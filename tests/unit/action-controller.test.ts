@@ -14,26 +14,28 @@ function fixture() {
   const target = { x: 2, y: 4, z: -1, nx: 0, ny: 1, nz: 0, t: 1 };
   let mob: SpawnMob | null = null;
   let block = 3;
-  const doBreak = vi.fn(), attackMob = vi.fn(), openTrade = vi.fn();
+  let hasTarget = true;
+  const doBreak = vi.fn(), attackMob = vi.fn(), openTrade = vi.fn(), swingHeldItem = vi.fn();
   const healGolem = vi.fn(() => true);
   const useBed = vi.fn(), openCraft = vi.fn();
   const useSelected = vi.fn(() => 0.4);
   const deps: ActionDependencies = {
     state, mine, miningBar,
-    keys: {}, getBlockHit: () => target, getTarget: () => target,
+    keys: {}, getBlockHit: () => hasTarget ? target : null, getTarget: () => hasTarget ? target : null,
     raycastMobs: () => mob ? { mob, t: 0.5 } : null,
     getBlock: () => block, breakTimes: { 3: 2, 19: 1 },
     toolSpeed: () => 2,
     doBreak, attackMob,
     canInteract: () => state.mode !== 'spectator' && state.mode !== 'adventure',
     openTrade, healGolem, isBed: b => b === 19, useBed,
-    craftingTableId: 18, openCraft, useSelected,
+    craftingTableId: 18, openCraft, useSelected, swingHeldItem,
   };
   const actions = createActionController(deps);
   return { state, mine, progress, miningBar, actions,
-    doBreak, attackMob, openTrade, healGolem, useBed, openCraft, useSelected,
+    doBreak, attackMob, openTrade, healGolem, useBed, openCraft, useSelected, swingHeldItem,
     setMob: (value: SpawnMob | null) => { mob = value; },
-    setBlock: (value: number) => { block = value; } };
+    setBlock: (value: number) => { block = value; },
+    setTargetVisible: (visible: boolean) => { hasTarget = visible; } };
 }
 
 describe('input actions and cooldowns', () => {
@@ -43,6 +45,7 @@ describe('input actions and cooldowns', () => {
     f.actions.handleActions(0.01, 300);
     expect(f.doBreak).toHaveBeenCalledOnce();
     expect(f.state.mineCd).toBeCloseTo(0.2);
+    expect(f.swingHeldItem).toHaveBeenCalledOnce();
     f.state.pulseMine = true;
     f.actions.handleActions(0.01, 320);
     expect(f.doBreak).toHaveBeenCalledTimes(2);
@@ -55,6 +58,7 @@ describe('input actions and cooldowns', () => {
     f.state.mining = true;
     f.actions.handleActions(0.5, 100);
     expect(f.mine.t).toBe(0.5);
+    expect(f.swingHeldItem).toHaveBeenCalledOnce();
     expect(f.progress.style.width).toBe('50%');
     f.actions.handleActions(0.5, 200);
     expect(f.doBreak).toHaveBeenCalledOnce();
@@ -71,6 +75,7 @@ describe('input actions and cooldowns', () => {
     f.actions.handleActions(0.01, 100);
     f.actions.handleActions(0.01, 150);
     expect(f.attackMob).toHaveBeenCalledOnce();
+    expect(f.swingHeldItem).toHaveBeenCalledOnce();
     expect(f.state.attackCd).toBeGreaterThan(0);
   });
 
@@ -85,6 +90,7 @@ describe('input actions and cooldowns', () => {
     f.actions.handleActions(0.1, 310);
     expect(f.healGolem).toHaveBeenCalledOnce();
     expect(f.useSelected).not.toHaveBeenCalled();
+    expect(f.swingHeldItem).not.toHaveBeenCalled();
   });
 
   it('prioritizes beds and crafting tables over normal placement', () => {
@@ -135,6 +141,36 @@ describe('input actions and cooldowns', () => {
     expect(f.openCraft).not.toHaveBeenCalled();
   });
 
+  it('animates a bare hand while mining air, throttling repeated swings during a hold', () => {
+    const f = fixture();
+    f.state.mode = 'survival';
+    f.state.mining = true;
+    f.setTargetVisible(false);
+    f.actions.handleActions(0.02, 0);
+    f.actions.handleActions(0.1, 100);
+    expect(f.swingHeldItem).toHaveBeenCalledOnce();
+    f.actions.handleActions(0.2, 300);
+    expect(f.swingHeldItem).toHaveBeenCalledTimes(2);
+    f.state.mining = false;
+    f.actions.handleActions(0.1, 400);
+    expect(f.swingHeldItem).toHaveBeenCalledTimes(2);
+  });
+
+  it('animates using a selected item without treating crafting-table interactions as swings', () => {
+    const f = fixture();
+    f.state.pulsePlace = true;
+    f.actions.handleActions(0.01, 100);
+    expect(f.useSelected).toHaveBeenCalledOnce();
+    expect(f.swingHeldItem).toHaveBeenCalledOnce();
+
+    f.state.placeCd = 0;
+    f.setBlock(18);
+    f.state.pulsePlace = true;
+    f.actions.handleActions(0.3, 500);
+    expect(f.openCraft).toHaveBeenCalledOnce();
+    expect(f.swingHeldItem).toHaveBeenCalledOnce();
+  });
+
   it('blocks all interaction in spectator mode', () => {
     const f = fixture();
     f.state.mode = 'spectator';
@@ -144,5 +180,6 @@ describe('input actions and cooldowns', () => {
     expect(f.doBreak).not.toHaveBeenCalled();
     expect(f.useSelected).not.toHaveBeenCalled();
     expect(f.state.pulsePlace).toBe(false);
+    expect(f.swingHeldItem).not.toHaveBeenCalled();
   });
 });
