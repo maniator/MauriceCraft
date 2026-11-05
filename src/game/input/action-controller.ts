@@ -47,7 +47,7 @@ export function createActionController(deps: ActionDependencies) {
     state.mineCd -= dt; state.placeCd -= dt; state.attackCd -= dt;
     const drag = state.drag, lookT = state.lookTouch;
     const holdOK = !drag || (tNow - drag.t0 > 160 && drag.moved < 6);
-    const touchHold = !!(lookT && lookT.moved < 10 && tNow - lookT.t0 > 220);
+    const touchHold = !!(lookT && lookT.moved < 10 && tNow - lookT.t0 >= 260);
     const heldMine = (state.mining && holdOK) || touchHold;
     const heldPlace = state.placing && holdOK;
     const wantMine = heldMine || state.pulseMine;
