@@ -114,6 +114,37 @@ export function createMobSimulation(deps: MobCombatDependencies) {
       }
       continue;
     }
+    if (m.kind === 'ghast' || m.kind === 'blaze') {
+      // These Nether enemies float instead of falling and fire from a distance.
+      if (D.cap === 0 && deps.canTakeDamage()) { removeMobAt(i); continue; }
+      if (dist > 85) { removeMobAt(i); continue; }
+      const ghast = m.kind === 'ghast';
+      const preferredY = Math.max(16, Math.min(ghast ? 31 : 30,
+        player.y + (ghast ? 7 : 3)));
+      const desiredRange = ghast ? 15 : 9;
+      const velocity = dist > desiredRange + 2 ? K.speed : dist < desiredRange - 3 ? -K.speed : 0;
+      const movement = Math.min(1, dt * 2.8);
+      m.vx += ((dx / dist) * velocity - m.vx) * movement;
+      m.vz += ((dz / dist) * velocity - m.vz) * movement;
+      // Floating movement still collides with terrain, including player-built
+      // shelter. Direct coordinate changes would clip through solid blocks.
+      m.onGround = false;
+      m.hit = false;
+      moveEnt(m, 0, m.vx * dt);
+      moveEnt(m, 2, m.vz * dt);
+      moveEnt(m, 1, Math.max(-2.8 * dt, Math.min(2.8 * dt, preferredY - m.y)));
+      if (m.hit) { m.vx = 0; m.vz = 0; }
+      m.phase += dt * 2;
+      m.group.position.set(m.x, m.y + Math.sin(m.phase * 2) * 0.25, m.z);
+      m.group.rotation.y = Math.atan2(dx, dz);
+      m.shoot -= dt;
+      if (dist < (ghast ? 35 : 22) && m.shoot <= 0 && hasLOS(m)) {
+        m.shoot = (ghast ? 3.4 : 2.2) * D.shoot;
+        shootArrow(m, ghast ? 5 : 3);
+      }
+      hostileActors.upsert(m);
+      continue;
+    }
     if (m.y < -30) { removeMobAt(i); continue; }
     if (m.hostile && D.cap === 0 && deps.canTakeDamage()) { removeMobAt(i); continue; }   // Peaceful: no monsters at all
     if (m.kind === 'villager' || m.village) { if (dist > 140) { if (m.village) m.village.vSpawned = false; removeMobAt(i); continue; } }
@@ -166,6 +197,10 @@ export function createMobSimulation(deps: MobCombatDependencies) {
         if (ad < 26 && m.shoot <= 0 && hasLOS(m, huntV)) { m.shoot = (2.4 + Math.random() * 0.8) * D.shoot; shootArrow(m, 4, huntV); }
       } else {
         if (sees && ad > 0.9) { tx = ax / ad * K.speed * D.speed; tz = az / ad * K.speed * D.speed; }
+        if (m.kind === 'magma_cube' && m.onGround && m.jumpCd <= 0) {
+          m.jumpCd = 1.6;
+          m.vy = 6.4;
+        }
         if (m.kind === 'spider' && sees && dist < 4.5 && m.onGround && m.jumpCd <= 0) { m.jumpCd = 1.2; m.vy = 7; m.vx = dx / dist * 5; m.vz = dz / dist * 5; }
       }
     } else if (K.golem) {
@@ -228,11 +263,12 @@ export function createMobSimulation(deps: MobCombatDependencies) {
     else { m.vx += (tx - m.vx) * k; m.vz += (tz - m.vz) * k; }
     m.vy = Math.max(-50, m.vy - 28 * dt);
     // Passive animals that wander into water should swim, not sink indefinitely.
-    if (['cow', 'pig', 'sheep', 'chicken'].includes(m.kind) && deps.getBlock) {
+    if (['cow', 'pig', 'sheep', 'chicken', 'strider'].includes(m.kind) && deps.getBlock) {
       const x = Math.floor(m.x), z = Math.floor(m.z);
       const feet = Math.floor(m.y - 0.3);
-      if (liquidKind(deps.getBlock(x, feet, z)) === 'water' ||
-        liquidKind(deps.getBlock(x, feet + 1, z)) === 'water') {
+      const fluid = m.kind === 'strider' ? 'lava' : 'water';
+      if (liquidKind(deps.getBlock(x, feet, z)) === fluid ||
+        liquidKind(deps.getBlock(x, feet + 1, z)) === fluid) {
         m.vy = Math.max(m.vy, 1.9);
       }
     }

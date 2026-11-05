@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createMobCatalog, type MobDropIds, type MobKind } from './mob-catalog';
 import { createMobSpawning, type SpawnMob, type MobSpawnDependencies } from './mob-spawning';
+import { createNetherSpawner } from './nether-spawning';
 import { createMobSimulation, type MobCombatDependencies, type MobDifficulty } from './mob-simulation';
 import { createMobWorldCycle, type MobWorldDifficulty } from './mob-world-cycle';
 import { createArrowSystem } from './arrow-system';
@@ -136,6 +137,11 @@ const { raid, endRaid, trySpawnMob, trySpawnAnimals, manageVillagers,
   playSound: deps.playSound,
   raidElement: deps.raidElement,
 });
+const { trySpawnNetherMob } = createNetherSpawner({
+  player, getSeed: deps.getSeed, getChunk: chunkAt, getBlock: get,
+  collides, solid, kinds: KINDS, addMob, worldHeight: deps.worldHeight,
+  lavaBlock: 35,
+});
 const pendingBlasts: MobCombatDependencies['pendingBlasts'] = [];
 const pendingHits: MobCombatDependencies['pendingHits'] = [];
 const { arrows, hasLOS, shootArrow, updateArrows } = createArrowSystem({
@@ -162,7 +168,7 @@ const { updateMobs, resetSpawnTimers } = createMobWorldCycle({
   getDifficulty: deps.getDifficulty, getDimension: deps.getDimension,
   isDragonDefeated: deps.isDragonDefeated,
   hasHealth: deps.hasHealth, isNight: deps.isNight, getWeather: deps.getWeather,
-  addMob, trySpawnMob, trySpawnAnimals, manageVillagers, trySpawnPatrol, updateRaid,
+  addMob, trySpawnMob, trySpawnNetherMob, trySpawnAnimals, manageVillagers, trySpawnPatrol, updateRaid,
   stepMobActors,
   setActiveIndexes: indexes => { activeMobIndexes = indexes; },
   damageMob, explode: (x, y, z, radius, power) => explode(x, y, z, radius, power),
@@ -195,6 +201,14 @@ function killMob(m: SpawnMob): void {
 }
 function damageMob(m: SpawnMob, dmg: number): boolean {
   m.hp -= dmg;
+  // Zombified piglins remain neutral until attacked, then alert their herd.
+  if (m.kind === 'zombified_piglin' && !m.hostile) {
+    for (const other of mobs) {
+      if (other.kind !== 'zombified_piglin') continue;
+      if (Math.hypot(other.x - m.x, other.z - m.z) < 14) other.hostile = true;
+    }
+    m.hostile = true;
+  }
   if (!m.hostile) m.panic = 3.5;
   if (m.hp <= 0) { killMob(m); return true; }
   return false;

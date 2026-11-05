@@ -236,5 +236,19 @@ export function makeAtlas(getToolTile: (tier: number, kind: number) => number): 
       if (y < 4) put(116, x, y, 91 + n, 158 + n, 65 + n * 0.5);
       else put(116, x, y, 130 + n, 97 + n * 0.7, 68 + n * 0.6);
     }
+    // Nether palette uses reserved atlas tiles, never changing existing save textures.
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+      const n = (hash2(x, y, 700) - 0.5) * 45;
+      const cracks = hash2(x >> 2, y >> 2, 701) < 0.22 ? -24 : 0;
+      put(117, x, y, 122 + n + cracks, 38 + n * 0.42, 45 + n * 0.4);
+      const seam = x % 7 === 0 || y % 7 === 0 ? -20 : 0;
+      put(118, x, y, 75 + n + seam, 71 + n + seam, 78 + n + seam);
+      put(119, x, y, 100 + n * 0.4, 83 + n * 0.5, 73 + n * 0.6);
+      put(120, x, y, 141 + n, 38 + n * 0.4, 65 + n * 0.4);
+      put(121, x, y, 31 + n * 0.3, 145 + n, 144 + n);
+      put(122, x, y, 40 + n * 0.6 + cracks, 39 + n * 0.6, 45 + n * 0.6);
+      const glow = hash2(x >> 1, y >> 1, 702);
+      put(123, x, y, 255 - glow * 30, 196 - glow * 87, 61 + glow * 40);
+    }
     return c;
   }

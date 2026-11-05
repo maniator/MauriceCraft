@@ -13,7 +13,10 @@ function makeActor(kind: string, hostile: boolean, x: number): MobActor {
     fuse: -1, shoot: 4, snd: 4, hx: 0, hz: 0, group, village: null,
   };
 }
-function fixture(actors: MobActor[], options: { daylight?: boolean; water?: boolean; sheltered?: boolean } = {}) {
+function fixture(actors: MobActor[], options: {
+  daylight?: boolean; water?: boolean; sheltered?: boolean;
+  movement?: (mob: MobActor, axis: number, distance: number) => void;
+} = {}) {
   const mobs = actors;
   const hostileActors = new SpatialIndex<MobActor>();
   const defenders = new SpatialIndex<MobActor>();
@@ -31,6 +34,7 @@ function fixture(actors: MobActor[], options: { daylight?: boolean; water?: bool
       zombie: { speed: 2, melee: { d: 1.15, dmg: 3, cd: 1.1 } },
       villager: { speed: 1 },
       creeper: { speed: 2 }, cow: { speed: 0.8 }, skeleton: { speed: 2 },
+      ghast: { speed: 2 }, blaze: { speed: 2.1 },
     },
     raid: { st: null }, hostileActors, defenders,
     getDifficulty: () => ({ cap: 8, dmg: 1, fuse: 1.5, speed: 1, aggro: 32, shoot: 1 }),
@@ -41,6 +45,7 @@ function fixture(actors: MobActor[], options: { daylight?: boolean; water?: bool
     damagePlayer, showHint: () => undefined, playSoundAt: () => undefined,
     hasLineOfSight: () => true, shootArrow: () => undefined,
     moveEntity: (mob, axis, distance) => {
+      if (options.movement) { options.movement(mob, axis, distance); return; }
       if (axis === 0) mob.x += distance;
       if (axis === 1) mob.y += distance;
       if (axis === 2) mob.z += distance;
@@ -86,4 +91,24 @@ describe('mob simulation', () => {
     expect(pendingBlasts).toHaveLength(1);
     expect(pendingBlasts[0].r).toBe(3.4);
   });
+  it('keeps flying Nether mobs out of solid shelters via the collision resolver', () => {
+    const ghast = makeActor('ghast', true, 20);
+    const blaze = makeActor('blaze', true, 15);
+    const calls: Array<{ kind: string; axis: number }> = [];
+    const { tick } = fixture([ghast, blaze], {
+      movement: (mob, axis) => {
+        calls.push({ kind: mob.kind, axis });
+        mob.hit = true; // A wall or ceiling blocks all attempted movement.
+      },
+    });
+    tick(0.2);
+    for (const mob of [ghast, blaze]) {
+      expect(calls.filter(call => call.kind === mob.kind).map(call => call.axis))
+        .toEqual([0, 2, 1]);
+      expect(mob.x).toBe(mob.kind === 'ghast' ? 20 : 15);
+      expect(mob.y).toBe(1);
+      expect(mob.group.position.x).toBe(mob.x);
+    }
+  });
+
 });
