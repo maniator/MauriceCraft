@@ -13,6 +13,7 @@ interface SavedRelic { x: number; y: number; z: number; got: boolean }
 type SavedWorld = WorldRecord & {
   dimension?: string; enderDragonDefeated?: boolean; portals?: unknown;
   player?: SavedPlayer; inv?: Record<string, number>; hotbar?: number[];
+  craftedRecipes?: unknown;
   selected?: number; tod?: number; toolWear?: Record<string, number>;
   mode?: string; difficulty?: string;
   spawn?: { x: number; y: number; z: number } | null;
@@ -36,6 +37,7 @@ export interface WorldRestoreDependencies {
   player: SavedPlayer & { vx: number; vy: number; vz: number; fallStart: number | null };
   portals: PortalFrame[];
   inventory: Record<string, number>;
+  craftedRecipes: Set<string>;
   toolWear: Record<string, number>;
   hotbar: number[];
   allBlocks: readonly number[];
@@ -94,6 +96,12 @@ export function createWorldRestore(deps: WorldRestoreDependencies) {
     player.vx = player.vy = player.vz = 0;
     player.yaw = p.yaw || 0; player.pitch = p.pitch || 0; player.fallStart = null;
     restoreNumbers(inventory, m.inv);
+    deps.craftedRecipes.clear();
+    if (Array.isArray(m.craftedRecipes)) {
+      for (const fingerprint of m.craftedRecipes) {
+        if (typeof fingerprint === 'string' && fingerprint.length <= 256) deps.craftedRecipes.add(fingerprint);
+      }
+    }
     if (m.hotbar && m.hotbar.length === 9) for (let i = 0; i < 9; i++) hotbar[i] = m.hotbar[i];
     state.selected = m.selected || 0;
     state.tod = typeof m.tod === 'number' ? m.tod : 0.22;
@@ -143,6 +151,7 @@ export function createWorldRestore(deps: WorldRestoreDependencies) {
     deps.respawn();
     deps.clearMobs();
     resetNumbers(inventory);
+    deps.craftedRecipes.clear();
     // Do not seed new worlds with free items or preselected Creative blocks.
     for (let i = 0; i < 9; i++) hotbar[i] = 0;
     state.selected = 0;

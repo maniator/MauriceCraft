@@ -45,6 +45,7 @@ export interface GameUiCompositionDependencies {
 
 /** UI composition only: game state and world rules stay in the gameplay runtime. */
 export function createGameUiComposition(deps: GameUiCompositionDependencies) {
+  const craftedRecipes = new Set<string>();
   const hud = createHud({
     hotbar: deps.hotbar, inventory: deps.inventory, names: deps.names,
     atlasCanvas: deps.atlasCanvas, tileOf: deps.tileOf,
@@ -58,7 +59,8 @@ export function createGameUiComposition(deps: GameUiCompositionDependencies) {
   });
   const inventory = createInventoryUi({
     state: deps.state, atlasCanvas: deps.atlasCanvas, tileOf: deps.tileOf,
-    inventory: deps.inventory, hotbar: deps.hotbar, allBlocks: deps.allBlocks,
+    inventory: deps.inventory, craftedRecipes,
+    hotbar: deps.hotbar, allBlocks: deps.allBlocks,
     names: deps.names, recipes, itemIds: deps.itemIds, jobNames: deps.jobNames,
     keys: deps.keys, touchMove: deps.touchMove, isTouch: deps.isTouch,
     getMode: deps.getMode, getModeLabel: deps.getModeLabel,
@@ -78,5 +80,5 @@ export function createGameUiComposition(deps: GameUiCompositionDependencies) {
     openInventory: inventory.openInventory, openCommand: deps.openCommand,
     pause: deps.pauseGame,
   });
-  return { ...hud, ...inventory, ...controls };
+  return { ...hud, ...inventory, ...controls, craftedRecipes };
 }

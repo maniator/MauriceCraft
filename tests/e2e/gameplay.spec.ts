@@ -126,3 +126,25 @@ test('switching dimensions preserves live gameplay and the saved world', async (
   await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
   expect(errors).toEqual([]);
 });
+
+test('survival bag hides zero-count items and recipe book reveals partial recipes on desktop and mobile', async ({ page, isMobile }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await startWorld(page);
+  await runCommand(page, '/gamemode survival');
+  await runCommand(page, '/give stick 1');
+
+  if (isMobile) await page.locator('#btnInv').tap();
+  else await page.keyboard.press('i');
+  await expect(page.locator('#inv')).toBeVisible();
+  await expect(page.locator('#invGrid .itile')).toHaveCount(1);
+  await expect(page.locator('#invGrid')).toContainText('Stick');
+  await expect(page.locator('#invGrid')).not.toContainText('Stone');
+
+  await page.getByRole('button', { name: 'Open crafting grid (C)' }).click();
+  await expect(page.locator('#craftui')).toBeVisible();
+  await expect(page.locator('#craftBook')).toContainText('Shovel');
+  await expect(page.locator('#craftBook')).toContainText('Still need:');
+  await expect(page.locator('#craftBook')).not.toContainText('Cooked Meat');
+  expect(errors).toEqual([]);
+});

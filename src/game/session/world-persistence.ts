@@ -21,6 +21,7 @@ export interface WorldSnapshotState {
   selected: number;
   hotbar: readonly number[];
   inventory: Readonly<Record<number, number>>;
+  craftedRecipes: readonly string[];
   player: { x: number; y: number; z: number; yaw: number; pitch: number; fly: boolean };
   relics: readonly { x: number; y: number; z: number; got: boolean }[];
   toolWear: Readonly<Record<number, number>>;
@@ -47,6 +48,7 @@ export function snapshotWorldState(world: WorldRecord, state: WorldSnapshotState
   world.selected = state.selected;
   world.hotbar = [...state.hotbar];
   world.inv = { ...state.inventory };
+  world.craftedRecipes = [...state.craftedRecipes];
   world.player = { ...state.player };
   world.relics = state.relics.map(({ x, y, z, got }) => ({ x, y, z, got }));
   world.toolWear = { ...state.toolWear };
