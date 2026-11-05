@@ -1,0 +1,48 @@
+#touchui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: none;
+}
+#touchui button {
+  position: absolute;
+  pointer-events: auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(18, 24, 31, 0.73);
+  color: var(--text);
+  border: 2px solid var(--panel-edge);
+  font-family: var(--font);
+  font-size: 14px;
+  touch-action: none;
+}
+#btnJump {
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 112px);
+  width: 56px;
+  height: 56px;
+}
+/* Tap the game world to use at the crosshair, instead of covering the view with another button. */
+#btnPlace {
+  right: 84px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 112px);
+}
+#btnFly {
+  right: 80px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 114px);
+  width: 48px;
+  height: 48px;
+  font-size: 13px;
+}
+/* Keep the movement prompt above the raised survival hearts and hunger icons. */
+#stickHint {
+  position: absolute;
+  left: 20px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 154px);
+  max-width: 130px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.25;
+  text-shadow: 0 1px 2px #000;
+}
