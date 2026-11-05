@@ -10,3 +10,22 @@ Read `README.md`, `CONTRIBUTING.md`, `docs/ARCHITECTURE.md`, and `docs/DEVELOPME
 4. Use npm packages where a dependency is justified, but do not add React or a giant framework just to reorganize the game. Global HUD CSS is intentional until UI components are extracted.
 5. Change tests/docs with behavior changes. Verify `npm run check` (including coverage thresholds) and the relevant desktop/mobile Playwright regressions. Report any check not run.
 6. Make small, meaningful commits and complete the full requested task; do not silently skip remaining requirements. Never include secrets or generated `dist/` files.
+
+## Required working flow for this repository
+
+1. Install deps with `npm ci` (Node.js 22+).
+2. For gameplay or UI behavior changes, run `npm run check`.
+3. If controls, HUD, menus, saving, startup, or other browser behavior changed, also run `npm run test:e2e`.
+4. If Playwright browsers are missing, run `npx playwright install chromium`.
+
+## High-risk invariants to preserve
+
+- Keep existing world saves compatible: keep IndexedDB database name `blockcraft-worlds`, block IDs, keys, and versioned world formats backward compatible.
+- Keep desktop and mobile play working (keyboard/mouse/touch, pause menu, inventory, crafting, saves, portal travel).
+- Keep the GitHub Pages base path `/MauriceCraft/` intact in build/deploy behavior.
+
+## Code placement and scope rules
+
+- Keep new gameplay logic in focused, typed TypeScript modules; keep `src/game/bootstrap.ts` as composition/integration glue.
+- Do not add `@ts-nocheck`, broad `any`, disabled tests, or unrelated refactors.
+- Update docs when commands, workflow, architecture expectations, or contributor workflow changes.
