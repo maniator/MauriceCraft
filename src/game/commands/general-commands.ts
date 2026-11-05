@@ -77,9 +77,17 @@ register(['dimension', 'dim'], '/dimension <overworld|nether|end>', 'Travel betw
 
 register(['spawn', 'summon'], '/spawn <creature> [count]', 'Spawn creatures in front of you', function (a) {
   if (!a[0]) throw new Error('Usage: /spawn <creature> [count]. Creatures: ' + mobNames().join(', '));
-  const q = slug(a[0]).replace(/_/g, '');
-  let kind = mobNames().filter(function (k) { return k === q; })[0] || (q === 'golem' ? 'irongolem' : null);
-  if (!kind) { const c = mobNames().filter(function (k) { return k.indexOf(q) === 0; }); if (c.length === 1) kind = c[0]; }
+  // Compare normalized spellings, but always pass the canonical catalog ID
+  // (including underscores) to addMob and saved-world data.
+  const normalized = (name: string): string => slug(name).replace(/_/g, '');
+  const q = normalized(a[0]);
+  const names = mobNames();
+  let kind: string | null = names.find(k => normalized(k) === q) ??
+    (q === 'golem' ? 'irongolem' : null);
+  if (!kind) {
+    const choices = names.filter(k => normalized(k).startsWith(q));
+    if (choices.length === 1) kind = choices[0];
+  }
   if (!kind) throw new Error('Unknown creature "' + a[0] + '". Creatures: ' + mobNames().join(', '));
   const K = KINDS[kind];
   if (K.hostile && hasHealth() && deps.getDifficultyCap() === 0) throw new Error('Monsters cannot spawn on Peaceful');
