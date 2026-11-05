@@ -33,16 +33,18 @@ export function createRecipeMatcher(recipes: readonly Recipe[]) {
   function matchRecipe(grid: readonly number[], size: number, preferred?: Recipe | null): Recipe | null {
     const crop = cropGrid(grid, size);
     if (!crop) return null;
+    // Preserve the non-null grid type inside the nested recipe matcher.
+    const cropped: number[][] = crop;
     const flat: number[] = [];
-    crop.forEach(row => row.forEach(v => { if (v) flat.push(v); }));
+    cropped.forEach(row => row.forEach(v => { if (v) flat.push(v); }));
     const key = flat.slice().sort((a, b) => a - b).join(',');
     // The recipe book can explicitly select an alternate output from the same
     // ingredients (e.g., a log can become planks or sticks).
     function matches(r: Recipe): boolean {
       if (r.shapeless) return r.shapeless.slice().sort((a, b) => a - b).join(',') === key;
       const pattern = recipePattern(r);
-      return samePattern(crop, pattern) ||
-        samePattern(crop, pattern.map(row => row.slice().reverse()));
+      return samePattern(cropped, pattern) ||
+        samePattern(cropped, pattern.map(row => row.slice().reverse()));
     }
     if (preferred && recipes.includes(preferred) && matches(preferred)) return preferred;
     for (const r of recipes) if (matches(r)) return r;
