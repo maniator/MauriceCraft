@@ -144,7 +144,10 @@
   /* Tap the game world to use at the crosshair, instead of covering the view with another button. */
   #btnPlace { right: 84px; bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); }
   #btnFly { right: 80px; bottom: calc(env(safe-area-inset-bottom, 0px) + 114px); width: 48px; height: 48px; font-size: 13px; }
-  #stickHint { position: absolute; left: 20px; bottom: calc(env(safe-area-inset-bottom, 0px) + 90px); color: var(--muted); font-size: 12px; }
+  /* Keep the movement prompt above the raised survival hearts and hunger icons. */
+  #stickHint { position: absolute; left: 20px; bottom: calc(env(safe-area-inset-bottom, 0px) + 154px);
+    max-width: 130px; color: var(--muted); font-size: 12px; line-height: 1.25;
+    text-shadow: 0 1px 2px #000; }
 
   #overlay {
     position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
