@@ -25,12 +25,12 @@
   }
   canvas#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
-  #crosshair { position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; pointer-events: none; mix-blend-mode: difference; }
+  #crosshair { position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; pointer-events: none; mix-blend-mode: difference; z-index: 4; }
   #crosshair::before, #crosshair::after { content: ""; position: absolute; background: #fff; }
   #crosshair::before { left: 10px; top: 0; width: 2px; height: 22px; }
   #crosshair::after { top: 10px; left: 0; height: 2px; width: 22px; }
 
-  #mineBar { position: fixed; left: 50%; top: calc(50% + 22px); width: 64px; height: 7px; margin-left: -32px; background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.5); display: none; pointer-events: none; }
+  #mineBar { position: fixed; left: 50%; top: calc(50% + 22px); width: 64px; height: 7px; margin-left: -32px; background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.5); display: none; pointer-events: none; z-index: 4; }
   #mineBar i { display: block; height: 100%; width: 0; background: var(--accent); }
 
   #bolt { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 3; }
@@ -91,53 +91,60 @@
     color: var(--text); background: var(--panel); border: 2px solid var(--panel-edge);
     font-family: var(--font); font-size: 16px; cursor: pointer; touch-action: manipulation; }
   #btnMenu:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  /* A first-person, pixel-style arm holds the actual selected hotbar sprite. */
+  /* First-person viewmodel belongs in the camera foreground, never behind HUD buttons.
+     Positioned relative to the crosshair so actions clearly land where the player aims. */
   #heldHand {
-    position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
-    width: 154px; height: 162px; pointer-events: none; z-index: 1;
-    transform-origin: 82% 100%;
+    position: fixed;
+    left: calc(50% + 16px); top: calc(50% + 28px);
+    width: 142px; height: 176px;
+    pointer-events: none; z-index: 2;
+    transform-origin: 76% 90%;
   }
   #heldHand[hidden], #overlay:not(.hidden) ~ #heldHand { display: none; }
   #heldHand .playerArm {
-    position: absolute; right: 8px; bottom: -34px; width: 62px; height: 148px;
-    box-sizing: border-box; border: 5px solid #6b4532;
+    position: absolute; right: 25px; bottom: -16px;
+    width: 55px; height: 158px; box-sizing: border-box;
+    border: 5px solid #6b4532;
     background: linear-gradient(to bottom, #3c9c9d 0 30%, #ad7052 30% 34%, #c18a65 34% 100%);
-    transform: rotate(26deg); transform-origin: 50% 100%;
+    transform: rotate(30deg); transform-origin: 50% 100%;
     box-shadow: inset -10px 0 #925c44, 5px 6px 0 rgba(0, 0, 0, .3);
   }
   #heldItem {
-    position: absolute; right: 50px; bottom: 61px; width: 100px; height: 100px;
+    position: absolute; right: 87px; bottom: 93px;
+    width: 82px; height: 82px;
     image-rendering: pixelated; pointer-events: none;
-    transform: rotate(-20deg) skew(-7deg, 2deg); transform-origin: bottom center;
+    transform: rotate(-22deg) skew(-7deg, 2deg); transform-origin: bottom center;
     filter: drop-shadow(5px 7px 2px rgba(0, 0, 0, .55));
   }
   #heldItem[hidden] { display: none; }
   #heldHand.swing { animation: held-hand-swing 280ms ease-out; }
   @keyframes held-hand-swing {
-    0%, 100% { transform: rotate(0deg) translate(0, 0); }
-    38% { transform: rotate(-48deg) translate(-19px, 15px); }
-    70% { transform: rotate(-16deg) translate(-8px, 3px); }
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    42% { transform: translate(-45px, -56px) rotate(-32deg); }
+    70% { transform: translate(-14px, -18px) rotate(-9deg); }
   }
   @media (prefers-reduced-motion: reduce) {
     #heldHand.swing { animation: none; }
   }
-  #touchui { z-index: 2; }
+  #touchui { z-index: 3; }
   @media (max-width: 700px) {
-    #heldHand { width: 104px; height: 112px; right: 6px; bottom: calc(env(safe-area-inset-bottom, 0px) + 57px); }
-    #heldHand .playerArm { width: 40px; height: 91px; right: 4px; bottom: -25px; border-width: 3px; }
-    #heldItem { width: 54px; height: 54px; right: 38px; bottom: 43px; }
+    #heldHand { left: calc(50% - 26px); top: calc(50% + 12px); width: 112px; height: 139px; }
+    #heldHand .playerArm { right: 16px; bottom: -20px; width: 46px; height: 132px; border-width: 3px; }
+    #heldItem { right: 60px; bottom: 67px; width: 70px; height: 70px; }
   }
 
   #touchui { position: fixed; inset: 0; pointer-events: none; display: none; }
   #touchui button {
-    position: absolute; pointer-events: auto; width: 64px; height: 64px; border-radius: 50%;
-    background: var(--panel); color: var(--text); border: 2px solid var(--panel-edge);
-    font-family: var(--font); font-size: 15px; touch-action: none;
+    position: absolute; pointer-events: auto; width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(18, 24, 31, 0.73); color: var(--text);
+    border: 2px solid var(--panel-edge);
+    font-family: var(--font); font-size: 14px; touch-action: none;
   }
-  #btnJump { right: 18px; bottom: calc(env(safe-area-inset-bottom, 0px) + 120px); }
-  #btnPlace { right: 92px; bottom: calc(env(safe-area-inset-bottom, 0px) + 154px); }
-  #btnFly { right: 92px; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); width: 48px; height: 48px; font-size: 13px; }
-  #stickHint { position: absolute; left: 24px; bottom: calc(env(safe-area-inset-bottom, 0px) + 100px); color: var(--muted); font-size: 13px; }
+  #btnJump { right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); width: 56px; height: 56px; }
+  /* Tap the game world to use at the crosshair, instead of covering the view with another button. */
+  #btnPlace { right: 84px; bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); }
+  #btnFly { right: 80px; bottom: calc(env(safe-area-inset-bottom, 0px) + 114px); width: 48px; height: 48px; font-size: 13px; }
+  #stickHint { position: absolute; left: 20px; bottom: calc(env(safe-area-inset-bottom, 0px) + 90px); color: var(--muted); font-size: 12px; }
 
   #overlay {
     position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -227,8 +234,8 @@
   #cmdbar { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); transform: translateX(-50%); width: min(640px, 94vw); z-index: 8; background: var(--panel); border: 3px solid var(--accent); padding: 6px; }
   #cmdbar.hidden { display: none; }
   #cmdinput { width: 100%; box-sizing: border-box; font-family: var(--font); font-size: 18px; padding: 8px 10px; background: rgba(0, 0, 0, 0.4); color: var(--text); border: 2px solid var(--panel-edge); -webkit-user-select: text; user-select: text; touch-action: auto; outline: none; }
-  #btnCmd { right: 26px; bottom: calc(env(safe-area-inset-bottom, 0px) + 256px); width: 48px; height: 48px; font-size: 13px; }
-  #btnInv { right: 26px; bottom: calc(env(safe-area-inset-bottom, 0px) + 196px); width: 48px; height: 48px; font-size: 13px; }
+  #btnCmd { right: 18px; bottom: calc(env(safe-area-inset-bottom, 0px) + 226px); width: 44px; height: 44px; font-size: 12px; }
+  #btnInv { right: 18px; bottom: calc(env(safe-area-inset-bottom, 0px) + 174px); width: 44px; height: 44px; font-size: 12px; }
   .btn:focus-visible, .itile:focus-visible, .slot:focus-visible, .mode:focus-visible, .dmode:focus-visible, .wmode:focus-visible, #touchui button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
   #hearts { left: calc(50% - 4px); transform: translateX(-100%); }
   #food { position: fixed; left: calc(50% + 4px); bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); display: none; gap: 2px; padding: 4px 8px; background: var(--panel); border: 2px solid var(--panel-edge); font-size: 18px; line-height: 1.25; pointer-events: none; }
@@ -258,8 +265,8 @@
 }
 @media (max-width: 370px) {
   .slot { width: 31px; height: 39px; }
-  #btnJump, #btnPlace { width: 56px; height: 56px; }
-  #btnPlace { right: 84px; }
+  #btnJump { width: 52px; height: 52px; }
+  #btnFly { right: 72px; }
 }
 
 /* World save/import/export actions. Menu placement remains raid-safe. */

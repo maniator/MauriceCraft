@@ -107,7 +107,9 @@ test('desktop and mobile can start playing', async ({ page, isMobile }) => {
   await expect(page.locator('#overlay')).toBeHidden();
   if (isMobile) {
     await expect(page.locator('#btnJump')).toBeVisible();
-    await expect(page.locator('#btnPlace')).toBeVisible();
+    // Mobile uses a tap on the world at the crosshair instead of a separate Use button.
+    await expect(page.locator('#btnPlace')).toBeHidden();
+    await expect(page.locator('#crosshair')).toBeVisible();
     // The game handles touchstart and prevents its synthetic click; use a real touch gesture.
     await page.locator('#btnInv').tap();
     await expect(page.locator('#inv')).toBeVisible();
