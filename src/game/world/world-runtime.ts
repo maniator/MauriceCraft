@@ -41,7 +41,7 @@ export function createWorldRuntime(deps: WorldRuntimeDependencies) {
     COAL_ORE, COPPER_ORE, DIAMOND_ORE, GRASS, IRON_ORE, LAVA,
     SAND, STONE, WATER, SNOW, PINE_LEAVES, RED_SAND, DARK_WOOD,
     BIRCH_WOOD, BIRCH_LEAVES, ACACIA_WOOD, ACACIA_LEAVES, WILLOW_WOOD,
-    WILLOW_LEAVES, AUTUMN_LEAVES, MUD, FLOWERING_GRASS, toolTile, ALL_BLOCKS, TILES,
+    WILLOW_LEAVES, AUTUMN_LEAVES, MUD, FLOWERING_GRASS, toolTile, TILES,
     ATLAS_N, BED_H, isBed, opq, solid,
   } = catalog;
   // Hotbar slots are empty until the player explicitly assigns an item.
