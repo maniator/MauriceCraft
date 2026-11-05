@@ -217,11 +217,30 @@ export function registerPlayerCommands(deps: PlayerCommandDependencies): void {
     (index) => (index === 1 ? Object.keys(deps.itemMap()) : []),
   );
 
-  register(['clear'], '/clear', 'Empty your backpack', () => {
-    for (const itemId in deps.inventory) delete deps.inventory[Number(itemId)];
-    deps.updateHotbar(false);
-    return 'Backpack cleared';
-  });
+  register(
+    ['clear'],
+    '/clear [--force]',
+    'Permanently empty your backpack after confirmation (--force skips it)',
+    (args) => {
+      if (args.length > 1 || (args.length === 1 && args[0] !== '--force')) {
+        throw new Error('Usage: /clear [--force]');
+      }
+      const count = Object.values(deps.inventory).reduce(
+        (total, quantity) => total + (Number.isFinite(quantity) ? Math.max(0, quantity) : 0),
+        0,
+      );
+      if (count === 0) return 'Your backpack is already empty';
+
+      const clearInventory = (): string => {
+        for (const itemId in deps.inventory) delete deps.inventory[Number(itemId)];
+        deps.updateHotbar(false);
+        return 'Backpack cleared (' + count + ' items removed)';
+      };
+      if (args[0] === '--force') return clearInventory();
+      return { kind: 'confirm-clear', count, confirm: clearInventory };
+    },
+    (index) => (index === 1 ? ['--force'] : []),
+  );
   register(['heal'], '/heal', 'Restore your health', () => {
     state.health = deps.maxHealth;
     state.sinceHurt = 99;

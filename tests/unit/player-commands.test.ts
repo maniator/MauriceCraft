@@ -4,9 +4,10 @@ import {
   type PlayerCommandState,
 } from '../../src/game/commands/player-commands';
 import type { RegisterCommand } from '../../src/game/commands/world-commands';
+import type { CommandResult } from '../../src/game/commands/command-result';
 
 function fixture() {
-  const actions = new Map<string, (args: string[]) => string | void>();
+  const actions = new Map<string, (args: string[]) => CommandResult>();
   const register: RegisterCommand = (aliases, _usage, _description, run) => {
     aliases.forEach((alias) => actions.set(alias, run));
   };
@@ -90,10 +91,10 @@ function fixture() {
     collides: () => false,
     getSeed: () => 321,
   });
-  const run = (command: string, args: string[] = []) => {
+  const run = (command: string, args: string[] = []): CommandResult => {
     const action = actions.get(command);
     if (!action) throw new Error('Missing command ' + command);
-    return String(action(args));
+    return action(args);
   };
   return { run, state, player, inventory, hotbar, chosen, getUpdates: () => updates };
 }
@@ -136,10 +137,27 @@ describe('player and game commands', () => {
     expect(game.hotbar.filter((item) => item === 101)).toHaveLength(1);
     expect(game.hotbar[5]).toBe(0);
     expect(game.state.selected).toBe(0);
-    game.run('clear');
+    const request = game.run('clear');
+    expect(request).toMatchObject({ kind: 'confirm-clear', count: 4 });
+    expect(game.inventory[101]).toBe(4);
+    if (!request || typeof request !== 'object') throw new Error('Confirmation was not requested');
+    request.confirm();
     expect(game.inventory[101]).toBeUndefined();
     expect(() => game.run('give', ['stone', '0'])).toThrow('count');
     expect(game.getUpdates()).toBeGreaterThan(0);
+  });
+
+  it('does not clear on cancel, skips confirmation with --force, and rejects bad arguments', () => {
+    const game = fixture();
+    expect(game.run('clear')).toBe('Your backpack is already empty');
+    game.inventory[3] = 2;
+    const request = game.run('clear');
+    expect(request).toMatchObject({ kind: 'confirm-clear', count: 2 });
+    expect(game.inventory[3]).toBe(2); // Cancelling means never running the callback.
+    expect(() => game.run('clear', ['stone'])).toThrow('Usage: /clear [--force]');
+    expect(() => game.run('clear', ['--force', 'extra'])).toThrow('Usage: /clear [--force]');
+    expect(game.run('clear', ['--force'])).toBe('Backpack cleared (2 items removed)');
+    expect(game.inventory[3]).toBeUndefined();
   });
 
   it('caps /give without reducing saved inventory stacks above the cap', () => {
