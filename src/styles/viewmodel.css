@@ -40,17 +40,17 @@
 #btnView[aria-pressed='true'] {
   border-color: var(--accent);
 }
-/* First-person viewmodel belongs in the camera foreground, never behind HUD buttons.
-     Positioned relative to the crosshair so actions clearly land where the player aims. */
+/* One transformable voxel arm: hand and item share the same grip and swing pivot. */
 #heldHand {
   position: fixed;
-  left: calc(50% + 16px);
-  top: calc(50% + 28px);
-  width: 142px;
-  height: 176px;
+  right: clamp(32px, 12vw, 220px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) - 110px);
+  width: clamp(250px, 29vw, 400px);
+  height: clamp(340px, 55vh, 470px);
   pointer-events: none;
   z-index: 2;
-  transform-origin: 76% 90%;
+  transform-origin: 78% 100%;
+  filter: drop-shadow(11px 11px 5px rgba(0, 0, 0, 0.28));
 }
 #heldHand[hidden],
 #overlay:not(.hidden) ~ #heldHand {
@@ -58,33 +58,106 @@
 }
 #heldHand .playerArm {
   position: absolute;
-  right: 25px;
-  bottom: -16px;
-  width: 55px;
-  height: 158px;
+  right: 36px;
+  bottom: -20px;
+  width: clamp(145px, 14vw, 205px);
+  height: 100%;
   box-sizing: border-box;
-  border: 5px solid #6b4532;
-  background: linear-gradient(to bottom, #3c9c9d 0 30%, #ad7052 30% 34%, #c18a65 34% 100%);
-  transform: rotate(30deg);
-  transform-origin: 50% 100%;
-  box-shadow:
-    inset -10px 0 #925c44,
-    5px 6px 0 rgba(0, 0, 0, 0.3);
+  border: 5px solid #674530;
+  background:
+    linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.12) 0 12%,
+      transparent 12% 77%,
+      rgba(0, 0, 0, 0.2) 77%
+    ),
+    linear-gradient(to bottom, #c38c69 0 31%, #a76b50 31% 34%, #3394a4 34% 100%);
+  box-shadow: inset 0 8px rgba(255, 255, 255, 0.1);
+  transform: rotate(-29deg);
+  transform-origin: 60% 100%;
+}
+#heldHand .armSide {
+  position: absolute;
+  top: 10px;
+  right: -29px;
+  bottom: -6px;
+  width: 29px;
+  box-sizing: border-box;
+  border: 4px solid #674530;
+  border-left: 0;
+  background: linear-gradient(to bottom, #926044 0 33%, #226875 33%);
+  transform: skewY(39deg);
+  transform-origin: top left;
+}
+#heldHand .armTop {
+  position: absolute;
+  top: -26px;
+  left: 9px;
+  right: -16px;
+  height: 26px;
+  box-sizing: border-box;
+  border: 4px solid #674530;
+  border-bottom: 0;
+  background: #dba27e;
+  transform: skewX(38deg);
+  transform-origin: bottom left;
+}
+/* The hand overlays the handle at the correct grip point, not the tool head. */
+#heldHand .handGrip {
+  position: absolute;
+  top: -25px;
+  left: calc(50% - 32px);
+  width: 68px;
+  height: 76px;
+}
+#heldHand .handGrip::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  bottom: 3px;
+  width: 51px;
+  height: 54px;
+  box-sizing: border-box;
+  border: 4px solid #674530;
+  background: linear-gradient(115deg, #dba27e, #b47a57 72%);
+  box-shadow: inset -8px -6px rgba(102, 62, 39, 0.23);
+  pointer-events: none;
+  z-index: 3;
 }
 #heldItem {
   position: absolute;
-  right: 87px;
-  bottom: 93px;
-  width: 82px;
-  height: 82px;
+  left: -17px;
+  top: -84px;
+  width: 126px;
+  height: 126px;
   image-rendering: pixelated;
   pointer-events: none;
-  transform: rotate(-22deg) skew(-7deg, 2deg);
-  transform-origin: bottom center;
-  filter: drop-shadow(5px 7px 2px rgba(0, 0, 0, 0.55));
+  transform: rotate(-8deg);
+  transform-origin: 22% 89%;
+  filter: drop-shadow(5px 6px 3px rgba(0, 0, 0, 0.5));
+  z-index: 2;
 }
 #heldItem[hidden] {
   display: none;
+}
+/* Atlas tools have their handle in the lower-left corner (x=2, y=14).
+   Enlarge the tile so the handle is covered by the hand and the blade/head
+   projects upward instead of floating as a tiny inventory icon. */
+#heldHand[data-held-kind='pickaxe'] #heldItem,
+#heldHand[data-held-kind='axe'] #heldItem,
+#heldHand[data-held-kind='shovel'] #heldItem,
+#heldHand[data-held-kind='sword'] #heldItem {
+  left: -8px;
+  top: -139px;
+  width: 190px;
+  height: 190px;
+  transform: rotate(-8deg);
+}
+#heldHand[data-held-kind='block'] #heldItem {
+  left: -26px;
+  top: -95px;
+  width: 140px;
+  height: 140px;
 }
 #heldHand.swing {
   animation: held-hand-swing 280ms ease-out;
@@ -92,13 +165,13 @@
 @keyframes held-hand-swing {
   0%,
   100% {
-    transform: translate(0, 0) rotate(0deg);
+    transform: translate(0, 0) rotate(0);
   }
   42% {
-    transform: translate(-45px, -56px) rotate(-32deg);
+    transform: translate(-155px, -75px) rotate(-24deg);
   }
   70% {
-    transform: translate(-14px, -18px) rotate(-9deg);
+    transform: translate(-25px, -15px) rotate(-5deg);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -111,22 +184,65 @@
 }
 @media (max-width: 700px) {
   #heldHand {
-    left: calc(50% - 26px);
-    top: calc(50% + 12px);
-    width: 112px;
-    height: 139px;
+    right: -24px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) - 108px);
+    width: 238px;
+    height: clamp(305px, 50vh, 395px);
+    transform-origin: 76% 100%;
   }
   #heldHand .playerArm {
-    right: 16px;
-    bottom: -20px;
-    width: 46px;
-    height: 132px;
+    right: 24px;
+    bottom: -18px;
+    width: 132px;
+    border-width: 4px;
+    transform: rotate(-23deg);
+  }
+  #heldHand .armSide {
+    top: 9px;
+    right: -21px;
+    width: 21px;
     border-width: 3px;
   }
+  #heldHand .armTop {
+    top: -21px;
+    height: 21px;
+    border-width: 3px;
+  }
+  #heldHand .handGrip {
+    top: -20px;
+    left: calc(50% - 30px);
+  }
   #heldItem {
-    right: 60px;
-    bottom: 67px;
-    width: 70px;
-    height: 70px;
+    left: -13px;
+    top: -78px;
+    width: 114px;
+    height: 114px;
+  }
+  #heldHand[data-held-kind='pickaxe'] #heldItem,
+  #heldHand[data-held-kind='axe'] #heldItem,
+  #heldHand[data-held-kind='shovel'] #heldItem,
+  #heldHand[data-held-kind='sword'] #heldItem {
+    left: -4px;
+    top: -121px;
+    width: 166px;
+    height: 166px;
+  }
+  #heldHand[data-held-kind='block'] #heldItem {
+    left: -21px;
+    top: -89px;
+    width: 128px;
+    height: 128px;
+  }
+  @keyframes held-hand-swing {
+    0%,
+    100% {
+      transform: translate(0, 0) rotate(0);
+    }
+    42% {
+      transform: translate(-68px, -78px) rotate(-23deg);
+    }
+    70% {
+      transform: translate(-17px, -15px) rotate(-5deg);
+    }
   }
 }

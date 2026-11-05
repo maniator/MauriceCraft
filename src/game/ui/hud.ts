@@ -52,8 +52,17 @@ export function createHud(deps: HudDependencies) {
   heldHand.id = 'heldHand';
   const arm = document.createElement('div');
   arm.className = 'playerArm';
-  arm.setAttribute('aria-hidden', 'true');
-  heldHand.append(arm, heldCanvas);
+  const armSide = document.createElement('span');
+  armSide.className = 'armSide';
+  armSide.setAttribute('aria-hidden', 'true');
+  const armTop = document.createElement('span');
+  armTop.className = 'armTop';
+  armTop.setAttribute('aria-hidden', 'true');
+  const grip = document.createElement('div');
+  grip.className = 'handGrip';
+  grip.appendChild(heldCanvas);
+  arm.append(armSide, armTop, grip);
+  heldHand.appendChild(arm);
   document.body.appendChild(heldHand);
   type SlotButton = HTMLButtonElement & {
     countElement: HTMLElement;
@@ -156,6 +165,9 @@ export function createHud(deps: HudDependencies) {
     // The empty hand is still visible so players can see themselves punch or mine.
     heldHand.hidden = deps.getMode() === 'spectator' || deps.isThirdPerson();
     heldCanvas.hidden = !holding;
+    heldHand.dataset.heldKind = holding
+      ? (deps.tools[heldId]?.kind ?? (heldId < 100 ? 'block' : 'item'))
+      : 'empty';
     heldImageContext.clearRect(0, 0, 96, 96);
     if (holding) {
       heldImageContext.drawImage(

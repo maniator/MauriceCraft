@@ -351,6 +351,50 @@ test('first-person viewmodel remains in the aiming area without obstructing the 
   if (isMobile) await expect(page.locator('#btnPlace')).toBeHidden();
 });
 
+test('first-person voxel hand grips full-size tools behind the hotbar', async ({ page }) => {
+  await startWorld(page);
+  const arm = page.locator('#heldHand .playerArm');
+  const grip = page.locator('#heldHand .handGrip');
+  const item = page.locator('#heldItem');
+  const hand = page.locator('#heldHand');
+  await expect(arm).toBeVisible();
+  await expect(grip).toBeVisible();
+  await expect(item).toBeHidden();
+
+  const initialWidth = await arm.evaluate((element) => element.getBoundingClientRect().width);
+  expect(initialWidth).toBeGreaterThan(105);
+
+  for (const [name, kind] of [
+    ['wooden_pickaxe', 'pickaxe'],
+    ['wooden_shovel', 'shovel'],
+    ['iron_sword', 'sword'],
+  ]) {
+    await runCommand(page, '/give ' + name);
+    await expect(hand).toHaveAttribute('data-held-kind', kind);
+    await expect(item).toBeVisible();
+    const bounds = await item.boundingBox();
+    const handBounds = await grip.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(handBounds).not.toBeNull();
+    expect(bounds!.width).toBeGreaterThan(140);
+    // Grip and item must be rendered together, with the tool handle near the hand.
+    const overlapX =
+      Math.min(bounds!.x + bounds!.width, handBounds!.x + handBounds!.width) -
+      Math.max(bounds!.x, handBounds!.x);
+    const overlapY =
+      Math.min(bounds!.y + bounds!.height, handBounds!.y + handBounds!.height) -
+      Math.max(bounds!.y, handBounds!.y);
+    expect(overlapX).toBeGreaterThan(0);
+    expect(overlapY).toBeGreaterThan(0);
+  }
+
+  const layers = await page.evaluate(() => ({
+    hand: getComputedStyle(document.getElementById('heldHand')!).zIndex,
+    hotbar: getComputedStyle(document.getElementById('hotbar')!).zIndex,
+  }));
+  expect(Number(layers.hotbar)).toBeGreaterThan(Number(layers.hand));
+});
+
 test('camera view toggles between the player avatar and the foreground hand', async ({
   page,
   isMobile,
