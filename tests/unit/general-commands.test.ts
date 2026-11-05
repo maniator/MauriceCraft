@@ -32,7 +32,13 @@ function fixture() {
     getDimension: () => dimension, buildPortalFrame, changeDimension,
     saveWorld, refreshWorlds: vi.fn(), isStorageAvailable: () => true,
     slug: name => name.toLowerCase().replace(/[^a-z]/g, ''),
-    mobs, kinds: { zombie: { r: 0.3, h: 1.8, hostile: true }, villager: { r: 0.3, h: 1.95 } },
+    mobs, kinds: {
+      zombie: { r: 0.3, h: 1.8, hostile: true },
+      villager: { r: 0.3, h: 1.95 },
+      magma_cube: { r: 0.46, h: 0.85, hostile: true },
+      zombified_piglin: { r: 0.32, h: 2.1 },
+      wither_skeleton: { r: 0.3, h: 2.25, hostile: true },
+    },
     jobs: ['farmer'], getDifficultyCap: () => 8, hasHealth: () => true,
     setHealth: value => { health = value; }, damagePlayer,
     spawnSpot: () => [2, 3, 4],
@@ -84,6 +90,22 @@ describe('general game commands', () => {
     expect(f.run('kill', ['hostile'])).toBe('Removed 1 creature');
     expect(f.mobs).toHaveLength(0);
     expect(f.removeMobAt).toHaveBeenCalledWith(0);
+  });
+
+  it('resolves underscored Nether creature commands to canonical mob IDs', () => {
+    const f = fixture();
+    expect(f.run('spawn', ['magma_cube'])).toBe('Spawned 1 magma_cube');
+    expect(f.run('summon', ['zombified_piglin'])).toBe('Spawned 1 zombified_piglin');
+    expect(f.run('spawn', ['wither_skeleton'])).toBe('Spawned 1 wither_skeleton');
+    expect(f.addMob.mock.calls.map(call => call[0]))
+      .toEqual(['magma_cube', 'zombified_piglin', 'wither_skeleton']);
+
+    // Short and alternate spelling still resolve without dropping underscores.
+    expect(f.run('spawn', ['magma-cube'])).toBe('Spawned 1 magma_cube');
+    expect(f.run('spawn', ['wither_skel'])).toBe('Spawned 1 wither_skeleton');
+    expect(f.run('spawn', ['zom'])).toBe('Spawned 1 zombie');
+    expect(f.addMob.mock.calls.slice(-3).map(call => call[0]))
+      .toEqual(['magma_cube', 'wither_skeleton', 'zombie']);
   });
 
   it('handles kill self, save and chat without changing commands', () => {
