@@ -53,10 +53,11 @@ export function registerWorldCommands(deps: WorldCommandDependencies): void {
     const z = Math.floor(coord(args[2], player.z));
     if (y < 0 || y >= maxHeight) throw new Error('Height must be between 0 and ' + (maxHeight - 1));
     const blockId = args[3].toLowerCase() === 'air' ? 0 : findItem(args[3], true);
+    const isTorchState = (id: number): boolean => id === deps.torchBlock || (id >= 57 && id <= 60);
     deps.getOrGenerateChunk(x >> 4, z >> 4);
     const previousBlock = deps.getBlock(x, y, z);
     deps.setBlock(x, y, z, blockId);
-    deps.queueRebuild(x, z, blockId === deps.torchBlock || previousBlock === deps.torchBlock);
+    deps.queueRebuild(x, z, isTorchState(blockId) || isTorchState(previousBlock));
     deps.flushRebuilds();
     return 'Set ' + x + ' ' + y + ' ' + z + ' to ' + (blockId ? names[blockId] : 'air');
   }, index => index === 4 ? blockOptions() : []);

@@ -60,6 +60,17 @@ describe('world commands', () => {
     expect(() => t.run('setblock', ['1', '49', '1', 'stone'])).toThrow('Height');
   });
 
+  it('queues wide rebuilds when a wall torch is set or removed', () => {
+    const t = fixture();
+    const base = [...t.rebuilds];
+    t.run('setblock', ['1', '10', '1', 'torch']);
+    expect(t.rebuilds).toContain('1,1');
+    t.world.set('1,10,1', 58);
+    t.run('setblock', ['1', '10', '1', 'air']);
+    expect(t.rebuilds.length).toBeGreaterThan(base.length);
+    expect(t.rebuilds.some(v => v === '1,1')).toBe(true);
+  });
+
   it('uses one block-name map for completion and limits large fills', () => {
     const t = fixture();
     expect(t.registered.get('fill')?.options?.(7, [])).toEqual(['air', 'stone', 'torch']);
