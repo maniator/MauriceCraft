@@ -98,7 +98,7 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     try {
       const output = command.fn(parts);
       if (typeof output === 'string' && output) chat(output);
-      else if (output && output.kind === 'confirm-clear') {
+      else if (typeof output === 'object' && output.kind === 'confirm-clear') {
         pendingClear = output;
         chat('Confirm deletion of ' + output.count + ' items in the dialog');
       }
