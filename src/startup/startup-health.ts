@@ -15,8 +15,10 @@ export function showStartupFailure(error: unknown, explanation?: string): void {
   const createWorld = menuElement<HTMLButtonElement>('newworld');
 
   if (overlay) overlay.style.display = 'block';
-  if (subtitle) subtitle.textContent = explanation ??
-    'Unable to load the game. Your saved worlds have not been deleted. Try reloading this page.';
+  if (subtitle)
+    subtitle.textContent =
+      explanation ??
+      'Unable to load the game. Your saved worlds have not been deleted. Try reloading this page.';
   if (createWorld) createWorld.disabled = true;
   if (!play) return;
 

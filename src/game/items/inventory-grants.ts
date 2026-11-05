@@ -11,6 +11,6 @@ export function grantInventoryItem(
 
   // Truly empty slots win over depleted items the player may want to replenish later.
   let slot = hotbar.indexOf(0);
-  if (slot === -1) slot = hotbar.findIndex(id => !(inventory[id] > 0));
+  if (slot === -1) slot = hotbar.findIndex((id) => !(inventory[id] > 0));
   if (slot !== -1) hotbar[slot] = itemId;
 }

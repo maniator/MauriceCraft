@@ -1,4 +1,8 @@
-import { registerPlayerCommands, type PlayerCommandState, type PlayerCommandDependencies } from './player-commands';
+import {
+  registerPlayerCommands,
+  type PlayerCommandState,
+  type PlayerCommandDependencies,
+} from './player-commands';
 import { registerWorldCommands, type RegisterCommand } from './world-commands';
 import { registerGeneralCommands, type GeneralCommandsDependencies } from './general-commands';
 import { createItemResolver } from './item-resolver';
@@ -10,7 +14,8 @@ import type { SpawnMob } from '../entities/mob-spawning';
 import type { GeneratedStructure } from '../world/structure-regions';
 
 export interface CoreCommandWorld {
-  BED: number; TORCH: number;
+  BED: number;
+  TORCH: number;
   NAMES: Readonly<Record<number, string>>;
   get: (x: number, y: number, z: number) => number;
   setBlock: (x: number, y: number, z: number, block: number) => void;
@@ -35,7 +40,8 @@ export interface CoreGameCommandDependencies {
   labels: PlayerCommandDependencies['labels'];
   difficulties: PlayerCommandDependencies['difficulties'];
   weatherLabels: PlayerCommandDependencies['weatherLabels'];
-  maxHeight: number; maxHealth: number;
+  maxHeight: number;
+  maxHealth: number;
   getSeed: () => number;
   getSeedLabel?: () => string;
   getDimension: () => WorldDimension;
@@ -57,7 +63,12 @@ export interface CoreGameCommandDependencies {
   flushRebuilds: () => void;
   explode: (x: number, y: number, z: number, radius: number, power: number) => void;
   collides: (x: number, y: number, z: number) => boolean;
-  buildPortalFrame: (dimension: 'overworld' | 'nether', x: number, y: number, z: number) => PortalFrame;
+  buildPortalFrame: (
+    dimension: 'overworld' | 'nether',
+    x: number,
+    y: number,
+    z: number,
+  ) => PortalFrame;
   changeDimension: (dimension: WorldDimension) => void;
   damagePlayer: (damage: number) => void;
   addMob: GeneralCommandsDependencies['addMob'];
@@ -76,48 +87,86 @@ export function registerCoreGameCommands(deps: CoreGameCommandDependencies): voi
   };
 
   registerPlayerCommands({
-    register, state, player,
-    maxHeight: deps.maxHeight, maxHealth: deps.maxHealth,
-    inventory, hotbar, names: world.NAMES, labels: deps.labels,
-    difficulties: deps.difficulties, weatherLabels: deps.weatherLabels,
-    findItem, itemMap,
-    setWeather: deps.setWeather, setMode: deps.setMode,
+    register,
+    state,
+    player,
+    maxHeight: deps.maxHeight,
+    maxHealth: deps.maxHealth,
+    inventory,
+    hotbar,
+    names: world.NAMES,
+    labels: deps.labels,
+    difficulties: deps.difficulties,
+    weatherLabels: deps.weatherLabels,
+    findItem,
+    itemMap,
+    setWeather: deps.setWeather,
+    setMode: deps.setMode,
     setDifficulty: deps.setDifficulty,
-    refreshWorlds: deps.refreshWorlds, saveWorld: deps.saveWorld,
-    updateHotbar: showName => deps.updateHotbar(showName ?? false),
-    updateHearts: deps.updateHearts, renderFood: deps.renderFood,
-    toggleFly: deps.toggleFly, ensureAround: deps.ensureAround,
-    topBlockY: world.topY, collides: deps.collides,
-    getSeed: deps.getSeed, getSeedLabel: deps.getSeedLabel,
+    refreshWorlds: deps.refreshWorlds,
+    saveWorld: deps.saveWorld,
+    updateHotbar: (showName) => deps.updateHotbar(showName ?? false),
+    updateHearts: deps.updateHearts,
+    renderFood: deps.renderFood,
+    toggleFly: deps.toggleFly,
+    ensureAround: deps.ensureAround,
+    topBlockY: world.topY,
+    collides: deps.collides,
+    getSeed: deps.getSeed,
+    getSeedLabel: deps.getSeedLabel,
   });
 
   registerWorldCommands({
-    register, player,
-    maxHeight: deps.maxHeight, torchBlock: world.TORCH,
-    names: world.NAMES, findItem, itemMap,
-    getBlock: world.get, setBlock: world.setBlock,
+    register,
+    player,
+    maxHeight: deps.maxHeight,
+    torchBlock: world.TORCH,
+    names: world.NAMES,
+    findItem,
+    itemMap,
+    getBlock: world.get,
+    setBlock: world.setBlock,
     getOrGenerateChunk: world.getOrGen,
-    queueRebuild: deps.queueRebuild, flushRebuilds: deps.flushRebuilds,
-    rebuildRegion: deps.rebuildRegion, spawnSpot,
-    explode: deps.explode, structureRegionSize: world.STRUCTURE_REGION_SIZE,
-    structureNames: world.STRUCT_NAMES, structureFor: world.structureFor,
-    ensureAround: deps.ensureAround, topBlockY: world.topY,
+    queueRebuild: deps.queueRebuild,
+    flushRebuilds: deps.flushRebuilds,
+    rebuildRegion: deps.rebuildRegion,
+    spawnSpot,
+    explode: deps.explode,
+    structureRegionSize: world.STRUCTURE_REGION_SIZE,
+    structureNames: world.STRUCT_NAMES,
+    structureFor: world.structureFor,
+    ensureAround: deps.ensureAround,
+    topBlockY: world.topY,
   });
 
   registerGeneralCommands({
-    register, commands: deps.commands, player, maxHeight: deps.maxHeight,
+    register,
+    commands: deps.commands,
+    player,
+    maxHeight: deps.maxHeight,
     getDimension: deps.getDimension,
     buildPortalFrame: deps.buildPortalFrame,
     changeDimension: deps.changeDimension,
     saveWorld: deps.saveWorld,
-    refreshWorlds: () => { void deps.refreshWorlds(); },
+    refreshWorlds: () => {
+      void deps.refreshWorlds();
+    },
     isStorageAvailable: deps.isStorageAvailable,
-    slug, mobs: deps.mobs, kinds: deps.kinds, jobs: deps.jobs,
-    getDifficultyCap: deps.getDifficultyCap, hasHealth: deps.hasHealth,
-    setHealth: hp => { state.health = hp; },
-    damagePlayer: deps.damagePlayer, spawnSpot,
-    getOrGenerateChunk: world.getOrGen, topY: world.topY,
-    collides: deps.collides, addMob: deps.addMob,
+    slug,
+    mobs: deps.mobs,
+    kinds: deps.kinds,
+    jobs: deps.jobs,
+    getDifficultyCap: deps.getDifficultyCap,
+    hasHealth: deps.hasHealth,
+    setHealth: (hp) => {
+      state.health = hp;
+    },
+    damagePlayer: deps.damagePlayer,
+    spawnSpot,
+    getOrGenerateChunk: world.getOrGen,
+    topY: world.topY,
+    collides: deps.collides,
+    addMob: deps.addMob,
     removeMobAt: deps.removeMobAt,
   });
 }

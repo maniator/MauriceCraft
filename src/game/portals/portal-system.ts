@@ -13,8 +13,12 @@ export interface PortalChunk {
   data: Uint8Array;
 }
 export interface PortalPlayer {
-  x: number; y: number; z: number;
-  vx: number; vy: number; vz: number;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
   fallStart: number | null;
 }
 export interface PortalSystemDependencies<Chunk extends PortalChunk> {
@@ -48,10 +52,30 @@ export interface PortalSystemDependencies<Chunk extends PortalChunk> {
 export function createPortalSystem<Chunk extends PortalChunk>(
   deps: PortalSystemDependencies<Chunk>,
 ) {
-  const { scene, portals, chunks, savedChunks, obsidian, worldHeight, getDimension,
-    setDimension, getPlayer, isPlaying, ensureAround, getOrGenerate,
-    setBlock, topBlockY, rebuildRegion, disposeMesh, resetChunkCache,
-    clearStructures, clearMobs, collides, saveWorld, showHint } = deps;
+  const {
+    scene,
+    portals,
+    chunks,
+    savedChunks,
+    obsidian,
+    worldHeight,
+    getDimension,
+    setDimension,
+    getPlayer,
+    isPlaying,
+    ensureAround,
+    getOrGenerate,
+    setBlock,
+    topBlockY,
+    rebuildRegion,
+    disposeMesh,
+    resetChunkCache,
+    clearStructures,
+    clearMobs,
+    collides,
+    saveWorld,
+    showHint,
+  } = deps;
   const portalVisuals: THREE.Mesh[] = [];
   let portalCooldown = 0;
 
@@ -59,7 +83,7 @@ export function createPortalSystem<Chunk extends PortalChunk>(
     for (const mesh of portalVisuals) {
       scene.remove(mesh);
       mesh.geometry.dispose();
-      if (Array.isArray(mesh.material)) mesh.material.forEach(material => material.dispose());
+      if (Array.isArray(mesh.material)) mesh.material.forEach((material) => material.dispose());
       else mesh.material.dispose();
     }
     portalVisuals.length = 0;
@@ -69,8 +93,11 @@ export function createPortalSystem<Chunk extends PortalChunk>(
     if (portal.dimension !== getDimension()) return;
     const geometry = new THREE.PlaneGeometry(portal.width + 0.85, portal.height - 0.15);
     const material = new THREE.MeshBasicMaterial({
-      color: 0x9a42ff, transparent: true, opacity: 0.62,
-      side: THREE.DoubleSide, depthWrite: false,
+      color: 0x9a42ff,
+      transparent: true,
+      opacity: 0.62,
+      side: THREE.DoubleSide,
+      depthWrite: false,
     });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(portal.x + 0.5, portal.y + 1 + portal.height / 2, portal.z + 0.5);
@@ -80,7 +107,10 @@ export function createPortalSystem<Chunk extends PortalChunk>(
   }
 
   function buildPortalFrame(
-    dimension: PortalDimension, centerX: number, baseY: number, centerZ: number,
+    dimension: PortalDimension,
+    centerX: number,
+    baseY: number,
+    centerZ: number,
   ): PortalFrame {
     const chunkX = Math.round(centerX);
     const chunkZ = Math.round(centerZ);
@@ -91,8 +121,13 @@ export function createPortalSystem<Chunk extends PortalChunk>(
       throw new Error('A portal is already too close. Build at least seven blocks farther away.');
     ensureAround(chunkX, chunkZ);
     const portal: PortalFrame = {
-      dimension, x: chunkX - 0.5, y: bottomY, z: chunkZ,
-      width: 2, height: 3, axis: 'x',
+      dimension,
+      x: chunkX - 0.5,
+      y: bottomY,
+      z: chunkZ,
+      width: 2,
+      height: 3,
+      axis: 'x',
     };
     // Generated portals need a floor outside BOTH faces. The Nether's
     // lava sea can be at y=12, immediately beneath the default y=13 portal,
@@ -103,8 +138,8 @@ export function createPortalSystem<Chunk extends PortalChunk>(
       for (let dz = -3; dz <= 3; dz++) {
         setBlock(chunkX + dx, bottomY, chunkZ + dz, obsidian);
         // Remove buried rock around the two portal exits, not just in its frame.
-        if (dz !== 0) for (let dy = 1; dy <= 3; dy++)
-          setBlock(chunkX + dx, bottomY + dy, chunkZ + dz, 0);
+        if (dz !== 0)
+          for (let dy = 1; dy <= 3; dy++) setBlock(chunkX + dx, bottomY + dy, chunkZ + dz, 0);
       }
     }
     for (let dx = -2; dx <= 1; dx++) {
@@ -121,13 +156,15 @@ export function createPortalSystem<Chunk extends PortalChunk>(
     return portal;
   }
 
-  function changeDimension(
-    destination: WorldDimension, x?: number, z?: number, y?: number,
-  ): void {
+  function changeDimension(destination: WorldDimension, x?: number, z?: number, y?: number): void {
     clearPortalVisuals();
     const current = getDimension();
-    const destinationCache = current === 'overworld' ? savedChunks :
-      deps.dimensionChunks ? getDimensionCache(deps.dimensionChunks, current) : null;
+    const destinationCache =
+      current === 'overworld'
+        ? savedChunks
+        : deps.dimensionChunks
+          ? getDimensionCache(deps.dimensionChunks, current)
+          : null;
     for (const chunk of chunks.values()) {
       if (chunk.edited) destinationCache?.set(ckey(chunk.cx, chunk.cz), chunk.data.slice());
     }
@@ -145,19 +182,27 @@ export function createPortalSystem<Chunk extends PortalChunk>(
     const player = getPlayer();
     player.x = targetX;
     player.z = targetZ;
-    player.y = y ?? (destination === 'nether' ? 15 :
-      (destination === 'end' ? 22 : topBlockY(Math.floor(targetX), Math.floor(targetZ)) + 1.01));
+    player.y =
+      y ??
+      (destination === 'nether'
+        ? 15
+        : destination === 'end'
+          ? 22
+          : topBlockY(Math.floor(targetX), Math.floor(targetZ)) + 1.01);
     for (let tries = 0; tries < 12 && collides(player.x, player.y, player.z); tries++) {
       player.y += 1;
     }
     player.vx = player.vy = player.vz = 0;
     player.fallStart = null;
     saveWorld();
-    showHint(destination === 'nether'
-      ? 'Welcome to the Nether! Watch your step in the red-hot caverns.'
-      : destination === 'end'
-        ? 'Welcome to the End! Stay on the floating islands.'
-        : 'Back to the Overworld.', 5000);
+    showHint(
+      destination === 'nether'
+        ? 'Welcome to the Nether! Watch your step in the red-hot caverns.'
+        : destination === 'end'
+          ? 'Welcome to the End! Stay on the floating islands.'
+          : 'Back to the Overworld.',
+      5000,
+    );
   }
 
   function netherPortalBase(x: number, z: number): number {
@@ -169,9 +214,8 @@ export function createPortalSystem<Chunk extends PortalChunk>(
     for (let y = 13; y <= worldHeight - 6; y++) {
       const material = getBlock(x, y, z);
       if (material === 0 || liquidKind(material)) continue;
-      if (getBlock(x, y + 1, z) !== 0 ||
-        getBlock(x, y + 2, z) !== 0 ||
-        getBlock(x, y + 3, z) !== 0) continue;
+      if (getBlock(x, y + 1, z) !== 0 || getBlock(x, y + 2, z) !== 0 || getBlock(x, y + 3, z) !== 0)
+        continue;
       floor = y;
     }
     return floor;
@@ -182,10 +226,11 @@ export function createPortalSystem<Chunk extends PortalChunk>(
     const dimension = getDimension();
     if (portalCooldown > 0 || !isPlaying() || dimension === 'end') return;
     const player = getPlayer();
-    const entered = portals.find(portal => portalContains(portal, dimension, player));
+    const entered = portals.find((portal) => portalContains(portal, dimension, player));
     if (!entered) return;
 
-    const destinationDimension: PortalDimension = dimension === 'overworld' ? 'nether' : 'overworld';
+    const destinationDimension: PortalDimension =
+      dimension === 'overworld' ? 'nether' : 'overworld';
     const scale = dimension === 'overworld' ? 1 / 8 : 8;
     const destinationX = Math.round((entered.x + 0.5) * scale);
     const destinationZ = Math.round((entered.z + 0.5) * scale);
@@ -193,16 +238,24 @@ export function createPortalSystem<Chunk extends PortalChunk>(
     // If two overworld portals map close together, reuse the best existing
     // Nether frame instead of generating increasingly crowded new frames.
     let destination = findLinkedPortal(
-      portals, destinationDimension, destinationX,
-      destinationDimension === 'nether' ? 15 : entered.y, destinationZ,
+      portals,
+      destinationDimension,
+      destinationX,
+      destinationDimension === 'nether' ? 15 : entered.y,
+      destinationZ,
     );
-    changeDimension(destinationDimension, destination?.x !== undefined ? destination.x + 0.5 : destinationX,
+    changeDimension(
+      destinationDimension,
+      destination?.x !== undefined ? destination.x + 0.5 : destinationX,
       destination?.z !== undefined ? destination.z + 0.5 : destinationZ,
-      destinationDimension === 'nether' ? 15 : undefined);
+      destinationDimension === 'nether' ? 15 : undefined,
+    );
     if (!destination) {
       getOrGenerate(destinationX >> 4, destinationZ >> 4);
-      const floorY = destinationDimension === 'nether' ? netherPortalBase(destinationX, destinationZ) :
-        topBlockY(destinationX, destinationZ) + 1;
+      const floorY =
+        destinationDimension === 'nether'
+          ? netherPortalBase(destinationX, destinationZ)
+          : topBlockY(destinationX, destinationZ) + 1;
       destination = buildPortalFrame(destinationDimension, destinationX, floorY, destinationZ);
     }
     // Center the exit on the frame, then offset onto its solid landing side.
@@ -214,10 +267,12 @@ export function createPortalSystem<Chunk extends PortalChunk>(
     }
     portalCooldown = 2.5;
     saveWorld();
-    showHint('Portal travel: ' +
-      (destinationDimension === 'nether' ? 'Overworld → Nether' : 'Nether → Overworld'), 3000);
+    showHint(
+      'Portal travel: ' +
+        (destinationDimension === 'nether' ? 'Overworld → Nether' : 'Nether → Overworld'),
+      3000,
+    );
   }
 
-  return { clearPortalVisuals, showPortalVisual, buildPortalFrame,
-    changeDimension, checkPortal };
+  return { clearPortalVisuals, showPortalVisual, buildPortalFrame, changeDimension, checkPortal };
 }

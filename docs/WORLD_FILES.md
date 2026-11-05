@@ -41,16 +41,16 @@ devices and browser origins, including a future custom domain.
 
 All numeric values are little-endian. All offsets are in bytes.
 
-| Offset | Data |
-| --- | --- |
-| 0 | ASCII `MCWORLD1` (8 bytes) |
-| 8 | Format version, `uint16` (currently 1) |
-| 10 | Reserved flags, `uint16` (must be zero) |
-| 12 | Metadata UTF-8 byte length, `uint32` |
-| 16 | Number of stored chunk records, `uint32` |
-| 20 | JSON world metadata, length specified above |
+| Offset         | Data                                                                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 0              | ASCII `MCWORLD1` (8 bytes)                                                                                                           |
+| 8              | Format version, `uint16` (currently 1)                                                                                               |
+| 10             | Reserved flags, `uint16` (must be zero)                                                                                              |
+| 12             | Metadata UTF-8 byte length, `uint32`                                                                                                 |
+| 16             | Number of stored chunk records, `uint32`                                                                                             |
+| 20             | JSON world metadata, length specified above                                                                                          |
 | After metadata | Each chunk: dimension `uint8` (0 Overworld, 1 Nether, 2 End); `int32` x; `int32` z; `uint32` payload length; raw chunk payload bytes |
-| Last 4 bytes | `uint32` CRC32 of all preceding bytes |
+| Last 4 bytes   | `uint32` CRC32 of all preceding bytes                                                                                                |
 
 Limits: 256 MiB file, 2 MiB metadata, 25,000 chunks, 12,288 bytes per chunk (16 × 16 × 48 blocks). Imports reject chunks with
 other payload sizes to prevent missing-block reads and silent block-loss.

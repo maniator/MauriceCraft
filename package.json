@@ -12,25 +12,28 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src tests *.config.ts",
-    "check": "npm run lint && npm run typecheck && npm run test:coverage && npm run build",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run build",
     "test:e2e": "playwright test",
-    "check:full": "npm run check && npm run test:e2e"
+    "check:full": "npm run check && npm run test:e2e",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,css,scss,md,mdx}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,css,scss,md,mdx}\""
   },
   "dependencies": {
-    "three": "0.128.0",
-    "dexie": "4.4.7"
+    "dexie": "4.4.7",
+    "three": "0.128.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "^22.15.30",
     "@types/three": "0.128.0",
-    "typescript": "5.9.3",
-    "vite": "8.3.5",
-    "vitest": "5.1.0",
     "@vitest/coverage-v8": "5.1.0",
     "eslint": "9.39.1",
-    "typescript-eslint": "8.46.3",
-    "@playwright/test": "1.56.1",
     "fake-indexeddb": "6.2.7",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.46.3",
+    "vite": "8.3.5",
     "vite-plugin-pwa": "2.0.0",
-    "@types/node": "^22.15.30"
+    "vitest": "5.1.0"
   }
 }

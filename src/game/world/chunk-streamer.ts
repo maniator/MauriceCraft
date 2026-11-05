@@ -32,16 +32,22 @@ export function createChunkStreamer<T extends StreamChunk>(
   const now = deps.now ?? (() => performance.now());
   // Load and mesh chunks around the player as they move; drop the ones left far behind
   const OFFS: { dx: number; dz: number; d: number; e: number }[] = [];
-  for (let dz = -R - 1; dz <= R + 1; dz++) for (let dx = -R - 1; dx <= R + 1; dx++) OFFS.push({ dx: dx, dz: dz, d: Math.max(Math.abs(dx), Math.abs(dz)), e: dx * dx + dz * dz });
-  OFFS.sort(function (a, b) { return a.e - b.e; });
+  for (let dz = -R - 1; dz <= R + 1; dz++)
+    for (let dx = -R - 1; dx <= R + 1; dx++)
+      OFFS.push({ dx: dx, dz: dz, d: Math.max(Math.abs(dx), Math.abs(dz)), e: dx * dx + dz * dz });
+  OFFS.sort(function (a, b) {
+    return a.e - b.e;
+  });
   let streamTick = 0;
   function neighborsLoaded(cx: number, cz: number): boolean {
-    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (!chunks.has(ckey(cx + dx, cz + dz))) return false;
+    for (let dz = -1; dz <= 1; dz++)
+      for (let dx = -1; dx <= 1; dx++) if (!chunks.has(ckey(cx + dx, cz + dz))) return false;
     return true;
   }
   function streamChunks(): void {
     const player = getPlayer();
-    const pcx = Math.floor(player.x / 16), pcz = Math.floor(player.z / 16);
+    const pcx = Math.floor(player.x / 16),
+      pcz = Math.floor(player.z / 16);
     for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) getOrGen(pcx + dx, pcz + dz);
     const t0 = now();
     let n = 0;
@@ -65,9 +71,14 @@ export function createChunkStreamer<T extends StreamChunk>(
       chunks.forEach(function (c, k) {
         const d = Math.max(Math.abs(c.cx - pcx), Math.abs(c.cz - pcz));
         if (c.meshed && d > R + 1) disposeMesh(c);
-        if (!c.edited && d > R + 3) { disposeMesh(c); gone.push(k); }
+        if (!c.edited && d > R + 3) {
+          disposeMesh(c);
+          gone.push(k);
+        }
       });
-      gone.forEach(function (k) { chunks.delete(k); });
+      gone.forEach(function (k) {
+        chunks.delete(k);
+      });
       resetChunkCache();
     }
   }

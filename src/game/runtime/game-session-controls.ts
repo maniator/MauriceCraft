@@ -3,11 +3,24 @@ import type { GameMode, Difficulty } from '../ui/game-menu';
 export interface GameSessionState {
   mode: GameMode;
   difficulty: Difficulty;
-  mining: boolean; placing: boolean; pulseMine: boolean; pulsePlace: boolean;
-  dead: boolean; hp: number; sinceHurt: number; regenT: number;
-  hunger: number; sat: number; exhaust: number; starveT: number;
-  locked: boolean; fallback: boolean; playing: boolean;
-  drag: unknown | null; ready: boolean; invOpen: boolean;
+  mining: boolean;
+  placing: boolean;
+  pulseMine: boolean;
+  pulsePlace: boolean;
+  dead: boolean;
+  hp: number;
+  sinceHurt: number;
+  regenT: number;
+  hunger: number;
+  sat: number;
+  exhaust: number;
+  starveT: number;
+  locked: boolean;
+  fallback: boolean;
+  playing: boolean;
+  drag: unknown | null;
+  ready: boolean;
+  invOpen: boolean;
 }
 
 export interface GameSessionDependencies {
@@ -93,7 +106,10 @@ export function createGameSessionControls(deps: GameSessionDependencies) {
     state.locked = false;
     state.playing = true;
     overlay.classList.add('hidden');
-    deps.showHint('Mouse capture is blocked here. Drag to look, click to break, right-click to place.', 6000);
+    deps.showHint(
+      'Mouse capture is blocked here. Drag to look, click to break, right-click to place.',
+      6000,
+    );
   }
 
   function requestLock(): void {

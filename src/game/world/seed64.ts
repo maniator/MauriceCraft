@@ -61,7 +61,7 @@ export function nextWorldSeed64(
 ): string {
   for (let attempt = 0; attempt < 32; attempt++) {
     const [high, low] = randomWords();
-    if (![high, low].every(n => Number.isInteger(n) && n >= 0 && n <= 0xffffffff)) {
+    if (![high, low].every((n) => Number.isInteger(n) && n >= 0 && n <= 0xffffffff)) {
       throw new Error('Seed entropy must contain exactly two unsigned 32-bit words');
     }
     const candidate = ((BigInt(high) << 32n) | BigInt(low)).toString(10);

@@ -8,18 +8,29 @@ function fixture() {
   const scene = new THREE.Scene();
   const key = (x: number, y: number, z: number) => `${x},${y},${z}`;
   const system = createExplosionSystem({
-    scene, texture: new THREE.Texture(), tntId: 16, torchId: 17,
-    worldHeight: 48, breakTimes: { 3: 4 },
+    scene,
+    texture: new THREE.Texture(),
+    tntId: 16,
+    torchId: 17,
+    worldHeight: 48,
+    breakTimes: { 3: 4 },
     blockGeometry: () => new THREE.BoxGeometry(1, 1, 1),
     getBlock: (x, y, z) => blocks.get(key(x, y, z)) ?? 0,
-    setBlock: (x, y, z, block) => { blocks.set(key(x, y, z), block); },
+    setBlock: (x, y, z, block) => {
+      blocks.set(key(x, y, z), block);
+    },
     hasChunk: () => true,
-    buildChunk: (x, z) => { chunksBuilt.push(`${x},${z}`); },
+    buildChunk: (x, z) => {
+      chunksBuilt.push(`${x},${z}`);
+    },
     getMobs: () => [],
     getPlayer: () => ({ x: 100, y: 100, z: 100, h: 1.8, r: 0.3, vx: 0, vy: 0, vz: 0 }),
-    damageMob: () => undefined, damagePlayer: () => undefined,
-    moveEntity: () => undefined, collides: () => false,
-    playSound: () => undefined, increaseShake: () => undefined,
+    damageMob: () => undefined,
+    damagePlayer: () => undefined,
+    moveEntity: () => undefined,
+    collides: () => false,
+    playSound: () => undefined,
+    increaseShake: () => undefined,
   });
   return { system, scene, chunksBuilt, blocks, key };
 }
@@ -35,14 +46,15 @@ describe('explosion module', () => {
     expect(system.rebuildSet.size).toBe(0);
   });
   it.each([17, 57, 58, 59, 60])(
-    'refreshes neighboring chunk lighting after destroying torch state %i', id => {
+    'refreshes neighboring chunk lighting after destroying torch state %i',
+    (id) => {
       const { system, blocks, key, chunksBuilt } = fixture();
       blocks.set(key(10, 10, 10), id);
       system.explode(10.5, 10.5, 10.5, 2.1, 20);
       expect(blocks.get(key(10, 10, 10))).toBe(0);
-      expect(new Set(chunksBuilt)).toEqual(new Set([
-        '-1,-1', '-1,0', '-1,1', '0,-1', '0,0', '0,1', '1,-1', '1,0', '1,1',
-      ]));
+      expect(new Set(chunksBuilt)).toEqual(
+        new Set(['-1,-1', '-1,0', '-1,1', '0,-1', '0,0', '0,1', '1,-1', '1,0', '1,1']),
+      );
     },
   );
   it('cleans up primed TNT meshes after removal', () => {

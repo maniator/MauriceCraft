@@ -1,11 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { createPlayerMovement, type PlayerMovementBody } from '../../src/game/player/player-movement';
+import {
+  createPlayerMovement,
+  type PlayerMovementBody,
+} from '../../src/game/player/player-movement';
 import type { GameMode } from '../../src/game/ui/game-menu';
 
 function fixture() {
   const player: PlayerMovementBody = {
-    x: 0, y: 1, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0,
-    fly: false, onGround: true, fallStart: null,
+    x: 0,
+    y: 1,
+    z: 0,
+    vx: 0,
+    vy: 0,
+    vz: 0,
+    yaw: 0,
+    pitch: 0,
+    fly: false,
+    onGround: true,
+    fallStart: null,
   };
   const keys: Record<string, boolean> = {};
   let mode: GameMode = 'creative';
@@ -15,10 +27,14 @@ function fixture() {
   let collisions = 0;
   const stepCeilings: Array<number | undefined> = [];
   const movement = createPlayerMovement({
-    player, keys, touchMovement: { x: 0, z: 0 },
-    getMode: () => mode, getHunger: () => hunger,
+    player,
+    keys,
+    touchMovement: { x: 0, z: 0 },
+    getMode: () => mode,
+    getHunger: () => hunger,
     isJumpPressed: () => Boolean(keys.Space),
-    isSleeping: () => sleeping, getSpectatorSpeed: () => 1,
+    isSleeping: () => sleeping,
+    getSpectatorSpeed: () => 1,
     worldHeight: 48,
     moveEntity: (axis, distance, maxStepY) => {
       collisions++;
@@ -30,17 +46,32 @@ function fixture() {
         if (player.y === 1) player.onGround = true;
       }
     },
-    checkPortal: () => undefined, respawn: () => undefined,
-    exert: () => undefined, refreshHunger: () => undefined,
-    getSurfaceBlock: () => 3, playStep: () => undefined,
+    checkPortal: () => undefined,
+    respawn: () => undefined,
+    exert: () => undefined,
+    refreshHunger: () => undefined,
+    getSurfaceBlock: () => 3,
+    playStep: () => undefined,
     playLanding: () => undefined,
-    applyFallDamage: amount => { damage.push(amount); },
+    applyFallDamage: (amount) => {
+      damage.push(amount);
+    },
   });
   return {
-    player, keys, damage, movement, stepCeilings,
-    setMode: (next: GameMode) => { mode = next; },
-    setHunger: (next: number) => { hunger = next; },
-    setSleeping: (next: boolean) => { sleeping = next; },
+    player,
+    keys,
+    damage,
+    movement,
+    stepCeilings,
+    setMode: (next: GameMode) => {
+      mode = next;
+    },
+    setHunger: (next: number) => {
+      hunger = next;
+    },
+    setSleeping: (next: boolean) => {
+      sleeping = next;
+    },
     getCollisions: () => collisions,
   };
 }

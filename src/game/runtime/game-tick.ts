@@ -56,7 +56,9 @@ export interface TickDependencies {
 }
 
 /** One active gameplay frame; the frame scheduler owns readiness and render order. */
-export function createGameTick(deps: TickDependencies): (deltaSeconds: number, now: number) => void {
+export function createGameTick(
+  deps: TickDependencies,
+): (deltaSeconds: number, now: number) => void {
   const { state, player, camera, selection, fadeElement } = deps;
   const random = deps.random ?? Math.random;
   let lavaDamageTimer = 0;
@@ -64,8 +66,12 @@ export function createGameTick(deps: TickDependencies): (deltaSeconds: number, n
   return (deltaSeconds: number, now: number): void => {
     const dt = Math.min(deltaSeconds, 0.05);
     lavaDamageTimer -= dt;
-    if (state.mode !== 'spectator' && lavaDamageTimer <= 0 &&
-      deps.getBlock(Math.floor(player.x), Math.floor(player.y + 0.2), Math.floor(player.z)) === deps.lavaBlock) {
+    if (
+      state.mode !== 'spectator' &&
+      lavaDamageTimer <= 0 &&
+      deps.getBlock(Math.floor(player.x), Math.floor(player.y + 0.2), Math.floor(player.z)) ===
+        deps.lavaBlock
+    ) {
       deps.damagePlayer(2, false);
       lavaDamageTimer = 0.8;
       deps.flashName('Ouch! Lava burns you!');
@@ -73,8 +79,15 @@ export function createGameTick(deps: TickDependencies): (deltaSeconds: number, n
     if (state.sleepTime > 0) {
       state.sleepTime -= dt;
       const elapsed = 3.2 - state.sleepTime;
-      fadeElement.style.opacity = String(state.sleepTime <= 0 ? 0 :
-        (elapsed < 1 ? elapsed : (state.sleepTime > 1 ? 1 : state.sleepTime)));
+      fadeElement.style.opacity = String(
+        state.sleepTime <= 0
+          ? 0
+          : elapsed < 1
+            ? elapsed
+            : state.sleepTime > 1
+              ? 1
+              : state.sleepTime,
+      );
       if (!state.slept && elapsed >= 1.2) {
         state.slept = true;
         state.timeOfDay = 0.02;
@@ -87,8 +100,10 @@ export function createGameTick(deps: TickDependencies): (deltaSeconds: number, n
     camera.position.set(player.x, player.y + deps.eyeHeight, player.z);
     camera.rotation.set(player.pitch, player.yaw, 0);
 
-    const blockHit = state.mode === 'spectator' ? null :
-      deps.raycast(deps.canInteract() ? (state.mode === 'creative' ? 6 : 5) : 4);
+    const blockHit =
+      state.mode === 'spectator'
+        ? null
+        : deps.raycast(deps.canInteract() ? (state.mode === 'creative' ? 6 : 5) : 4);
     const target = deps.canInteract() ? blockHit : null;
     deps.setBlockHit(blockHit);
     deps.setTarget(target);
@@ -105,8 +120,11 @@ export function createGameTick(deps: TickDependencies): (deltaSeconds: number, n
     if (deps.hasHealth()) {
       state.sinceHurt += dt;
       const config = deps.difficulty[state.difficulty];
-      if (state.health < deps.maximumHealth && state.sinceHurt > config.regenAfter &&
-        (state.mode !== 'survival' || state.difficulty === 'peaceful' || state.hunger >= 15)) {
+      if (
+        state.health < deps.maximumHealth &&
+        state.sinceHurt > config.regenAfter &&
+        (state.mode !== 'survival' || state.difficulty === 'peaceful' || state.hunger >= 15)
+      ) {
         state.regenerationTimer += dt;
         if (state.regenerationTimer >= config.regenEvery) {
           state.regenerationTimer = 0;
@@ -119,7 +137,10 @@ export function createGameTick(deps: TickDependencies): (deltaSeconds: number, n
         state.starvationTimer += dt;
         if (state.starvationTimer >= 4) {
           state.starvationTimer = 0;
-          if (state.health > (state.difficulty === 'easy' ? 10 : (state.difficulty === 'normal' ? 1 : 0))) {
+          if (
+            state.health >
+            (state.difficulty === 'easy' ? 10 : state.difficulty === 'normal' ? 1 : 0)
+          ) {
             deps.damagePlayer(1);
           }
         }

@@ -17,9 +17,20 @@ function fixture() {
     inStructureZone: () => false,
     grassBlock: 1,
     sandBlock: 4,
-    showHint: message => { hints.push(message); },
+    showHint: (message) => {
+      hints.push(message);
+    },
   });
-  return { scene, player, hints, relics, setMode: (next: string) => { mode = next; relics.setMode(); } };
+  return {
+    scene,
+    player,
+    hints,
+    relics,
+    setMode: (next: string) => {
+      mode = next;
+      relics.setMode();
+    },
+  };
 }
 
 describe('Adventure relics', () => {
@@ -27,8 +38,8 @@ describe('Adventure relics', () => {
     const { relics, scene } = fixture();
     relics.addRelic(12, 19, 7, true);
     relics.addRelic(14, 19, 8, false);
-    expect(relics.relics.map(relic => relic.got)).toEqual([true, false]);
-    expect(relics.relics.map(relic => relic.group.visible)).toEqual([false, true]);
+    expect(relics.relics.map((relic) => relic.got)).toEqual([true, false]);
+    expect(relics.relics.map((relic) => relic.group.visible)).toEqual([false, true]);
     relics.clearRelics();
     expect(scene.children).toHaveLength(0);
     expect(relics.relics).toHaveLength(0);

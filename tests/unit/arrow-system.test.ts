@@ -13,17 +13,33 @@ function fixture() {
   const playSound = vi.fn();
   const playSoundAt = vi.fn();
   const deps: ArrowDependencies = {
-    scene, player, mobs,
-    getBlock: x => blocked && x === 3 ? 3 : 0,
-    solid: id => id !== 0,
+    scene,
+    player,
+    mobs,
+    getBlock: (x) => (blocked && x === 3 ? 3 : 0),
+    solid: (id) => id !== 0,
     collides: () => false,
     hasHealth: () => true,
-    damagePlayer, damageMob, playSound, playSoundAt,
+    damagePlayer,
+    damageMob,
+    playSound,
+    playSoundAt,
   };
   const system = createArrowSystem(deps);
   const shooter = { x: 0, y: 0, z: 0 } as MobActor;
-  return { player, scene, system, shooter, damagePlayer, damageMob, playSound, playSoundAt,
-    setBlocked: (value: boolean) => { blocked = value; } };
+  return {
+    player,
+    scene,
+    system,
+    shooter,
+    damagePlayer,
+    damageMob,
+    playSound,
+    playSoundAt,
+    setBlocked: (value: boolean) => {
+      blocked = value;
+    },
+  };
 }
 
 describe('arrow flight and line of sight', () => {

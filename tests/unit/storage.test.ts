@@ -1,15 +1,28 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it } from 'vitest';
-import { openWorldStorage, type ChunkRecord, type WorldRecord, type WorldStorage } from '../../src/game/storage/world-storage';
+import {
+  openWorldStorage,
+  type ChunkRecord,
+  type WorldRecord,
+  type WorldStorage,
+} from '../../src/game/storage/world-storage';
 
 let current: WorldStorage | undefined;
 const name = (): string => 'mauricecraft-test-' + crypto.randomUUID();
 const world = (id = 'w1'): WorldRecord => ({
-  id, name: 'Practice world', seed: 1234, created: 1, lastPlayed: 2,
+  id,
+  name: 'Practice world',
+  seed: 1234,
+  created: 1,
+  lastPlayed: 2,
   portals: [{ dimension: 'nether', axis: 'z', x: 6, y: 10, z: 4 }],
 });
 const chunk = (w = 'w1', cx = 2, cz = 3): ChunkRecord => ({
-  k: `${w}:${cx},${cz}`, w, cx, cz, data: Uint8Array.from([0, 36, 0, 7]),
+  k: `${w}:${cx},${cz}`,
+  w,
+  cx,
+  cz,
+  data: Uint8Array.from([0, 36, 0, 7]),
 });
 
 afterEach(async () => {
@@ -53,10 +66,11 @@ describe('Dexie storage and cache', () => {
   it('imports a world atomically without overwriting an existing ID', async () => {
     current = await openWorldStorage(name());
     await current.saveWorld(world('w1'), [chunk('w1')]);
-    await expect(current.importWorld({ ...world('w1'), name: 'Imported' }, [chunk('w1')]))
-      .rejects.toThrow();
+    await expect(
+      current.importWorld({ ...world('w1'), name: 'Imported' }, [chunk('w1')]),
+    ).rejects.toThrow();
     expect((await current.getWorld('w1'))?.name).toBe('Practice world');
-    expect((await current.getChunks('w1'))).toEqual([chunk('w1')]);
+    expect(await current.getChunks('w1')).toEqual([chunk('w1')]);
 
     const invalid = { ...chunk('new'), k: undefined } as unknown as ChunkRecord;
     await expect(current.importWorld(world('new'), [invalid])).rejects.toThrow();

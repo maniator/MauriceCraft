@@ -15,12 +15,12 @@ npm run test:e2e
 
 ## What each test protects
 
-| Type | Location | Catches |
-| --- | --- | --- |
-| Unit / regression | `tests/unit/` | Terrain/seed versions, block IDs, recipes, mob spawning and raids, projectile collisions, chunk streaming and caches, player respawn, mining/placement cooldowns, portal travel, save-format compatibility and retry behavior |
-| Browser integration | `tests/e2e/` | Play becoming enabled, game controls, menus, mobile touch, portal commands, saved data after reload |
-| Type and style | `npm run typecheck`, `npm run lint` | Invalid interfaces, unsafe JavaScript, unnecessarily large TypeScript files |
-| Production build | `npm run build` | Broken imports, Pages base path, TypeScript/build errors |
+| Type                | Location                            | Catches                                                                                                                                                                                                                       |
+| ------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit / regression   | `tests/unit/`                       | Terrain/seed versions, block IDs, recipes, mob spawning and raids, projectile collisions, chunk streaming and caches, player respawn, mining/placement cooldowns, portal travel, save-format compatibility and retry behavior |
+| Browser integration | `tests/e2e/`                        | Play becoming enabled, game controls, menus, mobile touch, portal commands, saved data after reload                                                                                                                           |
+| Type and style      | `npm run typecheck`, `npm run lint` | Invalid interfaces, unsafe JavaScript, unnecessarily large TypeScript files                                                                                                                                                   |
+| Production build    | `npm run build`                     | Broken imports, Pages base path, TypeScript/build errors                                                                                                                                                                      |
 
 Browser tests also assert the optional command and world-archive JavaScript chunks are absent during normal gameplay and load on first use, alongside existing command and import/export round-trip coverage.
 

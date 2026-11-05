@@ -13,36 +13,69 @@ describe('Nether inhabitants and spawn safety', () => {
   });
   it('requires a loaded chunk and empty room rather than spawning inside rock', () => {
     const addMob = vi.fn();
-    const catalog = Object.fromEntries(['piglin', 'zombified_piglin', 'hoglin', 'ghast',
-      'blaze', 'magma_cube', 'strider', 'wither_skeleton'].map(kind => [kind, { r: 0.3, h: 1.8 }]));
+    const catalog = Object.fromEntries(
+      [
+        'piglin',
+        'zombified_piglin',
+        'hoglin',
+        'ghast',
+        'blaze',
+        'magma_cube',
+        'strider',
+        'wither_skeleton',
+      ].map((kind) => [kind, { r: 0.3, h: 1.8 }]),
+    );
     const player = { x: 20, z: 20 };
-    const base: Pick<MobSpawnDependencies, 'player' | 'getSeed' | 'getChunk' |
-      'getBlock' | 'collides' | 'solid' | 'kinds' | 'addMob'> = {
-      player, getSeed: () => 677,
-      getChunk: () => null, getBlock: () => 0, collides: () => false,
-      solid: block => block !== 0 && block !== 35,
-      kinds: catalog, addMob,
+    const base: Pick<
+      MobSpawnDependencies,
+      'player' | 'getSeed' | 'getChunk' | 'getBlock' | 'collides' | 'solid' | 'kinds' | 'addMob'
+    > = {
+      player,
+      getSeed: () => 677,
+      getChunk: () => null,
+      getBlock: () => 0,
+      collides: () => false,
+      solid: (block) => block !== 0 && block !== 35,
+      kinds: catalog,
+      addMob,
     };
-    const newSpawner = (override: Partial<typeof base>) => createNetherSpawner({
-      ...base, ...override, lavaBlock: 35, worldHeight: 48,
-      random: () => 0.28,
-    });
+    const newSpawner = (override: Partial<typeof base>) =>
+      createNetherSpawner({
+        ...base,
+        ...override,
+        lavaBlock: 35,
+        worldHeight: 48,
+        random: () => 0.28,
+      });
     newSpawner({}).trySpawnNetherMob();
     expect(addMob).not.toHaveBeenCalled();
     newSpawner({ getChunk: () => ({}), getBlock: () => 3 }).trySpawnNetherMob();
     expect(addMob).not.toHaveBeenCalled();
   });
   it('uses the current dimension seed and produces no ordinary cows or zombies', () => {
-    const names = ['piglin', 'zombified_piglin', 'hoglin', 'ghast', 'blaze',
-      'magma_cube', 'strider', 'wither_skeleton'];
+    const names = [
+      'piglin',
+      'zombified_piglin',
+      'hoglin',
+      'ghast',
+      'blaze',
+      'magma_cube',
+      'strider',
+      'wither_skeleton',
+    ];
     const addMob = vi.fn();
-    const floor = (y: number) => y <= 16 ? 50 : y >= 37 ? 50 : 0;
+    const floor = (y: number) => (y <= 16 ? 50 : y >= 37 ? 50 : 0);
     const spawner = createNetherSpawner({
-      player: { x: 0, z: 0 }, getSeed: () => 677, getChunk: () => ({}),
-      getBlock: (_x, y) => floor(y), collides: () => false,
-      solid: b => b === 50,
-      kinds: Object.fromEntries(names.map(kind => [kind, { r: 0.4, h: 1.8 }])),
-      addMob, worldHeight: 48, lavaBlock: 35,
+      player: { x: 0, z: 0 },
+      getSeed: () => 677,
+      getChunk: () => ({}),
+      getBlock: (_x, y) => floor(y),
+      collides: () => false,
+      solid: (b) => b === 50,
+      kinds: Object.fromEntries(names.map((kind) => [kind, { r: 0.4, h: 1.8 }])),
+      addMob,
+      worldHeight: 48,
+      lavaBlock: 35,
       random: () => 0.2,
     });
     spawner.trySpawnNetherMob();
@@ -52,16 +85,20 @@ describe('Nether inhabitants and spawn safety', () => {
   it('spawns only harmless lava-walking striders when Peaceful is requested', () => {
     const addMob = vi.fn();
     const spawner = createNetherSpawner({
-      player: { x: 40, z: 40 }, getSeed: () => 677,
+      player: { x: 40, z: 40 },
+      getSeed: () => 677,
       getChunk: () => ({}),
-      getBlock: (_x, y) => y === 12 ? 35 : 0,
-      collides: () => false, solid: () => false,
-      kinds: { strider: { r: 0.4, h: 1.8 } }, addMob,
-      worldHeight: 48, lavaBlock: 35, random: () => 0.28,
+      getBlock: (_x, y) => (y === 12 ? 35 : 0),
+      collides: () => false,
+      solid: () => false,
+      kinds: { strider: { r: 0.4, h: 1.8 } },
+      addMob,
+      worldHeight: 48,
+      lavaBlock: 35,
+      random: () => 0.28,
     });
     spawner.trySpawnNetherMob(true);
     expect(addMob).toHaveBeenCalledOnce();
     expect(addMob.mock.calls[0][0]).toBe('strider');
   });
-
 });

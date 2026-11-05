@@ -18,7 +18,9 @@ export interface GameRenderer {
 }
 
 /** Set up the canvas, lighting, and texture materials once at startup. */
-export function createGameRenderer(getToolTile: (tier: number, kind: number) => number): GameRenderer {
+export function createGameRenderer(
+  getToolTile: (tier: number, kind: number) => number,
+): GameRenderer {
   const canvas = document.getElementById('view');
   if (!(canvas instanceof HTMLCanvasElement)) throw new Error('Missing game canvas #view');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -37,14 +39,20 @@ export function createGameRenderer(getToolTile: (tier: number, kind: number) => 
 
   const mat = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true });
   const dayUniform = { value: 1 };
-  mat.onBeforeCompile = shader => {
+  mat.onBeforeCompile = (shader) => {
     shader.uniforms.uDay = dayUniform;
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float aLight;\nvarying float vLight;')
+      .replace(
+        '#include <common>',
+        '#include <common>\nattribute float aLight;\nvarying float vLight;',
+      )
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLight = aLight;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float uDay;\nvarying float vLight;')
-      .replace('#include <color_fragment>', 'diffuseColor.rgb *= vColor * max(vec3(uDay), vLight * vec3(1.0, 0.8, 0.52));');
+      .replace(
+        '#include <color_fragment>',
+        'diffuseColor.rgb *= vColor * max(vec3(uDay), vLight * vec3(1.0, 0.8, 0.52));',
+      );
   };
 
   const torchMat = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true });
@@ -59,8 +67,12 @@ export function createGameRenderer(getToolTile: (tier: number, kind: number) => 
   glowContext.fillStyle = glowGradient;
   glowContext.fillRect(0, 0, 64, 64);
   const glowMat = new THREE.PointsMaterial({
-    map: new THREE.CanvasTexture(glowCanvas), size: 3.4, transparent: true,
-    opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending,
+    map: new THREE.CanvasTexture(glowCanvas),
+    size: 3.4,
+    transparent: true,
+    opacity: 0.35,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
     color: 0xffffff,
   });
 
@@ -90,6 +102,19 @@ export function createGameRenderer(getToolTile: (tier: number, kind: number) => 
   }
   window.addEventListener('resize', resizeViewport);
   resizeViewport();
-  return { canvas, renderer, scene, camera, atlasCanvas, tex, mat, torchMat, dayUniform,
-    glowMat, sun, moon, sel };
+  return {
+    canvas,
+    renderer,
+    scene,
+    camera,
+    atlasCanvas,
+    tex,
+    mat,
+    torchMat,
+    dayUniform,
+    glowMat,
+    sun,
+    moon,
+    sel,
+  };
 }

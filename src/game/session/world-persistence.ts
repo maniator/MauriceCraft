@@ -26,15 +26,28 @@ export interface WorldSnapshotState {
   relics: readonly { x: number; y: number; z: number; got: boolean }[];
   toolWear: Readonly<Record<number, number>>;
   itemDrops?: readonly ItemDropRecord[];
-  golems: readonly { kind: string; x: number; y: number; z: number;
-    hp: number; hx: number; hz: number; golem: boolean; persist: boolean }[];
+  golems: readonly {
+    kind: string;
+    x: number;
+    y: number;
+    z: number;
+    hp: number;
+    hx: number;
+    hz: number;
+    golem: boolean;
+    persist: boolean;
+  }[];
 }
 
 /** Writes exactly the existing world metadata keys, retaining unknown legacy fields. */
-export function snapshotWorldState(world: WorldRecord, state: WorldSnapshotState, now = Date.now()): WorldRecord {
+export function snapshotWorldState(
+  world: WorldRecord,
+  state: WorldSnapshotState,
+  now = Date.now(),
+): WorldRecord {
   world.dimension = state.dimension;
   world.enderDragonDefeated = state.enderDragonDefeated;
-  world.portals = state.portals.map(p => ({ ...p }));
+  world.portals = state.portals.map((p) => ({ ...p }));
   world.mode = state.mode;
   world.difficulty = state.difficulty;
   world.spawn = state.spawn;
@@ -52,10 +65,18 @@ export function snapshotWorldState(world: WorldRecord, state: WorldSnapshotState
   world.player = { ...state.player };
   world.relics = state.relics.map(({ x, y, z, got }) => ({ x, y, z, got }));
   world.toolWear = { ...state.toolWear };
-  world.itemDrops = (state.itemDrops ?? []).map(drop => ({ ...drop }));
-  world.golems = state.golems.filter(g => g.golem && g.persist).map(g => ({
-    kind: g.kind, x: g.x, y: g.y, z: g.z, hp: g.hp, hx: g.hx, hz: g.hz,
-  }));
+  world.itemDrops = (state.itemDrops ?? []).map((drop) => ({ ...drop }));
+  world.golems = state.golems
+    .filter((g) => g.golem && g.persist)
+    .map((g) => ({
+      kind: g.kind,
+      x: g.x,
+      y: g.y,
+      z: g.z,
+      hp: g.hp,
+      hx: g.hx,
+      hz: g.hz,
+    }));
   return world;
 }
 
@@ -76,17 +97,24 @@ export function collectWorldSaveBatch(
   const records = new Map<string, ChunkRecord>();
   function remember(dim: string, cx: number, cz: number, data: Uint8Array): void {
     const k = savedChunkKey(world.id, dim, cx, cz);
-    records.set(k, { k, w: world.id, cx, cz, data: data.slice(),
-      ...(dim === 'overworld' ? {} : { dimension: dim as 'nether' | 'end' }) });
+    records.set(k, {
+      k,
+      w: world.id,
+      cx,
+      cz,
+      data: data.slice(),
+      ...(dim === 'overworld' ? {} : { dimension: dim as 'nether' | 'end' }),
+    });
   }
   function unpack(key: number): [number, number] {
     return [((key >> 16) << 16) >> 16, (key << 16) >> 16];
   }
   // The older save pipeline buffered edited Overworld chunks during portal travel.
-  if (dimension !== 'overworld') for (const [key, data] of savedChunks) {
-    const [cx, cz] = unpack(key);
-    remember('overworld', cx, cz, data);
-  }
+  if (dimension !== 'overworld')
+    for (const [key, data] of savedChunks) {
+      const [cx, cz] = unpack(key);
+      remember('overworld', cx, cz, data);
+    }
   for (const [dim, cache] of dimensionChunks) {
     if (dim === 'overworld' || (dim !== 'nether' && dim !== 'end')) continue;
     for (const [key, data] of cache) {
@@ -101,6 +129,8 @@ export function collectWorldSaveBatch(
   }
   return {
     records: [...records.values()],
-    restoreDirty: () => { for (const chunk of dirtyChunks) chunk.dirty = true; },
+    restoreDirty: () => {
+      for (const chunk of dirtyChunks) chunk.dirty = true;
+    },
   };
 }

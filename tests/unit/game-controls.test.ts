@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { rotateLook, scrollHotbar, spectatorScrollSpeed, touchTapUsesItem } from '../../src/game/input/game-controls';
+import {
+  rotateLook,
+  scrollHotbar,
+  spectatorScrollSpeed,
+  touchTapUsesItem,
+} from '../../src/game/input/game-controls';
 
 describe('input control helpers', () => {
   it('wraps the hotbar in both directions without out-of-range slots', () => {

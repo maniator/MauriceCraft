@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { deriveWorldSeed32, nextWorldSeed64, parseWorldSeed64, parseWorldSeedInput64 } from '../../src/game/world/seed64';
+import {
+  deriveWorldSeed32,
+  nextWorldSeed64,
+  parseWorldSeed64,
+  parseWorldSeedInput64,
+} from '../../src/game/world/seed64';
 
 describe('lossless 64-bit world seeds', () => {
   it('parses the full unsigned uint64 range without floating-point rounding', () => {
@@ -16,8 +21,12 @@ describe('lossless 64-bit world seeds', () => {
     expect(parseWorldSeedInput64('  4294967296 ')).toBe('4294967296');
     expect(parseWorldSeedInput64('18446744073709551615')).toBe('18446744073709551615');
     expect(parseWorldSeedInput64('-1')).toBe('18446744073709551615');
-    expect(parseWorldSeedInput64('MauriceCraft v5')).toBe(parseWorldSeedInput64(' MauriceCraft v5 '));
-    expect(parseWorldSeedInput64('MauriceCraft v5')).not.toBe(parseWorldSeedInput64('mauricecraft v5'));
+    expect(parseWorldSeedInput64('MauriceCraft v5')).toBe(
+      parseWorldSeedInput64(' MauriceCraft v5 '),
+    );
+    expect(parseWorldSeedInput64('MauriceCraft v5')).not.toBe(
+      parseWorldSeedInput64('mauricecraft v5'),
+    );
     for (const invalid of ['18446744073709551616', '-9223372036854775809', 'A'.repeat(129)]) {
       expect(() => parseWorldSeedInput64(invalid)).toThrow(RangeError);
     }
@@ -47,7 +56,10 @@ describe('lossless 64-bit world seeds', () => {
     const first = nextWorldSeed64(new Set(), () => [0xffffffff, 0xffffffff]);
     expect(first).toBe('18446744073709551615');
     const used = new Set([first, '3']);
-    const generated = [[0xffffffff, 0xffffffff], [1, 0]] as const;
+    const generated = [
+      [0xffffffff, 0xffffffff],
+      [1, 0],
+    ] as const;
     let index = 0;
     expect(nextWorldSeed64(used, () => generated[index++])).toBe('4294967296');
   });
@@ -60,10 +72,12 @@ describe('lossless 64-bit world seeds', () => {
 
   it('produces distinct full-world stream pairs for differing upper 32-bit words', () => {
     const streamPair = (seed: string) => [
-      deriveWorldSeed32(seed, 'terrain'), deriveWorldSeed32(seed, 'features'),
+      deriveWorldSeed32(seed, 'terrain'),
+      deriveWorldSeed32(seed, 'features'),
     ];
     const signatures = Array.from({ length: 128 }, (_, high) =>
-      streamPair(((BigInt(high) << 32n) | 123n).toString()).join(':'));
+      streamPair(((BigInt(high) << 32n) | 123n).toString()).join(':'),
+    );
     expect(new Set(signatures).size).toBe(signatures.length);
   });
 });

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { ckey } from '../../src/game/world/chunk-key';
-import { chunkDimension, getDimensionCache, hydrateDimensionChunks, savedChunkKey } from '../../src/game/session/dimension-chunk-records';
+import {
+  chunkDimension,
+  getDimensionCache,
+  hydrateDimensionChunks,
+  savedChunkKey,
+} from '../../src/game/session/dimension-chunk-records';
 import type { ChunkRecord } from '../../src/game/storage/world-storage';
 
 describe('cross-dimension save identity', () => {

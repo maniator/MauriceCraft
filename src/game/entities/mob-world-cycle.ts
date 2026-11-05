@@ -30,7 +30,9 @@ export interface MobWorldCycleDeps<T extends MobActor> {
   trySpawnPatrol: () => void;
   updateRaid: (dt: number, difficulty: MobWorldDifficulty) => void;
   stepMobActors: (dt: number) => void;
-  setActiveIndexes: (indexes: { hostiles: SpatialIndex<T>; defenders: SpatialIndex<T> } | null) => void;
+  setActiveIndexes: (
+    indexes: { hostiles: SpatialIndex<T>; defenders: SpatialIndex<T> } | null,
+  ) => void;
   damageMob: (mob: T, amount: number) => void;
   explode: (x: number, y: number, z: number, radius: number, power: number) => void;
   showHint: (message: string, ms: number) => void;
@@ -39,13 +41,29 @@ export interface MobWorldCycleDeps<T extends MobActor> {
 
 /** Manage population budgets and a single spatial-index rebuild per game frame. */
 export function createMobWorldCycle<T extends MobActor>(deps: MobWorldCycleDeps<T>) {
-  const { mobs, player, kinds: KINDS, hostileActors, defenders,
-    pendingHits, pendingBlasts, addMob, trySpawnMob, trySpawnAnimals,
-    manageVillagers, trySpawnPatrol, updateRaid, stepMobActors } = deps;
+  const {
+    mobs,
+    player,
+    kinds: KINDS,
+    hostileActors,
+    defenders,
+    pendingHits,
+    pendingBlasts,
+    addMob,
+    trySpawnMob,
+    trySpawnAnimals,
+    manageVillagers,
+    trySpawnPatrol,
+    updateRaid,
+    stepMobActors,
+  } = deps;
   const random = deps.random ?? Math.random;
   // Ten active minutes of grace stop dangerous patrols overwhelming new players.
   const INITIAL_PATROL_GRACE_SECONDS = 600;
-  let spawnT = 2, animalT = 0.5, villT = 0.2, patrolT = INITIAL_PATROL_GRACE_SECONDS;
+  let spawnT = 2,
+    animalT = 0.5,
+    villT = 0.2,
+    patrolT = INITIAL_PATROL_GRACE_SECONDS;
   function resetSpawnTimers(): void {
     spawnT = 2;
     animalT = 0.5;
@@ -53,62 +71,95 @@ export function createMobWorldCycle<T extends MobActor>(deps: MobWorldCycleDeps<
     patrolT = INITIAL_PATROL_GRACE_SECONDS;
   }
 
-function updateMobs(dt: number): void {
-  const D = deps.getDifficulty();
-  if (deps.getDimension() === 'end') {
-    if (!deps.isDragonDefeated() && !mobs.some(function (m) { return m.kind === 'enderdragon'; })) {
-      addMob('enderdragon', player.x + 8, Math.max(28, player.y + 8), player.z + 1, { boss: true });
-      deps.showHint('ENDER DRAGON! Hit it with your sword or shoot it with arrows!', 5500);
+  function updateMobs(dt: number): void {
+    const D = deps.getDifficulty();
+    if (deps.getDimension() === 'end') {
+      if (
+        !deps.isDragonDefeated() &&
+        !mobs.some(function (m) {
+          return m.kind === 'enderdragon';
+        })
+      ) {
+        addMob('enderdragon', player.x + 8, Math.max(28, player.y + 8), player.z + 1, {
+          boss: true,
+        });
+        deps.showHint('ENDER DRAGON! Hit it with your sword or shoot it with arrows!', 5500);
+      }
+      spawnT = Math.max(spawnT, 2);
+      animalT = Math.max(animalT, 2);
+      villT = Math.max(villT, 2);
     }
-    spawnT = Math.max(spawnT, 2); animalT = Math.max(animalT, 2); villT = Math.max(villT, 2);
-  }
-  spawnT -= dt; animalT -= dt; villT -= dt;
-  const nether = deps.getDimension() === 'nether';
-  // Creative players should still see Nether inhabitants. Peaceful still
-  // forbids monsters but lets harmless striders appear near lava.
-  if (deps.getDimension() !== 'end' && (deps.hasHealth() || nether) && spawnT <= 0) {
-    spawnT = nether && D.cap === 0 ? 8 : D.every;
-    // Nether spawns include neutral striders and zombified piglins. Count
-    // them with monsters or repeated spawns can grow the actor list forever.
-    const population = mobs.filter(m =>
-      (m.hostile && !KINDS[m.kind]?.illager) ||
-      (nether && (m.kind === 'strider' || m.kind === 'zombified_piglin'))).length;
-    if (nether && D.cap === 0) {
-      if (mobs.filter(m => m.kind === 'strider').length < 4)
-        deps.trySpawnNetherMob?.(true);
-    } else if (D.cap > 0 && population < D.cap) {
-      if (deps.getDimension() === 'overworld') trySpawnMob();
-      else if (nether) deps.trySpawnNetherMob?.();
+    spawnT -= dt;
+    animalT -= dt;
+    villT -= dt;
+    const nether = deps.getDimension() === 'nether';
+    // Creative players should still see Nether inhabitants. Peaceful still
+    // forbids monsters but lets harmless striders appear near lava.
+    if (deps.getDimension() !== 'end' && (deps.hasHealth() || nether) && spawnT <= 0) {
+      spawnT = nether && D.cap === 0 ? 8 : D.every;
+      // Nether spawns include neutral striders and zombified piglins. Count
+      // them with monsters or repeated spawns can grow the actor list forever.
+      const population = mobs.filter(
+        (m) =>
+          (m.hostile && !KINDS[m.kind]?.illager) ||
+          (nether && (m.kind === 'strider' || m.kind === 'zombified_piglin')),
+      ).length;
+      if (nether && D.cap === 0) {
+        if (mobs.filter((m) => m.kind === 'strider').length < 4) deps.trySpawnNetherMob?.(true);
+      } else if (D.cap > 0 && population < D.cap) {
+        if (deps.getDimension() === 'overworld') trySpawnMob();
+        else if (nether) deps.trySpawnNetherMob?.();
+      }
     }
-  }
-  if (deps.getDimension() === 'overworld' && animalT <= 0) {
-    animalT = 2.5;
-    if (!deps.isNight() && mobs.filter(function (m) { return !m.hostile && m.kind !== 'villager'; }).length < 12) trySpawnAnimals();
-  }
-  if (deps.getDimension() === 'overworld' && villT <= 0) { villT = 1.5; manageVillagers(); }
-  // Patrol timing pauses outside the Overworld (including the Nether).
-  if (deps.getDimension() === 'overworld') {
-    patrolT -= dt;
-    if (patrolT <= 0) {
-      patrolT = D.patrol[0] + random() * (D.patrol[1] - D.patrol[0]);
-      if (deps.hasHealth() && D.cap > 0 && mobs.filter(function (m) { return KINDS[m.kind].illager && !m.raid; }).length < 6) trySpawnPatrol();
+    if (deps.getDimension() === 'overworld' && animalT <= 0) {
+      animalT = 2.5;
+      if (
+        !deps.isNight() &&
+        mobs.filter(function (m) {
+          return !m.hostile && m.kind !== 'villager';
+        }).length < 12
+      )
+        trySpawnAnimals();
     }
+    if (deps.getDimension() === 'overworld' && villT <= 0) {
+      villT = 1.5;
+      manageVillagers();
+    }
+    // Patrol timing pauses outside the Overworld (including the Nether).
+    if (deps.getDimension() === 'overworld') {
+      patrolT -= dt;
+      if (patrolT <= 0) {
+        patrolT = D.patrol[0] + random() * (D.patrol[1] - D.patrol[0]);
+        if (
+          deps.hasHealth() &&
+          D.cap > 0 &&
+          mobs.filter(function (m) {
+            return KINDS[m.kind].illager && !m.raid;
+          }).length < 6
+        )
+          trySpawnPatrol();
+      }
+    }
+    if (deps.getDimension() === 'overworld') updateRaid(dt, D);
+    // Index mobs once per frame instead of searching everyone for every AI actor.
+    hostileActors.clear();
+    defenders.clear();
+    for (const mob of mobs) {
+      if (mob.hostile) hostileActors.upsert(mob);
+      if (mob.kind === 'villager' || mob.golem) defenders.upsert(mob);
+    }
+    deps.setActiveIndexes({ hostiles: hostileActors, defenders });
+    stepMobActors(dt);
+    while (pendingHits.length) {
+      const ph = pendingHits.pop()!;
+      if (mobs.indexOf(ph.m) >= 0) deps.damageMob(ph.m, ph.d);
+    }
+    while (pendingBlasts.length) {
+      const pb = pendingBlasts.pop()!;
+      deps.explode(pb.x, pb.y, pb.z, pb.r, pb.p);
+    }
+    deps.setActiveIndexes(null);
   }
-  if (deps.getDimension() === 'overworld') updateRaid(dt, D);
-  // Index mobs once per frame instead of searching everyone for every AI actor.
-  hostileActors.clear();
-  defenders.clear();
-  for (const mob of mobs) {
-    if (mob.hostile) hostileActors.upsert(mob);
-    if (mob.kind === 'villager' || mob.golem) defenders.upsert(mob);
-  }
-  deps.setActiveIndexes({ hostiles: hostileActors, defenders });
-  stepMobActors(dt);
-  while (pendingHits.length) { const ph = pendingHits.pop()!; if (mobs.indexOf(ph.m) >= 0) deps.damageMob(ph.m, ph.d); }
-  while (pendingBlasts.length) { const pb = pendingBlasts.pop()!; deps.explode(pb.x, pb.y, pb.z, pb.r, pb.p); }
-  deps.setActiveIndexes(null);
-}
-
 
   return { updateMobs, resetSpawnTimers };
 }

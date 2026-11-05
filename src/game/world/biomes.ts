@@ -1,7 +1,17 @@
 import { fbm } from './noise';
 
-export type Biome = 'plains' | 'forest' | 'meadow' | 'savanna' | 'desert' |
-  'badlands' | 'marsh' | 'taiga' | 'tundra' | 'highlands' | 'volcanic';
+export type Biome =
+  | 'plains'
+  | 'forest'
+  | 'meadow'
+  | 'savanna'
+  | 'desert'
+  | 'badlands'
+  | 'marsh'
+  | 'taiga'
+  | 'tundra'
+  | 'highlands'
+  | 'volcanic';
 export type BiomeSurface = 'grass' | 'snow' | 'sand' | 'red-sand' | 'stone' | 'moss';
 
 export function biomeAt(x: number, z: number, seed: number): Biome {
@@ -32,9 +42,10 @@ export function biomeHeightAt(x: number, z: number, seed: number, maxHeight: num
   const moisture = fbm(x / 250, z / 250, seed + 1702);
   // All height adjustments are continuous across biome transitions.
   const mountains = Math.max(0, relief - 0.54) * 48;
-  const lowlands = Math.max(0, moisture - 0.60) * 12;
-  const h = Math.floor(5 + (detail * 0.72 + continental * 0.28) * 30 +
-    roughness * 4 + mountains - lowlands);
+  const lowlands = Math.max(0, moisture - 0.6) * 12;
+  const h = Math.floor(
+    5 + (detail * 0.72 + continental * 0.28) * 30 + roughness * 4 + mountains - lowlands,
+  );
   return Math.max(3, Math.min(maxHeight - 8, h));
 }
 
@@ -48,7 +59,15 @@ export function biomeSurface(biome: Biome, height: number, seaLevel: number): Bi
 }
 
 export const BIOME_LABELS: Record<Biome, string> = {
-  plains: 'Plains', forest: 'Forest', meadow: 'Flower Meadow', savanna: 'Savanna',
-  desert: 'Desert', badlands: 'Badlands', marsh: 'Marsh', taiga: 'Snowy Taiga',
-  tundra: 'Tundra', highlands: 'Highlands', volcanic: 'Volcanic Highlands',
+  plains: 'Plains',
+  forest: 'Forest',
+  meadow: 'Flower Meadow',
+  savanna: 'Savanna',
+  desert: 'Desert',
+  badlands: 'Badlands',
+  marsh: 'Marsh',
+  taiga: 'Snowy Taiga',
+  tundra: 'Tundra',
+  highlands: 'Highlands',
+  volcanic: 'Volcanic Highlands',
 };

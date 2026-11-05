@@ -8,13 +8,31 @@ describe('canonical creature catalog', () => {
 
   it('keeps existing creature identities and spawnable animal types', () => {
     const originalKinds = [
-      'zombie', 'enderdragon', 'creeper', 'skeleton', 'spider',
-      'pillager', 'vindicator', 'irongolem', 'coppergolem', 'diamondgolem',
-      'villager', 'cow', 'pig', 'sheep', 'chicken',
+      'zombie',
+      'enderdragon',
+      'creeper',
+      'skeleton',
+      'spider',
+      'pillager',
+      'vindicator',
+      'irongolem',
+      'coppergolem',
+      'diamondgolem',
+      'villager',
+      'cow',
+      'pig',
+      'sheep',
+      'chicken',
     ];
     const netherKinds = [
-      'piglin', 'zombified_piglin', 'hoglin', 'ghast', 'blaze',
-      'magma_cube', 'strider', 'wither_skeleton',
+      'piglin',
+      'zombified_piglin',
+      'hoglin',
+      'ghast',
+      'blaze',
+      'magma_cube',
+      'strider',
+      'wither_skeleton',
     ];
     expect(Object.keys(KINDS)).toEqual([...netherKinds, ...originalKinds]);
     expect(ANIMALS).toEqual(['cow', 'pig', 'sheep', 'chicken']);

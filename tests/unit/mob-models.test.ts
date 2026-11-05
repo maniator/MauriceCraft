@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { bg, bm, makeZombie, makeCow, makeVillager, makePillager, makeEnderDragon } from '../../src/game/entities/mob-models';
+import {
+  bg,
+  bm,
+  makeZombie,
+  makeCow,
+  makeVillager,
+  makePillager,
+  makeEnderDragon,
+} from '../../src/game/entities/mob-models';
 
 describe('mob model factories', () => {
   it('creates a zombie with animated legs and independently placed meshes', () => {
@@ -15,7 +23,9 @@ describe('mob model factories', () => {
     expect(makeVillager({ job: 'cleric' }).children.length).toBeGreaterThan(2);
   });
   it('supports both regular and leader pillager models', () => {
-    expect(makePillager({ leader: true }).children.length).toBeGreaterThan(makePillager({ leader: false }).children.length);
+    expect(makePillager({ leader: true }).children.length).toBeGreaterThan(
+      makePillager({ leader: false }).children.length,
+    );
   });
   it('builds an Ender Dragon with animated wing references', () => {
     expect(makeEnderDragon().userData.wings).toHaveLength(2);

@@ -2,14 +2,20 @@ import { coord } from './coordinates';
 import type { GeneratedStructure } from '../world/structure-regions';
 
 export type RegisterCommand = (
-  names: string[], usage: string, description: string,
+  names: string[],
+  usage: string,
+  description: string,
   handler: (arguments_: string[]) => string | void,
   choices?: (argumentIndex: number, arguments_: string[]) => string[],
 ) => void;
 
 export interface WorldCommandPlayer {
-  x: number; y: number; z: number;
-  vx: number; vy: number; vz: number;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
   fallStart: number | null;
 }
 export interface WorldCommandDependencies {
@@ -43,28 +49,40 @@ export function registerWorldCommands(deps: WorldCommandDependencies): void {
   // a completion scan used to do avoidable repeated work.
   const blockOptions = () => {
     const map = deps.itemMap();
-    return ['air', ...Object.keys(map).filter(name => map[name] < 100)];
+    return ['air', ...Object.keys(map).filter((name) => map[name] < 100)];
   };
 
-  register(['setblock'], '/setblock <x> <y> <z> <block|air>', 'Place a single block', args => {
-    if (args.length < 4) throw new Error('Usage: /setblock <x> <y> <z> <block|air>');
-    const x = Math.floor(coord(args[0], player.x));
-    const y = Math.floor(coord(args[1], player.y));
-    const z = Math.floor(coord(args[2], player.z));
-    if (y < 0 || y >= maxHeight) throw new Error('Height must be between 0 and ' + (maxHeight - 1));
-    const blockId = args[3].toLowerCase() === 'air' ? 0 : findItem(args[3], true);
-    const isTorchState = (id: number): boolean => id === deps.torchBlock || (id >= 57 && id <= 60);
-    deps.getOrGenerateChunk(x >> 4, z >> 4);
-    const previousBlock = deps.getBlock(x, y, z);
-    deps.setBlock(x, y, z, blockId);
-    deps.queueRebuild(x, z, isTorchState(blockId) || isTorchState(previousBlock));
-    deps.flushRebuilds();
-    return 'Set ' + x + ' ' + y + ' ' + z + ' to ' + (blockId ? names[blockId] : 'air');
-  }, index => index === 4 ? blockOptions() : []);
+  register(
+    ['setblock'],
+    '/setblock <x> <y> <z> <block|air>',
+    'Place a single block',
+    (args) => {
+      if (args.length < 4) throw new Error('Usage: /setblock <x> <y> <z> <block|air>');
+      const x = Math.floor(coord(args[0], player.x));
+      const y = Math.floor(coord(args[1], player.y));
+      const z = Math.floor(coord(args[2], player.z));
+      if (y < 0 || y >= maxHeight)
+        throw new Error('Height must be between 0 and ' + (maxHeight - 1));
+      const blockId = args[3].toLowerCase() === 'air' ? 0 : findItem(args[3], true);
+      const isTorchState = (id: number): boolean =>
+        id === deps.torchBlock || (id >= 57 && id <= 60);
+      deps.getOrGenerateChunk(x >> 4, z >> 4);
+      const previousBlock = deps.getBlock(x, y, z);
+      deps.setBlock(x, y, z, blockId);
+      deps.queueRebuild(x, z, isTorchState(blockId) || isTorchState(previousBlock));
+      deps.flushRebuilds();
+      return 'Set ' + x + ' ' + y + ' ' + z + ' to ' + (blockId ? names[blockId] : 'air');
+    },
+    (index) => (index === 4 ? blockOptions() : []),
+  );
 
-  register(['fill'], '/fill <x1> <y1> <z1> <x2> <y2> <z2> <block|air>',
-    'Fill a box with a block (up to 32768 blocks)', args => {
-      if (args.length < 7) throw new Error('Usage: /fill <x1> <y1> <z1> <x2> <y2> <z2> <block|air>');
+  register(
+    ['fill'],
+    '/fill <x1> <y1> <z1> <x2> <y2> <z2> <block|air>',
+    'Fill a box with a block (up to 32768 blocks)',
+    (args) => {
+      if (args.length < 7)
+        throw new Error('Usage: /fill <x1> <y1> <z1> <x2> <y2> <z2> <block|air>');
       const x1 = Math.floor(coord(args[0], player.x));
       const y1 = Math.floor(coord(args[1], player.y));
       const z1 = Math.floor(coord(args[2], player.z));
@@ -78,7 +96,8 @@ export function registerWorldCommands(deps: WorldCommandDependencies): void {
       const minY = Math.max(0, Math.min(y1, y2));
       const maxY = Math.min(maxHeight - 1, Math.max(y1, y2));
       const blockCount = (maxX - minX + 1) * (maxZ - minZ + 1) * (maxY - minY + 1);
-      if (blockCount > 32768) throw new Error('That is ' + blockCount + ' blocks. The limit is 32768');
+      if (blockCount > 32768)
+        throw new Error('That is ' + blockCount + ' blocks. The limit is 32768');
       const blockId = args[6].toLowerCase() === 'air' ? 0 : findItem(args[6], true);
       for (let cx = minX >> 4; cx <= maxX >> 4; cx++) {
         for (let cz = minZ >> 4; cz <= maxZ >> 4; cz++) deps.getOrGenerateChunk(cx, cz);
@@ -89,22 +108,34 @@ export function registerWorldCommands(deps: WorldCommandDependencies): void {
         }
       }
       deps.rebuildRegion(minX, minZ, maxX, maxZ);
-      return 'Filled ' + blockCount + ' block' + (blockCount === 1 ? '' : 's') +
-        ' with ' + (blockId ? names[blockId] : 'air');
-    }, index => index === 7 ? blockOptions() : []);
+      return (
+        'Filled ' +
+        blockCount +
+        ' block' +
+        (blockCount === 1 ? '' : 's') +
+        ' with ' +
+        (blockId ? names[blockId] : 'air')
+      );
+    },
+    (index) => (index === 7 ? blockOptions() : []),
+  );
 
-  register(['explode'], '/explode [radius]', 'Blow up the ground in front of you', args => {
+  register(['explode'], '/explode [radius]', 'Blow up the ground in front of you', (args) => {
     const radius = Math.max(1, Math.min(12, Number(args[0] || 4) || 4));
     const [x, y, z] = deps.spawnSpot();
-    deps.explode(x, y, z, radius, 30 * radius / 4.2);
+    deps.explode(x, y, z, radius, (30 * radius) / 4.2);
     return 'Boom (radius ' + radius + ')';
   });
 
-  register(['locate'], '/locate <village|temple|tower|dungeon|cabin|circle> [tp]',
-    'Find the nearest structure', args => {
+  register(
+    ['locate'],
+    '/locate <village|temple|tower|dungeon|cabin|circle> [tp]',
+    'Find the nearest structure',
+    (args) => {
       const kind = (args[0] || '').toLowerCase();
       const structureName = deps.structureNames[kind];
-      if (!structureName) throw new Error('Usage: /locate <' + Object.keys(deps.structureNames).join('|') + '> [tp]');
+      if (!structureName)
+        throw new Error('Usage: /locate <' + Object.keys(deps.structureNames).join('|') + '> [tp]');
       const playerRegionX = Math.floor(player.x / deps.structureRegionSize);
       const playerRegionZ = Math.floor(player.z / deps.structureRegionSize);
       let nearest: GeneratedStructure | null = null;
@@ -120,7 +151,8 @@ export function registerWorldCommands(deps: WorldCommandDependencies): void {
           }
         }
       }
-      if (!nearest) throw new Error('No ' + structureName.toLowerCase() + ' within about 600 blocks');
+      if (!nearest)
+        throw new Error('No ' + structureName.toLowerCase() + ' within about 600 blocks');
       if ((args[1] || '').toLowerCase() === 'tp') {
         const destinationX = nearest.cx + 0.5;
         const destinationZ = nearest.cz + 4.5;
@@ -130,9 +162,27 @@ export function registerWorldCommands(deps: WorldCommandDependencies): void {
         player.y = deps.topBlockY(Math.floor(destinationX), Math.floor(destinationZ)) + 1.01;
         player.vx = player.vy = player.vz = 0;
         player.fallStart = null;
-        return 'Teleported to the ' + structureName.toLowerCase() + ' at ' + nearest.cx + ' ' + nearest.cz;
+        return (
+          'Teleported to the ' +
+          structureName.toLowerCase() +
+          ' at ' +
+          nearest.cx +
+          ' ' +
+          nearest.cz
+        );
       }
-      return 'Nearest ' + structureName.toLowerCase() + ': x ' + nearest.cx + ', z ' + nearest.cz +
-        ' (' + Math.round(shortestDistance) + ' blocks away)';
-    }, index => index === 1 ? Object.keys(deps.structureNames) : (index === 2 ? ['tp'] : []));
+      return (
+        'Nearest ' +
+        structureName.toLowerCase() +
+        ': x ' +
+        nearest.cx +
+        ', z ' +
+        nearest.cz +
+        ' (' +
+        Math.round(shortestDistance) +
+        ' blocks away)'
+      );
+    },
+    (index) => (index === 1 ? Object.keys(deps.structureNames) : index === 2 ? ['tp'] : []),
+  );
 }

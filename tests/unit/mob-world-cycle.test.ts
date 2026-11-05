@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { SpatialIndex } from '../../src/game/entities/spatial-index';
 import type { MobActor } from '../../src/game/entities/mob-simulation';
-import { createMobWorldCycle, type MobWorldCycleDeps } from '../../src/game/entities/mob-world-cycle';
+import {
+  createMobWorldCycle,
+  type MobWorldCycleDeps,
+} from '../../src/game/entities/mob-world-cycle';
 
 function fixture() {
   const mobs: MobActor[] = [];
@@ -9,30 +12,87 @@ function fixture() {
   const defenders = new SpatialIndex<MobActor>(16);
   const pendingHits: Array<{ m: MobActor; d: number }> = [];
   const pendingBlasts: Array<{ x: number; y: number; z: number; r: number; p: number }> = [];
-  const trySpawnMob = vi.fn(), trySpawnNetherMob = vi.fn();
-  const trySpawnAnimals = vi.fn(), manageVillagers = vi.fn();
-  const trySpawnPatrol = vi.fn(), updateRaid = vi.fn(), stepMobActors = vi.fn();
+  const trySpawnMob = vi.fn(),
+    trySpawnNetherMob = vi.fn();
+  const trySpawnAnimals = vi.fn(),
+    manageVillagers = vi.fn();
+  const trySpawnPatrol = vi.fn(),
+    updateRaid = vi.fn(),
+    stepMobActors = vi.fn();
   const setActiveIndexes = vi.fn();
-  const damageMob = vi.fn(), explode = vi.fn(), showHint = vi.fn(), addMob = vi.fn();
-  let dimension = 'overworld', night = false, health = true, dragonDefeated = false, mobCap = 8;
+  const damageMob = vi.fn(),
+    explode = vi.fn(),
+    showHint = vi.fn(),
+    addMob = vi.fn();
+  let dimension = 'overworld',
+    night = false,
+    health = true,
+    dragonDefeated = false,
+    mobCap = 8;
   const deps: MobWorldCycleDeps<MobActor> = {
-    mobs, player: { x: 0, y: 15, z: 0 }, kinds: { zombie: {}, villager: {}, pillager: { illager: true } },
-    hostileActors, defenders, pendingHits, pendingBlasts,
+    mobs,
+    player: { x: 0, y: 15, z: 0 },
+    kinds: { zombie: {}, villager: {}, pillager: { illager: true } },
+    hostileActors,
+    defenders,
+    pendingHits,
+    pendingBlasts,
     getDifficulty: () => ({ cap: mobCap, every: 2, patrol: [90, 160], raid: 1 }),
-    getDimension: () => dimension, isDragonDefeated: () => dragonDefeated,
-    hasHealth: () => health, isNight: () => night, getWeather: () => 'clear',
-    addMob, trySpawnMob, trySpawnNetherMob, trySpawnAnimals, manageVillagers, trySpawnPatrol, updateRaid,
-    stepMobActors, setActiveIndexes, damageMob, explode, showHint,
+    getDimension: () => dimension,
+    isDragonDefeated: () => dragonDefeated,
+    hasHealth: () => health,
+    isNight: () => night,
+    getWeather: () => 'clear',
+    addMob,
+    trySpawnMob,
+    trySpawnNetherMob,
+    trySpawnAnimals,
+    manageVillagers,
+    trySpawnPatrol,
+    updateRaid,
+    stepMobActors,
+    setActiveIndexes,
+    damageMob,
+    explode,
+    showHint,
     random: () => 0,
   };
   const { updateMobs, resetSpawnTimers } = createMobWorldCycle(deps);
-  return { mobs, hostileActors, defenders, pendingHits, pendingBlasts,
-    updateMobs, resetSpawnTimers, trySpawnMob, trySpawnNetherMob,
-    trySpawnAnimals, manageVillagers,
-    trySpawnPatrol, updateRaid, stepMobActors, setActiveIndexes, damageMob, explode, addMob,
-    setDimension: (v: string) => { dimension = v; }, setNight: (v: boolean) => { night = v; },
-    setHealth: (v: boolean) => { health = v; }, setMobCap: (v: number) => { mobCap = v; },
-    setDragonDefeated: (v: boolean) => { dragonDefeated = v; } };
+  return {
+    mobs,
+    hostileActors,
+    defenders,
+    pendingHits,
+    pendingBlasts,
+    updateMobs,
+    resetSpawnTimers,
+    trySpawnMob,
+    trySpawnNetherMob,
+    trySpawnAnimals,
+    manageVillagers,
+    trySpawnPatrol,
+    updateRaid,
+    stepMobActors,
+    setActiveIndexes,
+    damageMob,
+    explode,
+    addMob,
+    setDimension: (v: string) => {
+      dimension = v;
+    },
+    setNight: (v: boolean) => {
+      night = v;
+    },
+    setHealth: (v: boolean) => {
+      health = v;
+    },
+    setMobCap: (v: number) => {
+      mobCap = v;
+    },
+    setDragonDefeated: (v: boolean) => {
+      dragonDefeated = v;
+    },
+  };
 }
 
 describe('mob world population cycle', () => {
@@ -120,8 +180,12 @@ describe('mob world population cycle', () => {
     expect(peaceful.trySpawnNetherMob).toHaveBeenCalledOnce();
     expect(peaceful.trySpawnNetherMob).toHaveBeenCalledWith(true);
     expect(peaceful.trySpawnMob).not.toHaveBeenCalled();
-    peaceful.mobs.push(...Array.from({ length: 4 }, () =>
-      ({ kind: 'strider', x: 2, z: 3, hostile: false } as MobActor)));
+    peaceful.mobs.push(
+      ...Array.from(
+        { length: 4 },
+        () => ({ kind: 'strider', x: 2, z: 3, hostile: false }) as MobActor,
+      ),
+    );
     peaceful.updateMobs(8);
     expect(peaceful.trySpawnNetherMob).toHaveBeenCalledOnce();
   });

@@ -1,33 +1,68 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { createWeatherSystem, nextWeather, weatherDuration, type WeatherState } from '../../src/game/rendering/weather-system';
+import {
+  createWeatherSystem,
+  nextWeather,
+  weatherDuration,
+  type WeatherState,
+} from '../../src/game/rendering/weather-system';
 
 function fixture() {
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0x87ceeb, 30, 78);
   scene.background = new THREE.Color(0x87ceeb);
   const camera = new THREE.PerspectiveCamera();
-  const sun = new THREE.Mesh(), moon = new THREE.Mesh();
+  const sun = new THREE.Mesh(),
+    moon = new THREE.Mesh();
   const state: WeatherState = {
-    weather: 'clear', weatherT: 420, rainLevel: 0, rainTarget: 0,
-    lightningT: 0, nextBolt: 8, tod: 0.22, isNight: false, isDay: true,
+    weather: 'clear',
+    weatherT: 420,
+    rainLevel: 0,
+    rainTarget: 0,
+    lightningT: 0,
+    nextBolt: 8,
+    tod: 0.22,
+    isNight: false,
+    isDay: true,
   };
   const glowMat = new THREE.PointsMaterial();
   let weatherUiUpdates = 0;
   let lightningOpacity = -1;
   const system = createWeatherSystem({
-    scene, camera, sun, moon, dayUniform: { value: 1 }, glowMat, state,
+    scene,
+    camera,
+    sun,
+    moon,
+    dayUniform: { value: 1 },
+    glowMat,
+    state,
     sound: { ctx: null, noise: null, sfxGain: null },
     getPlayer: () => ({ x: 0, y: 20, z: 0 }),
-    getDimension: () => 'overworld', hasChunk: () => false, topY: () => 19,
-    hasHealth: () => false, damagePlayer: () => undefined,
-    getMobs: () => [], damageMob: () => undefined,
-    updateWeatherUI: () => { weatherUiUpdates++; },
-    setLightningOpacity: value => { lightningOpacity = value; },
-    tone: () => undefined, hiss: () => undefined,
+    getDimension: () => 'overworld',
+    hasChunk: () => false,
+    topY: () => 19,
+    hasHealth: () => false,
+    damagePlayer: () => undefined,
+    getMobs: () => [],
+    damageMob: () => undefined,
+    updateWeatherUI: () => {
+      weatherUiUpdates++;
+    },
+    setLightningOpacity: (value) => {
+      lightningOpacity = value;
+    },
+    tone: () => undefined,
+    hiss: () => undefined,
   });
-  return { system, state, scene, sun, moon,
-    getUpdates: () => weatherUiUpdates, getOpacity: () => lightningOpacity };
+  return {
+    system,
+    state,
+    scene,
+    sun,
+    moon,
+    getUpdates: () => weatherUiUpdates,
+    getOpacity: () => lightningOpacity,
+  };
 }
 describe('weather and daylight', () => {
   it('changes naturally between four weather conditions with bounded durations', () => {

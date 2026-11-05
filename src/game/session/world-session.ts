@@ -1,7 +1,12 @@
 import type { ChunkRecord, WorldRecord, WorldStorage } from '../storage/world-storage';
 import { WORLD_FILE_MAX_BYTES } from '../storage/world-archive-limits';
 import { prepareImportedWorld, worldArchiveFilename } from './world-transfer';
-import { deriveWorldSeed32, nextWorldSeed64, parseWorldSeedInput64, type WorldSeedWords } from '../world/seed64';
+import {
+  deriveWorldSeed32,
+  nextWorldSeed64,
+  parseWorldSeedInput64,
+  type WorldSeedWords,
+} from '../world/seed64';
 
 export interface SaveBatch {
   records: ChunkRecord[];
@@ -34,8 +39,11 @@ export function timeAgo(timestamp: number, now = Date.now()): string {
 export const CURRENT_WORLD_GENERATOR_VERSION = 7;
 
 /** Full 32-bit seeds; avoid reuse among locally saved worlds where possible. */
-export function nextWorldSeed(worlds: readonly WorldRecord[], random: () => number = Math.random): number {
-  const used = new Set(worlds.map(world => world.seed));
+export function nextWorldSeed(
+  worlds: readonly WorldRecord[],
+  random: () => number = Math.random,
+): number {
+  const used = new Set(worlds.map((world) => world.seed));
   for (let attempt = 0; attempt < 32; attempt++) {
     const seed = Math.floor(random() * 0x100000000) >>> 0;
     if (!used.has(seed)) return seed;
@@ -68,8 +76,11 @@ export function parseWorldSeedInput(raw: string): number | null {
 }
 
 /** New v5 world seed IDs stay distinct from locally stored worlds. */
-export function nextSavedWorldSeed64(worlds: readonly WorldRecord[], randomWords?: () => WorldSeedWords): string {
-  const occupied = new Set(worlds.map(world => world.seed64 ?? String(world.seed)));
+export function nextSavedWorldSeed64(
+  worlds: readonly WorldRecord[],
+  randomWords?: () => WorldSeedWords,
+): string {
+  const occupied = new Set(worlds.map((world) => world.seed64 ?? String(world.seed)));
   return nextWorldSeed64(occupied, randomWords);
 }
 
@@ -111,8 +122,10 @@ export function createWorldSession(deps: WorldSessionDependencies) {
   let busy = false;
   let worldRevision = 0;
   let currentPauseToken: number | null = null;
-  window.addEventListener('mauricecraft:world-mutated', () => { worldRevision++; });
-  window.addEventListener('mauricecraft:menu-paused', event => {
+  window.addEventListener('mauricecraft:world-mutated', () => {
+    worldRevision++;
+  });
+  window.addEventListener('mauricecraft:menu-paused', (event) => {
     currentPauseToken = (event as CustomEvent<number>).detail;
   });
 
@@ -126,9 +139,11 @@ export function createWorldSession(deps: WorldSessionDependencies) {
       await database.saveWorld(metadata, batch.records);
       // The persisted snapshot, not the request time or an older menu save,
       // establishes which paused settings can safely survive a worker reload.
-      window.dispatchEvent(new CustomEvent('mauricecraft:world-persisted', {
-        detail: { revision, pauseToken },
-      }));
+      window.dispatchEvent(
+        new CustomEvent('mauricecraft:world-persisted', {
+          detail: { revision, pauseToken },
+        }),
+      );
     } catch (error) {
       batch.restoreDirty();
       throw error;
@@ -141,9 +156,12 @@ export function createWorldSession(deps: WorldSessionDependencies) {
       return Promise.reject(new Error('This world is not ready for saving.'));
     }
     const attempt = pendingSave.then(persistSnapshot);
-    pendingSave = attempt.catch(error => {
+    pendingSave = attempt.catch((error) => {
       console.error('MauriceCraft save failed:', error);
-      deps.showHint('Saving failed. Your changes are still in memory; keep this tab open and try again.', 6500);
+      deps.showHint(
+        'Saving failed. Your changes are still in memory; keep this tab open and try again.',
+        6500,
+      );
     });
     return attempt;
   }
@@ -152,9 +170,13 @@ export function createWorldSession(deps: WorldSessionDependencies) {
     if (!storageAvailable || !database || !currentWorld || !deps.isWorldReady()) return pendingSave;
     const attempt = saveWorldVerified();
     if (reason === 'menu' && pauseToken !== undefined) {
-      void attempt.then(() => {
-        window.dispatchEvent(new CustomEvent<number>('mauricecraft:menu-saved', { detail: pauseToken }));
-      }).catch(() => {});
+      void attempt
+        .then(() => {
+          window.dispatchEvent(
+            new CustomEvent<number>('mauricecraft:menu-saved', { detail: pauseToken }),
+          );
+        })
+        .catch(() => {});
     }
     return attempt.catch(() => {});
   }
@@ -187,9 +209,14 @@ export function createWorldSession(deps: WorldSessionDependencies) {
       openButton.className = 'wmain';
       openButton.appendChild(document.createTextNode(world.name));
       const details = document.createElement('small');
-      details.textContent = deps.modeLabel(world.mode) + ' · played ' +
+      details.textContent =
+        deps.modeLabel(world.mode) +
+        ' · played ' +
         timeAgo(world.lastPlayed || world.created || Date.now()) +
-        ' · Seed ' + (world.seedText ?? world.seed64 ?? world.seed) + ' · Terrain v' + (world.generatorVersion ?? 1);
+        ' · Seed ' +
+        (world.seedText ?? world.seed64 ?? world.seed) +
+        ' · Terrain v' +
+        (world.generatorVersion ?? 1);
       openButton.appendChild(details);
       openButton.addEventListener('click', () => {
         if (busy) return;
@@ -294,10 +321,11 @@ export function createWorldSession(deps: WorldSessionDependencies) {
   }
 
   saveButton.addEventListener('click', () => {
-    if (!busy) void runTransfer('Saving world…', async () => {
-      await saveWorldVerified();
-      return 'World saved successfully.';
-    });
+    if (!busy)
+      void runTransfer('Saving world…', async () => {
+        await saveWorldVerified();
+        return 'World saved successfully.';
+      });
   });
   importButton.addEventListener('click', () => {
     if (!busy && storageAvailable) importFileInput.click();
@@ -311,7 +339,9 @@ export function createWorldSession(deps: WorldSessionDependencies) {
   async function refreshWorlds(): Promise<void> {
     if (storageAvailable && database) {
       try {
-        worlds = (await database.listWorlds()).sort((left, right) => right.lastPlayed - left.lastPlayed);
+        worlds = (await database.listWorlds()).sort(
+          (left, right) => right.lastPlayed - left.lastPlayed,
+        );
       } catch (error) {
         console.error('MauriceCraft could not refresh world list:', error);
       }
@@ -338,7 +368,7 @@ export function createWorldSession(deps: WorldSessionDependencies) {
       if (!world) throw new Error('World metadata not found');
       const storedChunks = await database.getChunks(id);
       currentWorld = world;
-      await new Promise(resolve => setTimeout(resolve, 20));
+      await new Promise((resolve) => setTimeout(resolve, 20));
       deps.applyLoadedWorld(world, storedChunks);
       finishLoad();
     } catch (error) {
@@ -347,7 +377,8 @@ export function createWorldSession(deps: WorldSessionDependencies) {
       currentWorld = null;
       setBusy(false);
       playButton.disabled = true;
-      subtitle.textContent = 'Could not load this world. Its save is still in your browser. Select another world or create a new one.';
+      subtitle.textContent =
+        'Could not load this world. Its save is still in your browser. Select another world or create a new one.';
       deps.showHint('World load failed. Your saved data was not deleted.', 6000);
       renderWorldList();
     }
@@ -357,15 +388,18 @@ export function createWorldSession(deps: WorldSessionDependencies) {
     setBusy(true, 'Building your world…');
     await saveWorld();
     deps.setWorldReady(false);
-    await new Promise(resolve => setTimeout(resolve, 20));
+    await new Promise((resolve) => setTimeout(resolve, 20));
     const now = Date.now();
     const seed64 = seedOverride ?? nextSavedWorldSeed64(worlds);
     const world: WorldRecord = {
       id: 'w' + now.toString(36) + Math.floor(Math.random() * 1296).toString(36),
-      name: nextWorldName(worlds), seed: deriveWorldSeed32(seed64, 'terrain'), seed64,
+      name: nextWorldName(worlds),
+      seed: deriveWorldSeed32(seed64, 'terrain'),
+      seed64,
       generatorVersion: CURRENT_WORLD_GENERATOR_VERSION,
       ...(seedText ? { seedText } : {}),
-      created: now, lastPlayed: now,
+      created: now,
+      lastPlayed: now,
     };
     currentWorld = world;
     deps.prepareNewWorld(world);
@@ -436,13 +470,15 @@ export function createWorldSession(deps: WorldSessionDependencies) {
       worldSeedInput.focus();
       return;
     }
-    void newWorld(seed, worldSeedInput.value.trim() || undefined)
-      .catch(error => showWorldLifecycleError(error));
+    void newWorld(seed, worldSeedInput.value.trim() || undefined).catch((error) =>
+      showWorldLifecycleError(error),
+    );
   });
   function showWorldLifecycleError(error: unknown): void {
     console.error('MauriceCraft world operation failed:', error);
     setBusy(false);
-    subtitle.textContent = 'World operation failed. Your existing saved worlds have not been deleted.';
+    subtitle.textContent =
+      'World operation failed. Your existing saved worlds have not been deleted.';
     deps.showHint('World operation failed. Check browser storage and try again.', 6000);
   }
   window.setInterval(() => {
@@ -451,9 +487,16 @@ export function createWorldSession(deps: WorldSessionDependencies) {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') void saveWorld();
   });
-  window.addEventListener('pagehide', () => { void saveWorld(); });
+  window.addEventListener('pagehide', () => {
+    void saveWorld();
+  });
 
-  return { initialize, saveWorld, refreshWorlds,
-    getSeedLabel: () => currentWorld?.seedText ?? currentWorld?.seed64 ?? String(currentWorld?.seed ?? 0),
-    isStorageAvailable: () => storageAvailable };
+  return {
+    initialize,
+    saveWorld,
+    refreshWorlds,
+    getSeedLabel: () =>
+      currentWorld?.seedText ?? currentWorld?.seed64 ?? String(currentWorld?.seed ?? 0),
+    isStorageAvailable: () => storageAvailable,
+  };
 }

@@ -13,27 +13,53 @@ function fixture(netherFloor?: number) {
   const blocks: Array<[number, number, number, number]> = [];
   const saveWorld = vi.fn();
   const portalSystem = createPortalSystem({
-    scene, portals, chunks, savedChunks, obsidian: 12, worldHeight: 48,
-    getDimension: () => dimension, setDimension: next => { dimension = next; },
-    getPlayer: () => player, isPlaying: () => true,
-    ensureAround: () => undefined, getOrGenerate: () => undefined,
-    setBlock: (x, y, z, id) => { blocks.push([x, y, z, id]); },
-    getBlock: (_x, y) => dimension === 'nether' && netherFloor !== undefined &&
-      y <= netherFloor ? 50 : 0,
-    topBlockY: () => 13, rebuildRegion: () => undefined,
-    disposeMesh: () => undefined, resetChunkCache: () => undefined,
-    clearStructures: () => undefined, clearMobs: () => undefined,
-    collides: () => false, saveWorld, showHint: () => undefined,
+    scene,
+    portals,
+    chunks,
+    savedChunks,
+    obsidian: 12,
+    worldHeight: 48,
+    getDimension: () => dimension,
+    setDimension: (next) => {
+      dimension = next;
+    },
+    getPlayer: () => player,
+    isPlaying: () => true,
+    ensureAround: () => undefined,
+    getOrGenerate: () => undefined,
+    setBlock: (x, y, z, id) => {
+      blocks.push([x, y, z, id]);
+    },
+    getBlock: (_x, y) =>
+      dimension === 'nether' && netherFloor !== undefined && y <= netherFloor ? 50 : 0,
+    topBlockY: () => 13,
+    rebuildRegion: () => undefined,
+    disposeMesh: () => undefined,
+    resetChunkCache: () => undefined,
+    clearStructures: () => undefined,
+    clearMobs: () => undefined,
+    collides: () => false,
+    saveWorld,
+    showHint: () => undefined,
   });
-  return { scene, portals, chunks, savedChunks, player, blocks,
-    saveWorld, portalSystem, getDimension: () => dimension };
+  return {
+    scene,
+    portals,
+    chunks,
+    savedChunks,
+    player,
+    blocks,
+    saveWorld,
+    portalSystem,
+    getDimension: () => dimension,
+  };
 }
 describe('portal lifecycle and dimension transitions', () => {
   it('builds frame blocks, shows the purple plane and disposes visuals on unload', () => {
     const { scene, portals, blocks, portalSystem } = fixture();
     const portal = portalSystem.buildPortalFrame('overworld', 0, 12, 0);
     expect(blocks).toHaveLength(170);
-    expect(blocks.filter(entry => entry[3] === 12)).toHaveLength(56);
+    expect(blocks.filter((entry) => entry[3] === 12)).toHaveLength(56);
     expect(blocks).toContainEqual([-1, 12, 2, 12]);
     expect(blocks).toContainEqual([-1, 13, 2, 0]);
     expect(portal.width).toBe(2);
@@ -52,8 +78,9 @@ describe('portal lifecycle and dimension transitions', () => {
     // These landing tiles are at y=13, above the Nether lava ocean (y<=12).
     expect(f.blocks).toContainEqual([exitX, 13, exitZ, 12]);
     expect(f.blocks).toContainEqual([exitX, 13, Math.floor(portal.z - 2.1), 12]);
-    expect(f.blocks.some(([x, y, z, id]) =>
-      x === exitX && y === 13 && z === exitZ && id === 0)).toBe(false);
+    expect(
+      f.blocks.some(([x, y, z, id]) => x === exitX && y === 13 && z === exitZ && id === 0),
+    ).toBe(false);
   });
 
   it('places a high-floor Nether portal above rock with clear approaches', () => {
@@ -63,13 +90,12 @@ describe('portal lifecycle and dimension transitions', () => {
     f.player.y = origin.y + 1;
     f.player.z = origin.z + 0.5;
     f.portalSystem.checkPortal(0.016);
-    const destination = f.portals.find(p => p.dimension === 'nether');
+    const destination = f.portals.find((p) => p.dimension === 'nether');
     expect(destination?.y).toBe(23);
     expect(f.player.y).toBeCloseTo(24.05);
     // The player lands at z+2.1; this column is air above solid support.
     expect(f.blocks).toContainEqual([-1, 23, 2, 12]);
-    for (const y of [24, 25, 26])
-      expect(f.blocks).toContainEqual([-1, y, 2, 0]);
+    for (const y of [24, 25, 26]) expect(f.blocks).toContainEqual([-1, y, 2, 0]);
   });
 
   it('preserves edited Overworld chunks when moving to another dimension', () => {
@@ -103,7 +129,7 @@ describe('portal lifecycle and dimension transitions', () => {
     f.player.y = first.y + 1;
     f.player.z = first.z + 0.5;
     f.portalSystem.checkPortal(0.016);
-    const originalNether = f.portals.find(p => p.dimension === 'nether');
+    const originalNether = f.portals.find((p) => p.dimension === 'nether');
     expect(originalNether).toBeDefined();
 
     // These Overworld locations are separate but only about one Nether block apart.
@@ -114,7 +140,7 @@ describe('portal lifecycle and dimension transitions', () => {
     f.player.z = nearby.z + 0.5;
     f.portalSystem.checkPortal(3);
     expect(f.getDimension()).toBe('nether');
-    expect(f.portals.filter(p => p.dimension === 'nether')).toEqual([originalNether]);
+    expect(f.portals.filter((p) => p.dimension === 'nether')).toEqual([originalNether]);
 
     f.portalSystem.changeDimension('overworld', 400, 24, 32);
     const distant = f.portalSystem.buildPortalFrame('overworld', 400, 24, 32);
@@ -122,7 +148,7 @@ describe('portal lifecycle and dimension transitions', () => {
     f.player.y = distant.y + 1;
     f.player.z = distant.z + 0.5;
     f.portalSystem.checkPortal(3);
-    const netherPortals = f.portals.filter(p => p.dimension === 'nether');
+    const netherPortals = f.portals.filter((p) => p.dimension === 'nether');
     expect(netherPortals).toHaveLength(2);
     expect(Math.abs(netherPortals[1].x - netherPortals[0].x)).toBeGreaterThan(16);
   });
@@ -131,10 +157,8 @@ describe('portal lifecycle and dimension transitions', () => {
     const f = fixture();
     f.portalSystem.buildPortalFrame('nether', 9, 15, 4);
     const editedBlocks = f.blocks.length;
-    expect(() => f.portalSystem.buildPortalFrame('nether', 9, 15, 10))
-      .toThrow(/already too close/);
+    expect(() => f.portalSystem.buildPortalFrame('nether', 9, 15, 10)).toThrow(/already too close/);
     expect(f.blocks).toHaveLength(editedBlocks);
     expect(f.portals).toHaveLength(1);
   });
-
 });

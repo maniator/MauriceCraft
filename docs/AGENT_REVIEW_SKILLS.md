@@ -12,11 +12,11 @@ This layout follows [GitHub Copilot's skill discovery](https://docs.github.com/e
 
 ## Choose a review
 
-| Skill | Use it when | Source of approach |
-| --- | --- | --- |
-| [`code-review`](../.agents/skills/code-review/SKILL.md) | Reviewing a PR, diff, branch, or re-review; compare requirements against implementation and repo rules | [Matt Pocock's code-review](https://github.com/mattpocock/skills/tree/main/skills/engineering/code-review) |
-| [`code-review-and-quality`](../.agents/skills/code-review-and-quality/SKILL.md) | Inspecting correctness, readability, architecture, security, performance | [Addy Osmani's code-review-and-quality](https://github.com/addyosmani/agent-skills/tree/main/skills/code-review-and-quality) |
-| [`review-game-regressions`](../.agents/skills/review-game-regressions/SKILL.md) | Touching gameplay, existing worlds, chunk generation, mobile controls, rendering, or offline updates | MauriceCraft's own [architecture](ARCHITECTURE.md) and [testing](TESTING.md) rules |
+| Skill                                                                           | Use it when                                                                                            | Source of approach                                                                                                           |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| [`code-review`](../.agents/skills/code-review/SKILL.md)                         | Reviewing a PR, diff, branch, or re-review; compare requirements against implementation and repo rules | [Matt Pocock's code-review](https://github.com/mattpocock/skills/tree/main/skills/engineering/code-review)                   |
+| [`code-review-and-quality`](../.agents/skills/code-review-and-quality/SKILL.md) | Inspecting correctness, readability, architecture, security, performance                               | [Addy Osmani's code-review-and-quality](https://github.com/addyosmani/agent-skills/tree/main/skills/code-review-and-quality) |
+| [`review-game-regressions`](../.agents/skills/review-game-regressions/SKILL.md) | Touching gameplay, existing worlds, chunk generation, mobile controls, rendering, or offline updates   | MauriceCraft's own [architecture](ARCHITECTURE.md) and [testing](TESTING.md) rules                                           |
 
 The first two are **short, MauriceCraft-specific adaptations of popular review workflows**, not verbatim copies or automatically synchronized upstream skills. They avoid irrelevant React/server rules and do not assume an agent has subagent support. The original projects are MIT-licensed; follow their links for the complete upstream skills and license terms.
 

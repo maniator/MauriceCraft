@@ -11,10 +11,7 @@ export interface WritableChunk extends MeshChunk {
  * Owns the last-chunk cache and the original persistent block layout.
  * No chunk is created here: an unloaded chunk remains solid to collisions.
  */
-export function createBlockAccess<T extends WritableChunk>(
-  chunks: Map<number, T>,
-  height: number,
-) {
+export function createBlockAccess<T extends WritableChunk>(chunks: Map<number, T>, height: number) {
   let cachedKey: number | null = null;
   let cachedChunk: T | null = null;
 

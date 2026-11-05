@@ -12,11 +12,16 @@ export const WALL_TORCH_NORTH = 60;
 /** The solid block supporting this torch, relative to the torch position. */
 export function wallTorchSupport(id: number): readonly [dx: number, dz: number] | null {
   switch (id) {
-    case WALL_TORCH_EAST: return [1, 0];
-    case WALL_TORCH_WEST: return [-1, 0];
-    case WALL_TORCH_SOUTH: return [0, 1];
-    case WALL_TORCH_NORTH: return [0, -1];
-    default: return null;
+    case WALL_TORCH_EAST:
+      return [1, 0];
+    case WALL_TORCH_WEST:
+      return [-1, 0];
+    case WALL_TORCH_SOUTH:
+      return [0, 1];
+    case WALL_TORCH_NORTH:
+      return [0, -1];
+    default:
+      return null;
   }
 }
 

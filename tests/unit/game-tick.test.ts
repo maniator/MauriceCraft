@@ -1,14 +1,27 @@
 import * as THREE from 'three';
 import { describe, expect, it, vi } from 'vitest';
-import { createGameTick, type TickDependencies, type TickState } from '../../src/game/runtime/game-tick';
+import {
+  createGameTick,
+  type TickDependencies,
+  type TickState,
+} from '../../src/game/runtime/game-tick';
 
 function fixture() {
   const camera = new THREE.PerspectiveCamera();
   const player = { x: 4, y: 10, z: 6, yaw: 0, pitch: 0 };
   const state: TickState = {
-    mode: 'creative', difficulty: 'normal', hunger: 20, health: 20,
-    dead: false, sleepTime: 0, slept: false, timeOfDay: 0.2,
-    sinceHurt: 99, regenerationTimer: 0, starvationTimer: 0, shake: 0,
+    mode: 'creative',
+    difficulty: 'normal',
+    hunger: 20,
+    health: 20,
+    dead: false,
+    sleepTime: 0,
+    slept: false,
+    timeOfDay: 0.2,
+    sinceHurt: 99,
+    regenerationTimer: 0,
+    starvationTimer: 0,
+    shake: 0,
   };
   const calls: string[] = [];
   const selection = { visible: false, position: { set: vi.fn() } };
@@ -21,26 +34,72 @@ function fixture() {
   const target = { x: 5, y: 10, z: 6, nx: -1, ny: 0, nz: 0, t: 1 };
   const setTarget = vi.fn();
   const deps: TickDependencies = {
-    state, player, camera, selection, fadeElement,
-    difficulty: { normal: { regenAfter: 6, regenEvery: 1 }, easy: { regenAfter: 4, regenEvery: 1 },
-      peaceful: { regenAfter: 1, regenEvery: 1 } },
-    lavaBlock: 35, maximumHealth: 20, eyeHeight: 1.62,
-    getBlock: () => 0, canInteract: () => true, hasHealth: () => true,
+    state,
+    player,
+    camera,
+    selection,
+    fadeElement,
+    difficulty: {
+      normal: { regenAfter: 6, regenEvery: 1 },
+      easy: { regenAfter: 4, regenEvery: 1 },
+      peaceful: { regenAfter: 1, regenEvery: 1 },
+    },
+    lavaBlock: 35,
+    maximumHealth: 20,
+    eyeHeight: 1.62,
+    getBlock: () => 0,
+    canInteract: () => true,
+    hasHealth: () => true,
     raycast: () => target,
-    setBlockHit: vi.fn(), setTarget, damagePlayer, setWeather,
-    showHint: vi.fn(), playSound: vi.fn(), flashName: vi.fn(),
-    updatePlayerMovement: () => { calls.push('move'); },
-    updateMobs: () => { calls.push('mobs'); },
-    updateBlasts: () => { calls.push('blasts'); },
-    updateArrows: () => { calls.push('arrows'); },
-    updateFx: () => { calls.push('effects'); },
-    updateMusic: () => { calls.push('music'); },
-    updateHearts, exert, checkRelics: () => { calls.push('relics'); },
+    setBlockHit: vi.fn(),
+    setTarget,
+    damagePlayer,
+    setWeather,
+    showHint: vi.fn(),
+    playSound: vi.fn(),
+    flashName: vi.fn(),
+    updatePlayerMovement: () => {
+      calls.push('move');
+    },
+    updateMobs: () => {
+      calls.push('mobs');
+    },
+    updateBlasts: () => {
+      calls.push('blasts');
+    },
+    updateArrows: () => {
+      calls.push('arrows');
+    },
+    updateFx: () => {
+      calls.push('effects');
+    },
+    updateMusic: () => {
+      calls.push('music');
+    },
+    updateHearts,
+    exert,
+    checkRelics: () => {
+      calls.push('relics');
+    },
     handleActions,
     random: () => 0.5,
   };
-  return { tick: createGameTick(deps), deps, state, calls, player, camera,
-    selection, fadeElement, damagePlayer, setWeather, updateHearts, exert, handleActions, setTarget };
+  return {
+    tick: createGameTick(deps),
+    deps,
+    state,
+    calls,
+    player,
+    camera,
+    selection,
+    fadeElement,
+    damagePlayer,
+    setWeather,
+    updateHearts,
+    exert,
+    handleActions,
+    setTarget,
+  };
 }
 
 describe('active gameplay tick', () => {

@@ -30,12 +30,12 @@ Use this checklist **selectively** on touched code and its downstream dependenci
 
 ## Evidence to ask for
 
-| Change | Minimum meaningful evidence |
-| --- | --- |
-| Block ID, save schema, seeds, world generation | Vitest old/new seed and saved-world round trip; migration test if needed |
-| Mining, placement, mobs, crafting, movement | Deterministic unit/regression test of behavior; browser test when input/UI wiring changes |
-| Input, HUD, menus, portals, startup | Desktop **and** mobile Playwright flow against compiled game; actual screenshots for visual changes |
-| Dexie import/export, restore, autosave | Browser reload with existing fixture world, error-path assertions, and no data loss |
-| Chunk/render/PWA updates | Relevant unit/browser regression, build validation, and profiling/bundle evidence for performance claims |
+| Change                                         | Minimum meaningful evidence                                                                              |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Block ID, save schema, seeds, world generation | Vitest old/new seed and saved-world round trip; migration test if needed                                 |
+| Mining, placement, mobs, crafting, movement    | Deterministic unit/regression test of behavior; browser test when input/UI wiring changes                |
+| Input, HUD, menus, portals, startup            | Desktop **and** mobile Playwright flow against compiled game; actual screenshots for visual changes      |
+| Dexie import/export, restore, autosave         | Browser reload with existing fixture world, error-path assertions, and no data loss                      |
+| Chunk/render/PWA updates                       | Relevant unit/browser regression, build validation, and profiling/bundle evidence for performance claims |
 
 Run or verify `npm run check` and `npm run test:e2e` as applicable. Treat CI results and assertions as evidence, never a substitute for reading the changed logic. If a test cannot be run, state that limitation clearly. Suggest one focused regression test per genuine gap; do not add tests that only parse YAML or search for source text.

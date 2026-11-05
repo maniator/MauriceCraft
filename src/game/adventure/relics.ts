@@ -31,7 +31,11 @@ export function createRelicSystem(deps: RelicDependencies) {
   const gemMaterial = new THREE.MeshBasicMaterial({ color: 0xffd34d });
   const beamGeometry = new THREE.CylinderGeometry(0.07, 0.07, 40, 8);
   const beamMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffe28a, transparent: true, opacity: 0.4, fog: false, depthWrite: false,
+    color: 0xffe28a,
+    transparent: true,
+    opacity: 0.4,
+    fog: false,
+    depthWrite: false,
   });
 
   function clearRelics(): void {
@@ -69,7 +73,8 @@ export function createRelicSystem(deps: RelicDependencies) {
       const surface = deps.getBlock(blockX, groundY, blockZ);
       if (surface !== deps.grassBlock && surface !== deps.sandBlock) continue;
       if (deps.inStructureZone(blockX, blockZ)) continue;
-      if (relics.some(relic => Math.hypot(relic.x - blockX, relic.z - blockZ) < minimumDistance)) continue;
+      if (relics.some((relic) => Math.hypot(relic.x - blockX, relic.z - blockZ) < minimumDistance))
+        continue;
       addRelic(blockX + 0.5, groundY + 2, blockZ + 0.5);
     }
   }
@@ -89,7 +94,8 @@ export function createRelicSystem(deps: RelicDependencies) {
       const distanceX = player.x - relic.x;
       const distanceY = player.y + 0.9 - relic.y;
       const distanceZ = player.z - relic.z;
-      if (distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ >= 2.6 * 2.6) continue;
+      if (distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ >= 2.6 * 2.6)
+        continue;
       relic.got = true;
       relic.group.visible = false;
       collected++;
@@ -103,16 +109,34 @@ export function createRelicSystem(deps: RelicDependencies) {
     const player = deps.getPlayer();
     let nearestDistance = Infinity;
     for (const relic of relics) {
-      if (!relic.got) nearestDistance = Math.min(nearestDistance, Math.hypot(relic.x - player.x, relic.z - player.z));
+      if (!relic.got)
+        nearestDistance = Math.min(
+          nearestDistance,
+          Math.hypot(relic.x - player.x, relic.z - player.z),
+        );
     }
-    return 'Relics ' + collected + '/' + RELIC_COUNT +
-      (Number.isFinite(nearestDistance) ? '\nNearest: ' + Math.round(nearestDistance) + ' m' : '');
+    return (
+      'Relics ' +
+      collected +
+      '/' +
+      RELIC_COUNT +
+      (Number.isFinite(nearestDistance) ? '\nNearest: ' + Math.round(nearestDistance) + ' m' : '')
+    );
   }
 
   function setMode(): void {
     for (const relic of relics) relic.group.visible = deps.getMode() === 'adventure' && !relic.got;
   }
 
-  return { RELIC_COUNT, relics, addRelic, clearRelics, createRelics, updateRelics,
-    checkRelics, objectiveText, setMode };
+  return {
+    RELIC_COUNT,
+    relics,
+    addRelic,
+    clearRelics,
+    createRelics,
+    updateRelics,
+    checkRelics,
+    objectiveText,
+    setMode,
+  };
 }

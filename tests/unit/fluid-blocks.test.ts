@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { flowingBlock, liquidCornerHeight, liquidHeight, liquidKind, liquidLevel } from '../../src/game/world/fluid-blocks';
+import {
+  flowingBlock,
+  liquidCornerHeight,
+  liquidHeight,
+  liquidKind,
+  liquidLevel,
+} from '../../src/game/world/fluid-blocks';
 
 describe('persisted flowing liquid levels', () => {
   it('preserves original water and lava source IDs and separates flowing variants', () => {
@@ -20,11 +26,16 @@ describe('persisted flowing liquid levels', () => {
     expect(liquidHeight(163, 34)).toBe(1);
   });
   it('generates shared sloped/trapezoidal corners without cracks between blocks', () => {
-    const map = new Map<string, number>([['0,0,0', 34], ['1,0,0', 162]]);
+    const map = new Map<string, number>([
+      ['0,0,0', 34],
+      ['1,0,0', 162],
+    ]);
     const get = (x: number, y: number, z: number) => map.get(`${x},${y},${z}`) ?? 0;
-    expect(liquidCornerHeight(get, 0, 0, 0, 1, 0))
-      .toBeCloseTo(liquidCornerHeight(get, 1, 0, 0, 0, 0));
-    expect(liquidCornerHeight(get, 0, 0, 0, 0, 0))
-      .toBeGreaterThan(liquidCornerHeight(get, 1, 0, 0, 1, 0));
+    expect(liquidCornerHeight(get, 0, 0, 0, 1, 0)).toBeCloseTo(
+      liquidCornerHeight(get, 1, 0, 0, 0, 0),
+    );
+    expect(liquidCornerHeight(get, 0, 0, 0, 0, 0)).toBeGreaterThan(
+      liquidCornerHeight(get, 1, 0, 0, 1, 0),
+    );
   });
 });

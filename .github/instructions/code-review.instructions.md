@@ -1,5 +1,5 @@
 ---
-applyTo: "**"
+applyTo: '**'
 ---
 
 # MauriceCraft code review focus

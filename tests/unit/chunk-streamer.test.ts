@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { ckey } from '../../src/game/world/chunk-key';
 import { createChunkStreamer, type StreamChunk } from '../../src/game/world/chunk-streamer';
 
-interface Chunk extends StreamChunk { disposed?: boolean }
+interface Chunk extends StreamChunk {
+  disposed?: boolean;
+}
 function harness(viewDistance = 2) {
   const chunks = new Map<number, Chunk>();
   const player = { x: 0.5, z: 0.5 };
@@ -19,7 +21,8 @@ function harness(viewDistance = 2) {
     return chunk;
   }
   const tick = createChunkStreamer({
-    chunks, viewDistance,
+    chunks,
+    viewDistance,
     getPlayer: () => player,
     getOrGen: create,
     genChunk: create,
@@ -29,8 +32,13 @@ function harness(viewDistance = 2) {
       chunk.meshed = true;
       meshes++;
     },
-    disposeMesh: (chunk: Chunk) => { chunk.meshed = false; chunk.disposed = true; },
-    resetChunkCache: () => { resets++; },
+    disposeMesh: (chunk: Chunk) => {
+      chunk.meshed = false;
+      chunk.disposed = true;
+    },
+    resetChunkCache: () => {
+      resets++;
+    },
     now: () => 0,
   });
   return { chunks, player, tick, counts: () => ({ generated, meshes, resets }) };

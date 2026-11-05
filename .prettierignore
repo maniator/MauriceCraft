@@ -1,0 +1,12 @@
+# Generated output and local tooling
+# Prettier also honors .gitignore
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+package-lock.json
+# Binary and generated screenshots
+docs/previews/
+public/icons/

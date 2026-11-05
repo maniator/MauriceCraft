@@ -1,57 +1,146 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { WorldRecord } from '../../src/game/storage/world-storage';
-import { createWorldRestore, type RestorableGameState, type WorldRestoreDependencies } from '../../src/game/session/world-restore';
+import {
+  createWorldRestore,
+  type RestorableGameState,
+  type WorldRestoreDependencies,
+} from '../../src/game/session/world-restore';
 import type { SpawnMob } from '../../src/game/entities/mob-spawning';
 import { deriveWorldSeed32 } from '../../src/game/world/seed64';
 
 function fixture() {
   const state: RestorableGameState = {
-    dimension: 'overworld', enderDragonDefeated: false, selected: 2, tod: 0.4,
-    mode: 'survival', difficulty: 'hard', spawnPoint: { x: 1, y: 2, z: 3 }, omen: true,
-    weather: 'storm', weatherT: 1, rainLevel: 1, rainTarget: 1,
-    ready: false, dead: true, hp: 5, hunger: 3, sat: 2,
+    dimension: 'overworld',
+    enderDragonDefeated: false,
+    selected: 2,
+    tod: 0.4,
+    mode: 'survival',
+    difficulty: 'hard',
+    spawnPoint: { x: 1, y: 2, z: 3 },
+    omen: true,
+    weather: 'storm',
+    weatherT: 1,
+    rainLevel: 1,
+    rainTarget: 1,
+    ready: false,
+    dead: true,
+    hp: 5,
+    hunger: 3,
+    sat: 2,
   };
-  const player = { x: 3, y: 11, z: 5, vx: 5, vy: 3, vz: 2, yaw: 0, pitch: 0,
-    fly: false, fallStart: 30 as number | null };
+  const player = {
+    x: 3,
+    y: 11,
+    z: 5,
+    vx: 5,
+    vy: 3,
+    vz: 2,
+    yaw: 0,
+    pitch: 0,
+    fly: false,
+    fallStart: 30 as number | null,
+  };
   const portals: WorldRestoreDependencies['portals'] = [];
   const inventory: Record<string, number> = { 5: 10 };
   const toolWear: Record<string, number> = { 100: 7 };
   const craftedRecipes = new Set<string>(['stale:from:prior:world']);
   const hotbar = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const relics: unknown[] = [];
-  const resetWorld = vi.fn(), setWorldSeed64 = vi.fn();
-  const clearMobs = vi.fn(), clearRelics = vi.fn();
-  const restoreItemDrops = vi.fn(), clearItemDrops = vi.fn();
-  const updateHearts = vi.fn(), renderFood = vi.fn(), updateWeatherUI = vi.fn();
-  const addMob = vi.fn((kind: string, x: number, y: number, z: number): SpawnMob =>
-    ({ kind, x, y, z, hp: 20, persist: false } as SpawnMob));
+  const resetWorld = vi.fn(),
+    setWorldSeed64 = vi.fn();
+  const clearMobs = vi.fn(),
+    clearRelics = vi.fn();
+  const restoreItemDrops = vi.fn(),
+    clearItemDrops = vi.fn();
+  const updateHearts = vi.fn(),
+    renderFood = vi.fn(),
+    updateWeatherUI = vi.fn();
+  const addMob = vi.fn(
+    (kind: string, x: number, y: number, z: number): SpawnMob =>
+      ({ kind, x, y, z, hp: 20, persist: false }) as SpawnMob,
+  );
   const deps: WorldRestoreDependencies = {
-    state, player, portals, inventory, toolWear, craftedRecipes, hotbar,
+    state,
+    player,
+    portals,
+    inventory,
+    toolWear,
+    craftedRecipes,
+    hotbar,
     allBlocks: [2, 3, 4, 5, 6, 7, 8, 9, 10],
-    savedChunks: new Map(), validDifficulties: { normal: {}, hard: {} },
+    savedChunks: new Map(),
+    validDifficulties: { normal: {}, hard: {} },
     weatherLabels: { clear: 'Clear', cloudy: 'Cloudy', rain: 'Rain', storm: 'Storm' },
-    kinds: { irongolem: {} }, mobs: [], relics, maximumHealth: 20,
-    resetWorld, setWorldSeed64, clearPortalVisuals: vi.fn(), showPortalVisual: vi.fn(),
-    clearMobs, clearRelics, restoreItemDrops, clearItemDrops,
-    addRelic: vi.fn(), createRelics: vi.fn(),
-    setMode: mode => { state.mode = mode; state.hp = 20; state.hunger = 20; },
-    updateHearts, renderFood, updateWeatherUI,
-    addMob, hasChunk: () => true, respawn: vi.fn(), random: () => 0.5,
+    kinds: { irongolem: {} },
+    mobs: [],
+    relics,
+    maximumHealth: 20,
+    resetWorld,
+    setWorldSeed64,
+    clearPortalVisuals: vi.fn(),
+    showPortalVisual: vi.fn(),
+    clearMobs,
+    clearRelics,
+    restoreItemDrops,
+    clearItemDrops,
+    addRelic: vi.fn(),
+    createRelics: vi.fn(),
+    setMode: (mode) => {
+      state.mode = mode;
+      state.hp = 20;
+      state.hunger = 20;
+    },
+    updateHearts,
+    renderFood,
+    updateWeatherUI,
+    addMob,
+    hasChunk: () => true,
+    respawn: vi.fn(),
+    random: () => 0.5,
   };
-  return { restore: createWorldRestore(deps), deps, state, player, portals,
-    inventory, toolWear, craftedRecipes, hotbar, resetWorld, setWorldSeed64, clearMobs, clearRelics,
-    updateHearts, renderFood, updateWeatherUI, addMob, restoreItemDrops, clearItemDrops };
+  return {
+    restore: createWorldRestore(deps),
+    deps,
+    state,
+    player,
+    portals,
+    inventory,
+    toolWear,
+    craftedRecipes,
+    hotbar,
+    resetWorld,
+    setWorldSeed64,
+    clearMobs,
+    clearRelics,
+    updateHearts,
+    renderFood,
+    updateWeatherUI,
+    addMob,
+    restoreItemDrops,
+    clearItemDrops,
+  };
 }
 
 describe('saved-world restoration', () => {
   it('restores compatible legacy metadata without resetting the selected game mode', () => {
     const f = fixture();
     const world: WorldRecord = {
-      id: 'old', name: 'Saved World', seed: 501, created: 1, lastPlayed: 2,
-      mode: 'survival', difficulty: 'normal', dimension: 'overworld',
+      id: 'old',
+      name: 'Saved World',
+      seed: 501,
+      created: 1,
+      lastPlayed: 2,
+      mode: 'survival',
+      difficulty: 'normal',
+      dimension: 'overworld',
       player: { x: 35, y: 20, z: -18, yaw: 1, pitch: 0.3, fly: false },
-      inv: { 3: 10 }, toolWear: { 101: 12 },
-      hunger: 13, sat: 4, hp: 8, selected: 5, tod: 0.6,
+      inv: { 3: 10 },
+      toolWear: { 101: 12 },
+      hunger: 13,
+      sat: 4,
+      hp: 8,
+      selected: 5,
+      tod: 0.6,
       weather: { w: 'rain', t: 15, r: 0.7 },
       portals: [{ dimension: 'overworld', x: 10, y: 2, z: 6 }],
     };
@@ -77,8 +166,13 @@ describe('saved-world restoration', () => {
   it('restores v2 terrain version and cloudy weather from saved metadata', () => {
     const f = fixture();
     f.restore.applyWorld({
-      id: 'new', name: 'New World', seed: 311, generatorVersion: 2,
-      created: 1, lastPlayed: 1, weather: { w: 'cloudy', t: 37, r: 0.16 },
+      id: 'new',
+      name: 'New World',
+      seed: 311,
+      generatorVersion: 2,
+      created: 1,
+      lastPlayed: 1,
+      weather: { w: 'cloudy', t: 37, r: 0.16 },
     });
     expect(f.resetWorld).toHaveBeenCalledWith(311, 0, 0, 2);
     expect(f.state.weather).toBe('cloudy');
@@ -87,8 +181,16 @@ describe('saved-world restoration', () => {
 
   it('keeps preexisting generator v4 worlds on the exact original 32-bit seed', () => {
     const f = fixture();
-    f.restore.applyWorld({ ...({ id: 'v4', name: 'Old v4', seed: 6041988,
-      generatorVersion: 4, created: 1, lastPlayed: 2 } satisfies WorldRecord) });
+    f.restore.applyWorld({
+      ...({
+        id: 'v4',
+        name: 'Old v4',
+        seed: 6041988,
+        generatorVersion: 4,
+        created: 1,
+        lastPlayed: 2,
+      } satisfies WorldRecord),
+    });
     expect(f.resetWorld).toHaveBeenCalledWith(6041988, 0, 0, 4);
     expect(f.setWorldSeed64).toHaveBeenCalledWith(null);
   });
@@ -97,8 +199,15 @@ describe('saved-world restoration', () => {
     const f = fixture();
     const seed64 = '18446744073709551615';
     const terrain = deriveWorldSeed32(seed64, 'terrain');
-    const world: WorldRecord = { id: 'v5', name: 'New v5', seed: terrain, seed64,
-      generatorVersion: 5, created: 1, lastPlayed: 2 };
+    const world: WorldRecord = {
+      id: 'v5',
+      name: 'New v5',
+      seed: terrain,
+      seed64,
+      generatorVersion: 5,
+      created: 1,
+      lastPlayed: 2,
+    };
     f.restore.applyWorld(world);
     expect(f.resetWorld).toHaveBeenCalledWith(terrain, 0, 0, 5);
     expect(f.setWorldSeed64).toHaveBeenCalledWith(seed64);
@@ -109,14 +218,22 @@ describe('saved-world restoration', () => {
   it('rejects corrupt v5 metadata without clearing the old world', () => {
     const f = fixture();
     f.deps.savedChunks.set(99, new Uint8Array([3]));
-    const broken: WorldRecord = { id: 'bad', name: 'Broken v5', seed: 123,
-      generatorVersion: 5, created: 1, lastPlayed: 2 };
+    const broken: WorldRecord = {
+      id: 'bad',
+      name: 'Broken v5',
+      seed: 123,
+      generatorVersion: 5,
+      created: 1,
+      lastPlayed: 2,
+    };
     expect(() => f.restore.applyWorld(broken)).toThrow('64-bit world seed is missing');
     expect(() => f.restore.prepareNewWorld(broken)).toThrow('64-bit world seed is missing');
-    expect(() => f.restore.applyWorld({ ...broken, seed64: '18446744073709551616' }))
-      .toThrow('Invalid 64-bit world seed');
-    expect(() => f.restore.applyWorld({ ...broken, seed64: '18446744073709551615' }))
-      .toThrow('does not match stored world metadata');
+    expect(() => f.restore.applyWorld({ ...broken, seed64: '18446744073709551616' })).toThrow(
+      'Invalid 64-bit world seed',
+    );
+    expect(() => f.restore.applyWorld({ ...broken, seed64: '18446744073709551615' })).toThrow(
+      'does not match stored world metadata',
+    );
     expect(f.deps.savedChunks.has(99)).toBe(true);
     expect(f.setWorldSeed64).not.toHaveBeenCalled();
     expect(f.resetWorld).not.toHaveBeenCalled();
@@ -125,12 +242,20 @@ describe('saved-world restoration', () => {
   it('loads learned recipes per world, ignoring invalid entries from older data', () => {
     const f = fixture();
     f.restore.applyWorld({
-      id: 'known', name: 'Known recipes', seed: 10, created: 1, lastPlayed: 1,
+      id: 'known',
+      name: 'Known recipes',
+      seed: 10,
+      created: 1,
+      lastPlayed: 1,
       craftedRecipes: ['shaped:1', 'shapeless:2', null, 42, 'a'.repeat(300)],
     });
     expect([...f.craftedRecipes]).toEqual(['shaped:1', 'shapeless:2']);
     f.restore.applyWorld({
-      id: 'another', name: 'New saved world', seed: 11, created: 1, lastPlayed: 1,
+      id: 'another',
+      name: 'New saved world',
+      seed: 11,
+      created: 1,
+      lastPlayed: 1,
     });
     expect(f.craftedRecipes.size).toBe(0);
   });
@@ -138,7 +263,11 @@ describe('saved-world restoration', () => {
   it('restores saved golems without duplicating ordinary creatures', () => {
     const f = fixture();
     const world: WorldRecord = {
-      id: 'saved', name: 'Saved World', seed: 4, created: 1, lastPlayed: 1,
+      id: 'saved',
+      name: 'Saved World',
+      seed: 4,
+      created: 1,
+      lastPlayed: 1,
       player: { x: 1, y: 20, z: 1, yaw: 0, pitch: 0, fly: false },
       golems: [
         { kind: 'irongolem', x: 2, y: 21, z: 3, hp: 45, hx: 1, hz: 1 },
@@ -172,18 +301,29 @@ describe('saved-world restoration', () => {
 
   it('restores existing uncollected items from world metadata', () => {
     const f = fixture();
-    const savedDrop = { id: 5, count: 1, x: 2.5, y: 9, z: -1.5,
-      dimension: 'nether', age: 2.5 };
-    f.restore.applyWorld({ id: 'drops', name: 'Drops', seed: 17,
-      created: 1, lastPlayed: 1, itemDrops: [savedDrop] });
+    const savedDrop = { id: 5, count: 1, x: 2.5, y: 9, z: -1.5, dimension: 'nether', age: 2.5 };
+    f.restore.applyWorld({
+      id: 'drops',
+      name: 'Drops',
+      seed: 17,
+      created: 1,
+      lastPlayed: 1,
+      itemDrops: [savedDrop],
+    });
     expect(f.restoreItemDrops).toHaveBeenCalledWith([savedDrop]);
   });
 
   it('loads defaults for missing fields in old saves and rejects unsupported dimensions', () => {
     const f = fixture();
     f.restore.applyWorld({
-      id: 'older', name: 'Old', seed: 1, created: 1, lastPlayed: 1,
-      dimension: 'moon', mode: 'creative', difficulty: 'nightmare',
+      id: 'older',
+      name: 'Old',
+      seed: 1,
+      created: 1,
+      lastPlayed: 1,
+      dimension: 'moon',
+      mode: 'creative',
+      difficulty: 'nightmare',
     });
     expect(f.state.dimension).toBe('overworld');
     expect(f.state.difficulty).toBe('normal');

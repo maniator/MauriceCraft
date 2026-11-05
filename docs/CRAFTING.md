@@ -9,6 +9,7 @@ A recipe successfully crafted at least once is **remembered in that world**, eve
 The **Fill** action is available when a recipe has all materials and fits the current grid. **Preview** can display a partially collected recipe in the grid without consuming items or permitting crafting without the required inventory. A recipe needing a crafting table cannot fill a 2×2 grid.
 
 Regression coverage:
+
 - `tests/unit/recipe-discovery.test.ts`: partial ingredient discovery, missing material counts, known recipes, alternative recipes with the same output, and crafting table requirements
 - `tests/unit/world-restore.test.ts` and `tests/unit/world-persistence.test.ts`: learned recipe save/load and isolation across worlds
 - `tests/e2e/gameplay.spec.ts`: survival backpack and partial recipe discovery in desktop and mobile browser builds

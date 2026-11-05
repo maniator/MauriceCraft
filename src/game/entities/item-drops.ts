@@ -41,8 +41,11 @@ export function createItemDropSystem(deps: ItemDropDependencies) {
     const uv = geometry.getAttribute('uv');
     // The block atlas is a single row of 16x16 tiles.
     for (let vertex = 0; vertex < uv.count; vertex++) {
-      uv.setXY(vertex, (tile + 0.015 + uv.getX(vertex) * 0.97) / deps.atlasTiles,
-        0.015 + uv.getY(vertex) * 0.97);
+      uv.setXY(
+        vertex,
+        (tile + 0.015 + uv.getX(vertex) * 0.97) / deps.atlasTiles,
+        0.015 + uv.getY(vertex) * 0.97,
+      );
     }
     geometryCache.set(tile, geometry);
     return geometry;
@@ -56,8 +59,15 @@ export function createItemDropSystem(deps: ItemDropDependencies) {
     if (drops.length >= MAX_DROPS) remove(0);
     const mesh = new THREE.Mesh(geometryFor(id), material);
     const record: ActiveDrop = {
-      id, count: Math.min(64, Math.floor(count)), x, y, z,
-      dimension: deps.getDimension(), age: 0, vy: 0, mesh,
+      id,
+      count: Math.min(64, Math.floor(count)),
+      x,
+      y,
+      z,
+      dimension: deps.getDimension(),
+      age: 0,
+      vy: 0,
+      mesh,
     };
     mesh.position.set(x, y, z);
     deps.scene.add(mesh);
@@ -71,7 +81,10 @@ export function createItemDropSystem(deps: ItemDropDependencies) {
       d.mesh.visible = d.dimension === dimension;
       if (d.dimension !== dimension) continue;
       d.age += seconds;
-      if (d.age >= EXPIRE_AFTER) { remove(i); continue; }
+      if (d.age >= EXPIRE_AFTER) {
+        remove(i);
+        continue;
+      }
       d.vy = Math.max(-16, d.vy - 19 * seconds);
       const nextY = d.y + d.vy * seconds;
       const under = Math.floor(nextY - 0.15);
@@ -80,8 +93,12 @@ export function createItemDropSystem(deps: ItemDropDependencies) {
         d.vy = 0;
       } else d.y = nextY;
       if (d.age >= PICKUP_DELAY) {
-        const tx = deps.player.x, ty = deps.player.y + 0.9, tz = deps.player.z;
-        const dx = tx - d.x, dy = ty - d.y, dz = tz - d.z;
+        const tx = deps.player.x,
+          ty = deps.player.y + 0.9,
+          tz = deps.player.z;
+        const dx = tx - d.x,
+          dy = ty - d.y,
+          dz = tz - d.z;
         const distance = Math.hypot(dx, dy, dz);
         if (distance < 0.65) {
           deps.giveItem(d.id, d.count);
@@ -102,16 +119,31 @@ export function createItemDropSystem(deps: ItemDropDependencies) {
     }
   }
   function snapshot(): ItemDropRecord[] {
-    return drops.map(({ id, count, x, y, z, dimension, age }) =>
-      ({ id, count, x, y, z, dimension, age }));
+    return drops.map(({ id, count, x, y, z, dimension, age }) => ({
+      id,
+      count,
+      x,
+      y,
+      z,
+      dimension,
+      age,
+    }));
   }
   function restore(records: readonly ItemDropRecord[]): void {
     clear();
     for (const d of records.slice(0, MAX_DROPS)) {
-      if (!d || !Number.isInteger(d.id) || d.id <= 0 ||
-        !Number.isFinite(d.x) || !Number.isFinite(d.y) || !Number.isFinite(d.z) ||
-        !Number.isInteger(d.count) || d.count <= 0 ||
-        !['overworld', 'nether', 'end'].includes(d.dimension)) continue;
+      if (
+        !d ||
+        !Number.isInteger(d.id) ||
+        d.id <= 0 ||
+        !Number.isFinite(d.x) ||
+        !Number.isFinite(d.y) ||
+        !Number.isFinite(d.z) ||
+        !Number.isInteger(d.count) ||
+        d.count <= 0 ||
+        !['overworld', 'nether', 'end'].includes(d.dimension)
+      )
+        continue;
       spawn(d.id, d.count, d.x, d.y, d.z);
       drops[drops.length - 1].dimension = d.dimension;
       // Retain fractional lifetime so nearly expired drops expire promptly after loading.

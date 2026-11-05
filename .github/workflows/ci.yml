@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   test:
-    name: Lint, unit coverage, and browser regression
+    name: Formatting, lint, unit coverage, and browser regression
     runs-on: ubuntu-24.04
     steps:
       - name: Check out source
@@ -28,7 +28,7 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
-      - name: Run lint, TypeScript, unit coverage, and production build
+      - name: Check Prettier, lint, TypeScript, coverage, and build
         run: npm run check
       - name: Install Chromium
         run: npx playwright install --with-deps chromium

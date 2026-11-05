@@ -8,16 +8,29 @@ function fixture() {
   const giveItem = vi.fn();
   let dimension = 'overworld';
   const drops = createItemDropSystem({
-    scene, atlas: new THREE.Texture(), atlasTiles: 128,
+    scene,
+    atlas: new THREE.Texture(),
+    atlasTiles: 128,
     tileOf: () => 8,
-    getBlock: (_x, y) => y <= 5 ? 3 : 0,
-    solid: b => b !== 0, player, giveItem,
+    getBlock: (_x, y) => (y <= 5 ? 3 : 0),
+    solid: (b) => b !== 0,
+    player,
+    giveItem,
     getDimension: () => dimension,
   });
   const tick = (seconds = 2) => {
     for (let t = 0; t < seconds; t += 0.05) drops.update(0.05);
   };
-  return { drops, scene, giveItem, player, tick, setDimension: (next: string) => { dimension = next; } };
+  return {
+    drops,
+    scene,
+    giveItem,
+    player,
+    tick,
+    setDimension: (next: string) => {
+      dimension = next;
+    },
+  };
 }
 
 describe('physical block drops', () => {
@@ -36,7 +49,9 @@ describe('physical block drops', () => {
     f.drops.spawn(5, 2, 0.5, 6.15, 0.5);
     f.tick(2);
     expect(f.giveItem).not.toHaveBeenCalled();
-    f.player.x = 0.5; f.player.z = 0.5; f.player.y = 5.2;
+    f.player.x = 0.5;
+    f.player.z = 0.5;
+    f.player.y = 5.2;
     f.tick(2);
     expect(f.giveItem).toHaveBeenCalledWith(5, 2);
     expect(f.drops.count()).toBe(0);

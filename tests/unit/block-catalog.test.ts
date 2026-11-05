@@ -8,10 +8,18 @@ describe('persisted item and block catalog', () => {
     expect(catalog.BIRCH_WOOD).toBe(41);
     expect(catalog.WILLOW_LEAVES).toBe(46);
     expect(catalog.FLOWERING_GRASS).toBe(49);
-    expect([catalog.NETHERRACK, catalog.BASALT, catalog.SOUL_SOIL,
-      catalog.CRIMSON_NYLIUM, catalog.WARPED_NYLIUM, catalog.BLACKSTONE,
-      catalog.GLOWSTONE]).toEqual([50, 51, 52, 53, 54, 55, 56]);
-    expect([catalog.SNOW, catalog.PINE_LEAVES, catalog.RED_SAND, catalog.DARK_WOOD]).toEqual([37, 38, 39, 40]);
+    expect([
+      catalog.NETHERRACK,
+      catalog.BASALT,
+      catalog.SOUL_SOIL,
+      catalog.CRIMSON_NYLIUM,
+      catalog.WARPED_NYLIUM,
+      catalog.BLACKSTONE,
+      catalog.GLOWSTONE,
+    ]).toEqual([50, 51, 52, 53, 54, 55, 56]);
+    expect([catalog.SNOW, catalog.PINE_LEAVES, catalog.RED_SAND, catalog.DARK_WOOD]).toEqual([
+      37, 38, 39, 40,
+    ]);
     expect(catalog.FLINT).toBe(111);
     expect(catalog.BED).toBe(19);
     expect(catalog.toolId(0, 0)).toBe(130);

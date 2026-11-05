@@ -8,11 +8,15 @@ describe('world-version-scoped lake planning', () => {
       getSeed: () => seed,
       biomeAt: () => 'plains' as const,
       inStructureZone: () => false,
-      seaLevel: 14, maxHeight: 48,
-      waterBlock: 34, lavaBlock: 35,
+      seaLevel: 14,
+      maxHeight: 48,
+      waterBlock: 34,
+      lavaBlock: 35,
     };
     const flat = createNaturalFeatures({
-      ...shared, getGeneratorVersion: () => 2, heightAt: () => 24,
+      ...shared,
+      getGeneratorVersion: () => 2,
+      heightAt: () => 24,
     });
     let sample: { rx: number; rz: number; x: number; z: number } | undefined;
     for (let rx = -5; rx <= 5 && !sample; rx++) {
@@ -29,7 +33,7 @@ describe('world-version-scoped lake planning', () => {
       ...shared,
       getGeneratorVersion: () => version,
       // Lake center is viable but the shoreline drops off sharply.
-      heightAt: (x, z) => x === sample.x && z === sample.z ? 24 : 3,
+      heightAt: (x, z) => (x === sample.x && z === sample.z ? 24 : 3),
     });
     expect(planner.lakeFor(sample.rx, sample.rz)).not.toBeNull();
 

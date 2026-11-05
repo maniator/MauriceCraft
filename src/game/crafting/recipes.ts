@@ -20,31 +20,59 @@ export type Recipe = ShapedRecipe | ShapelessRecipe;
 export function createRecipeMatcher(recipes: readonly Recipe[]) {
   function recipePattern(r: Recipe): number[][] {
     if (!r.shape || !r.key) return [];
-    return r.shape.map(row => row.split('').map(ch => ch === '.' ? 0 : r.key[ch]));
+    return r.shape.map((row) => row.split('').map((ch) => (ch === '.' ? 0 : r.key[ch])));
   }
   function recipeCounts(r: Recipe): Record<number, number> {
     const counts: Record<number, number> = {};
-    if (r.shapeless) r.shapeless.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
-    else recipePattern(r).forEach(row => row.forEach(id => {
-      if (id) counts[id] = (counts[id] || 0) + 1;
-    }));
+    if (r.shapeless)
+      r.shapeless.forEach((id) => {
+        counts[id] = (counts[id] || 0) + 1;
+      });
+    else
+      recipePattern(r).forEach((row) =>
+        row.forEach((id) => {
+          if (id) counts[id] = (counts[id] || 0) + 1;
+        }),
+      );
     return counts;
   }
-  function matchRecipe(grid: readonly number[], size: number, preferred?: Recipe | null): Recipe | null {
+  function matchRecipe(
+    grid: readonly number[],
+    size: number,
+    preferred?: Recipe | null,
+  ): Recipe | null {
     const crop = cropGrid(grid, size);
     if (!crop) return null;
     // Preserve the non-null grid type inside the nested recipe matcher.
     const cropped: number[][] = crop;
     const flat: number[] = [];
-    cropped.forEach(row => row.forEach(v => { if (v) flat.push(v); }));
-    const key = flat.slice().sort((a, b) => a - b).join(',');
+    cropped.forEach((row) =>
+      row.forEach((v) => {
+        if (v) flat.push(v);
+      }),
+    );
+    const key = flat
+      .slice()
+      .sort((a, b) => a - b)
+      .join(',');
     // The recipe book can explicitly select an alternate output from the same
     // ingredients (e.g., a log can become planks or sticks).
     function matches(r: Recipe): boolean {
-      if (r.shapeless) return r.shapeless.slice().sort((a, b) => a - b).join(',') === key;
+      if (r.shapeless)
+        return (
+          r.shapeless
+            .slice()
+            .sort((a, b) => a - b)
+            .join(',') === key
+        );
       const pattern = recipePattern(r);
-      return samePattern(cropped, pattern) ||
-        samePattern(cropped, pattern.map(row => row.slice().reverse()));
+      return (
+        samePattern(cropped, pattern) ||
+        samePattern(
+          cropped,
+          pattern.map((row) => row.slice().reverse()),
+        )
+      );
     }
     if (preferred && recipes.includes(preferred) && matches(preferred)) return preferred;
     for (const r of recipes) if (matches(r)) return r;

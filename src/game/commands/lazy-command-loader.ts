@@ -8,7 +8,8 @@ export function createLazyCommandLoader(deps: CoreGameCommandDependencies): () =
     loading = import('./core-game-commands')
       .then(({ registerCoreGameCommands }) => {
         registerCoreGameCommands(deps);
-      }).catch(error => {
+      })
+      .catch((error) => {
         // The next command-bar open should retry after a transient failure.
         loading = null;
         throw error;

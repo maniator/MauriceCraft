@@ -3,7 +3,15 @@ import { ckey } from '../../src/game/world/chunk-key';
 import { createBlockAccess, type WritableChunk } from '../../src/game/world/block-access';
 
 function chunk(cx: number, cz: number): WritableChunk {
-  return { cx, cz, data: new Uint8Array(16 * 16 * 48), meshed: false, edited: false, dirty: false, torches: [[1, 2, 3]] };
+  return {
+    cx,
+    cz,
+    data: new Uint8Array(16 * 16 * 48),
+    meshed: false,
+    edited: false,
+    dirty: false,
+    torches: [[1, 2, 3]],
+  };
 }
 
 describe('chunk block access', () => {

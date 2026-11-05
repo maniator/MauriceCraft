@@ -1,7 +1,8 @@
 import { fbm, hash2 } from './noise';
 
 /** Coherent climate regions, shared by terrain, inhabitants and the exploration HUD. */
-export type NetherBiome = 'wastes' | 'crimson-forest' | 'warped-forest' | 'basalt-deltas' | 'soul-sand-valley';
+export type NetherBiome =
+  'wastes' | 'crimson-forest' | 'warped-forest' | 'basalt-deltas' | 'soul-sand-valley';
 export const NETHER_BIOME_LABELS: Record<NetherBiome, string> = {
   wastes: 'Nether Wastes',
   'crimson-forest': 'Crimson Forest',
@@ -34,7 +35,12 @@ export function netherCeilingAt(x: number, z: number, seed: number, maxHeight = 
 }
 export interface NetherStructure {
   type: 'fortress' | 'bastion';
-  x: number; z: number; y: number; radius: number; rx: number; rz: number;
+  x: number;
+  z: number;
+  y: number;
+  radius: number;
+  rx: number;
+  rz: number;
 }
 export const NETHER_STRUCTURE_REGION = 160;
 /** Rare region-anchored structure plans do not depend on chunk load order. */
@@ -46,5 +52,13 @@ export function netherStructureAt(rx: number, rz: number, seed: number): NetherS
   if (Math.hypot(x, z) < 52) return null;
   const biome = netherBiomeAt(x, z, seed);
   const type = roll < 0.085 || biome === 'soul-sand-valley' ? 'fortress' : 'bastion';
-  return { type, x, z, y: Math.min(30, Math.max(16, netherFloorAt(x, z, seed) + 3)), radius: 19, rx, rz };
+  return {
+    type,
+    x,
+    z,
+    y: Math.min(30, Math.max(16, netherFloorAt(x, z, seed) + 3)),
+    radius: 19,
+    rx,
+    rz,
+  };
 }

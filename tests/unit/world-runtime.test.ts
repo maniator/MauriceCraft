@@ -3,27 +3,49 @@ import { createWorldRuntime } from '../../src/game/world/world-runtime';
 
 vi.mock('../../src/game/rendering/game-renderer', () => ({
   createGameRenderer: vi.fn(() => ({
-    canvas: {}, renderer: {}, scene: {}, camera: {},
-    atlasCanvas: {}, tex: {}, mat: {}, torchMat: {},
-    dayUniform: { value: 1 }, glowMat: {}, sun: {}, moon: {}, sel: {},
+    canvas: {},
+    renderer: {},
+    scene: {},
+    camera: {},
+    atlasCanvas: {},
+    tex: {},
+    mat: {},
+    torchMat: {},
+    dayUniform: { value: 1 },
+    glowMat: {},
+    sun: {},
+    moon: {},
+    sel: {},
   })),
 }));
-const buildChunk = vi.fn(), disposeMesh = vi.fn();
+const buildChunk = vi.fn(),
+  disposeMesh = vi.fn();
 vi.mock('../../src/game/rendering/chunk-mesher', () => ({
   createChunkMesher: vi.fn(() => ({
     buildChunk: (cx: number, cz: number) => buildChunk(cx, cz),
     disposeMesh: (chunk: unknown) => disposeMesh(chunk),
-    refreshAround: vi.fn(), blockGeo: vi.fn(),
+    refreshAround: vi.fn(),
+    blockGeo: vi.fn(),
   })),
 }));
 
 describe('world runtime wiring', () => {
   it('builds a coherent, cached world with stable block IDs and shared chunk access', () => {
-    let seed = 17, version = 1;
+    let seed = 17,
+      version = 1;
     const world = createWorldRuntime({
-      height: 48, chunkSize: 16, seaLevel: 14, viewDistance: 5,
-      getSeed: () => seed, setSeed: value => { seed = value; },
-      getGeneratorVersion: () => version, setGeneratorVersion: value => { version = value; },
+      height: 48,
+      chunkSize: 16,
+      seaLevel: 14,
+      viewDistance: 5,
+      getSeed: () => seed,
+      setSeed: (value) => {
+        seed = value;
+      },
+      getGeneratorVersion: () => version,
+      setGeneratorVersion: (value) => {
+        version = value;
+      },
       getDimension: () => 'overworld',
       getPlayer: () => ({ x: 0, z: 0 }),
     });
@@ -48,9 +70,14 @@ describe('world runtime wiring', () => {
   it('keeps chunk data separate across dimensions and delegates player streaming', () => {
     let dimension: 'overworld' | 'nether' = 'overworld';
     const world = createWorldRuntime({
-      height: 48, chunkSize: 16, seaLevel: 14, viewDistance: 5,
-      getSeed: () => 120, setSeed: () => undefined,
-      getGeneratorVersion: () => 1, setGeneratorVersion: () => undefined,
+      height: 48,
+      chunkSize: 16,
+      seaLevel: 14,
+      viewDistance: 5,
+      getSeed: () => 120,
+      setSeed: () => undefined,
+      getGeneratorVersion: () => 1,
+      setGeneratorVersion: () => undefined,
       getDimension: () => dimension,
       getPlayer: () => ({ x: 24, z: -16 }),
     });

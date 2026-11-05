@@ -5,9 +5,16 @@ describe('startup chunk priming', () => {
   it('generates only the nine immediately needed chunks and renders the center', () => {
     const chunks: string[] = [];
     const meshes: string[] = [];
-    primeWorldChunks(-3, 7,
-      (x, z) => { chunks.push(x + ',' + z); },
-      (x, z) => { meshes.push(x + ',' + z); });
+    primeWorldChunks(
+      -3,
+      7,
+      (x, z) => {
+        chunks.push(x + ',' + z);
+      },
+      (x, z) => {
+        meshes.push(x + ',' + z);
+      },
+    );
     expect(chunks).toHaveLength(9);
     expect(new Set(chunks).size).toBe(9);
     expect(chunks).toContain('-4,6');
@@ -17,8 +24,12 @@ describe('startup chunk priming', () => {
 
   it('generates neighbors before meshing the center', () => {
     const events: string[] = [];
-    const generate = vi.fn((x: number, z: number) => { events.push('generate:' + x + ',' + z); });
-    const mesh = vi.fn(() => { events.push('mesh'); });
+    const generate = vi.fn((x: number, z: number) => {
+      events.push('generate:' + x + ',' + z);
+    });
+    const mesh = vi.fn(() => {
+      events.push('mesh');
+    });
     primeWorldChunks(0, 0, generate, mesh);
     expect(events.at(-1)).toBe('mesh');
     expect(generate).toHaveBeenCalledTimes(9);

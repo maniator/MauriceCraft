@@ -1,5 +1,9 @@
 /** Allocation-free ray versus actor-box targeting. */
-export interface WorldPoint { x: number; y: number; z: number }
+export interface WorldPoint {
+  x: number;
+  y: number;
+  z: number;
+}
 export interface TargetableActor extends WorldPoint {
   r: number;
   h: number;

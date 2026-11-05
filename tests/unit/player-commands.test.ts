@@ -1,39 +1,94 @@
 import { describe, expect, it } from 'vitest';
-import { registerPlayerCommands, type PlayerCommandState } from '../../src/game/commands/player-commands';
+import {
+  registerPlayerCommands,
+  type PlayerCommandState,
+} from '../../src/game/commands/player-commands';
 import type { RegisterCommand } from '../../src/game/commands/world-commands';
 
 function fixture() {
   const actions = new Map<string, (args: string[]) => string | void>();
   const register: RegisterCommand = (aliases, _usage, _description, run) => {
-    aliases.forEach(alias => actions.set(alias, run));
+    aliases.forEach((alias) => actions.set(alias, run));
   };
   const state: PlayerCommandState = {
-    tod: 0.22, isNight: false, weatherDuration: 300,
-    mode: 'creative', selected: 0, health: 5, sinceHurt: 0,
-    hunger: 2, satiety: 1, exhaustion: 3,
+    tod: 0.22,
+    isNight: false,
+    weatherDuration: 300,
+    mode: 'creative',
+    selected: 0,
+    health: 5,
+    sinceHurt: 0,
+    hunger: 2,
+    satiety: 1,
+    exhaustion: 3,
   };
-  const player = { x: 8, y: 16, z: 8, yaw: 0, vx: 3, vy: 3, vz: 3, fly: false, fallStart: 30 as number | null };
+  const player = {
+    x: 8,
+    y: 16,
+    z: 8,
+    yaw: 0,
+    vx: 3,
+    vy: 3,
+    vz: 3,
+    fly: false,
+    fallStart: 30 as number | null,
+  };
   const inventory: Record<number, number> = {};
   const hotbar = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const chosen: string[] = [];
   let updates = 0;
   registerPlayerCommands({
-    register, state, player, maxHeight: 48, maxHealth: 20, inventory, hotbar,
+    register,
+    state,
+    player,
+    maxHeight: 48,
+    maxHealth: 20,
+    inventory,
+    hotbar,
     names: { 3: 'Stone', 19: 'Bed', 101: 'Raw Beef' },
-    labels: { creative: 'Creative', survival: 'Survival', adventure: 'Adventure', spectator: 'Spectator' },
-    difficulties: { peaceful: { label: 'Peaceful' }, easy: { label: 'Easy' }, normal: { label: 'Normal' }, hard: { label: 'Hard' } },
+    labels: {
+      creative: 'Creative',
+      survival: 'Survival',
+      adventure: 'Adventure',
+      spectator: 'Spectator',
+    },
+    difficulties: {
+      peaceful: { label: 'Peaceful' },
+      easy: { label: 'Easy' },
+      normal: { label: 'Normal' },
+      hard: { label: 'Hard' },
+    },
     weatherLabels: { clear: 'Clear', rain: 'Rain', storm: 'Storm' },
-    findItem: name => name === 'beef' ? 101 : 3,
+    findItem: (name) => (name === 'beef' ? 101 : 3),
     itemMap: () => ({ stone: 3, beef: 101 }),
-    setWeather: weather => { chosen.push('weather:' + weather); },
-    setMode: mode => { state.mode = mode; chosen.push('mode:' + mode); },
-    setDifficulty: difficulty => { chosen.push('difficulty:' + difficulty); },
-    refreshWorlds: async () => undefined, saveWorld: async () => undefined,
-    updateHotbar: () => { updates++; },
-    updateHearts: () => { updates++; }, renderFood: () => { updates++; },
-    toggleFly: () => { player.fly = !player.fly; },
-    ensureAround: () => undefined, topBlockY: () => 19,
-    collides: () => false, getSeed: () => 321,
+    setWeather: (weather) => {
+      chosen.push('weather:' + weather);
+    },
+    setMode: (mode) => {
+      state.mode = mode;
+      chosen.push('mode:' + mode);
+    },
+    setDifficulty: (difficulty) => {
+      chosen.push('difficulty:' + difficulty);
+    },
+    refreshWorlds: async () => undefined,
+    saveWorld: async () => undefined,
+    updateHotbar: () => {
+      updates++;
+    },
+    updateHearts: () => {
+      updates++;
+    },
+    renderFood: () => {
+      updates++;
+    },
+    toggleFly: () => {
+      player.fly = !player.fly;
+    },
+    ensureAround: () => undefined,
+    topBlockY: () => 19,
+    collides: () => false,
+    getSeed: () => 321,
   });
   const run = (command: string, args: string[] = []) => {
     const action = actions.get(command);
@@ -78,7 +133,7 @@ describe('player and game commands', () => {
     expect(game.hotbar).toEqual([101, 2, 3, 4, 5, 6, 7, 8, 9]);
     game.hotbar[5] = 0;
     game.run('give', ['beef', '1']);
-    expect(game.hotbar.filter(item => item === 101)).toHaveLength(1);
+    expect(game.hotbar.filter((item) => item === 101)).toHaveLength(1);
     expect(game.hotbar[5]).toBe(0);
     expect(game.state.selected).toBe(0);
     game.run('clear');
@@ -113,7 +168,15 @@ describe('player and game commands', () => {
   it('teleports, resets motion and reports world position and seed', () => {
     const game = fixture();
     expect(game.run('tp', ['~2', '12', '~3'])).toContain('10.0 12.0 11.0');
-    expect(game.player).toMatchObject({ x: 10, y: 12, z: 11, vx: 0, vy: 0, vz: 0, fallStart: null });
+    expect(game.player).toMatchObject({
+      x: 10,
+      y: 12,
+      z: 11,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      fallStart: null,
+    });
     expect(game.run('pos')).toContain('10.0');
     expect(game.run('seed')).toBe('Seed: 321');
     expect(game.run('teleport', ['spawn'])).toContain('0.5');

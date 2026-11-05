@@ -3,15 +3,15 @@ import { test, expect } from '@playwright/test';
 // Surface startup exceptions in GitHub Actions logs before the test times out.
 // This is particularly useful when headless Chromium cannot start WebGL.
 test.beforeEach(async ({ page }) => {
-  page.on('pageerror', err => console.error(`[browser uncaught] ${err.stack ?? err.message}`));
-  page.on('console', msg => {
+  page.on('pageerror', (err) => console.error(`[browser uncaught] ${err.stack ?? err.message}`));
+  page.on('console', (msg) => {
     if (msg.type() === 'error') console.error(`[browser console] ${msg.text()}`);
   });
 });
 
 test('production build loads the game menu without startup exceptions', async ({ page }) => {
   const pageErrors: string[] = [];
-  page.on('pageerror', err => pageErrors.push(err.message));
+  page.on('pageerror', (err) => pageErrors.push(err.message));
   await page.goto('./');
   await expect(page.getByRole('heading', { name: 'MauriceCraft' })).toBeVisible();
   await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
@@ -19,9 +19,11 @@ test('production build loads the game menu without startup exceptions', async ({
   expect(pageErrors).toEqual([]);
 });
 
-test('new v7 worlds retain their full 64-bit seeds and weather across reloads', async ({ page }) => {
+test('new v7 worlds retain their full 64-bit seeds and weather across reloads', async ({
+  page,
+}) => {
   const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('./');
   await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
   await page.locator('#newworld').click();
@@ -30,23 +32,45 @@ test('new v7 worlds retain their full 64-bit seeds and weather across reloads', 
   const cloudy = page.locator('.wmode[data-weather="cloudy"]');
   await cloudy.click();
   await expect(cloudy).toHaveClass(/on/);
-  const readWorlds = () => page.evaluate(async () => {
-    const database = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open('blockcraft-worlds');
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    try {
-      return await new Promise<Array<{ id: string; seed: number; seed64?: string; generatorVersion?: number; weather?: { w: string } }>>((resolve, reject) => {
-        const request = database.transaction('worlds', 'readonly').objectStore('worlds').getAll();
-        request.onsuccess = () => resolve(request.result as Array<{ id: string; seed: number; seed64?: string; generatorVersion?: number; weather?: { w: string } }>);
+  const readWorlds = () =>
+    page.evaluate(async () => {
+      const database = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open('blockcraft-worlds');
+        request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
-    } finally { database.close(); }
-  });
-  await expect.poll(async () => (await readWorlds()).filter(w => w.weather?.w === 'cloudy').length, {
-    timeout: 15_000,
-  }).toBe(1);
+      try {
+        return await new Promise<
+          Array<{
+            id: string;
+            seed: number;
+            seed64?: string;
+            generatorVersion?: number;
+            weather?: { w: string };
+          }>
+        >((resolve, reject) => {
+          const request = database.transaction('worlds', 'readonly').objectStore('worlds').getAll();
+          request.onsuccess = () =>
+            resolve(
+              request.result as Array<{
+                id: string;
+                seed: number;
+                seed64?: string;
+                generatorVersion?: number;
+                weather?: { w: string };
+              }>,
+            );
+          request.onerror = () => reject(request.error);
+        });
+      } finally {
+        database.close();
+      }
+    });
+  await expect
+    .poll(async () => (await readWorlds()).filter((w) => w.weather?.w === 'cloudy').length, {
+      timeout: 15_000,
+    })
+    .toBe(1);
   const before = await readWorlds();
   expect(before).toHaveLength(2);
   for (const world of before) {
@@ -56,11 +80,12 @@ test('new v7 worlds retain their full 64-bit seeds and weather across reloads', 
     expect(world.seed).toBeGreaterThanOrEqual(0);
     expect(world.seed).toBeLessThan(0x100000000);
   }
-  expect(new Set(before.map(world => world.seed64)).size).toBe(2);
+  expect(new Set(before.map((world) => world.seed64)).size).toBe(2);
   await page.reload();
   await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
-  expect((await readWorlds()).map(world => [world.id, world.seed64]).sort())
-    .toEqual(before.map(world => [world.id, world.seed64]).sort());
+  expect((await readWorlds()).map((world) => [world.id, world.seed64]).sort()).toEqual(
+    before.map((world) => [world.id, world.seed64]).sort(),
+  );
   expect(errors).toEqual([]);
 });
 
@@ -84,7 +109,10 @@ test('new worlds accept a specified seed and preserve it across reloads', async 
   await page.locator('#worldSeed').fill('18446744073709551616');
   await page.locator('#newworld').click();
   await expect(page.locator('.world')).toHaveCount(3);
-  await expect(page.locator('#worldSeed')).toHaveJSProperty('validationMessage', 'Numeric seeds must fit in unsigned or signed 64-bit range.');
+  await expect(page.locator('#worldSeed')).toHaveJSProperty(
+    'validationMessage',
+    'Numeric seeds must fit in unsigned or signed 64-bit range.',
+  );
 });
 
 test('phrase seeds are stored and displayed after reload', async ({ page }) => {
@@ -123,7 +151,7 @@ test('desktop and mobile can start playing', async ({ page, isMobile }) => {
 
 test('the in-game portal command builds a frame without exceptions', async ({ page }) => {
   const errors: string[] = [];
-  page.on('pageerror', err => errors.push(err.message));
+  page.on('pageerror', (err) => errors.push(err.message));
   await page.goto('./');
   await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
   await page.locator('#play').click();
@@ -142,31 +170,40 @@ test('the in-game portal command builds a frame without exceptions', async ({ pa
   await expect(page.locator('#chatlog')).toContainText('Built an obsidian Nether portal frame');
 
   // Validate the actual IndexedDB metadata, not just a success message.
-  await expect.poll(async () => page.evaluate(async () => {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open('blockcraft-worlds');
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    try {
-      const worlds = await new Promise<unknown[]>((resolve, reject) => {
-        const request = db.transaction('worlds', 'readonly').objectStore('worlds').getAll();
-        request.onsuccess = () => resolve(request.result as unknown[]);
-        request.onerror = () => reject(request.error);
-      });
-      return worlds.some(world => {
-        if (!world || typeof world !== 'object') return false;
-        const portals = (world as { portals?: unknown }).portals;
-        return Array.isArray(portals) && portals.some((entry: unknown) => {
-          if (!entry || typeof entry !== 'object') return false;
-          const portal = entry as { dimension?: unknown; axis?: unknown };
-          return portal.dimension === 'overworld' && portal.axis === 'x';
-        });
-      });
-    } finally {
-      db.close();
-    }
-  }), { timeout: 15_000 }).toBe(true);
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(async () => {
+          const db = await new Promise<IDBDatabase>((resolve, reject) => {
+            const request = indexedDB.open('blockcraft-worlds');
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+          try {
+            const worlds = await new Promise<unknown[]>((resolve, reject) => {
+              const request = db.transaction('worlds', 'readonly').objectStore('worlds').getAll();
+              request.onsuccess = () => resolve(request.result as unknown[]);
+              request.onerror = () => reject(request.error);
+            });
+            return worlds.some((world) => {
+              if (!world || typeof world !== 'object') return false;
+              const portals = (world as { portals?: unknown }).portals;
+              return (
+                Array.isArray(portals) &&
+                portals.some((entry: unknown) => {
+                  if (!entry || typeof entry !== 'object') return false;
+                  const portal = entry as { dimension?: unknown; axis?: unknown };
+                  return portal.dimension === 'overworld' && portal.axis === 'x';
+                })
+              );
+            });
+          } finally {
+            db.close();
+          }
+        }),
+      { timeout: 15_000 },
+    )
+    .toBe(true);
 
   // A reload must still be able to open the old database and the saved world.
   await page.reload();
@@ -174,11 +211,9 @@ test('the in-game portal command builds a frame without exceptions', async ({ pa
   expect(errors).toEqual([]);
 });
 
-
-
 test('time-of-day survives the weather refactor and can be changed in game', async ({ page }) => {
   const runtimeErrors: string[] = [];
-  page.on('pageerror', error => runtimeErrors.push(error.message));
+  page.on('pageerror', (error) => runtimeErrors.push(error.message));
   await page.goto('./');
   // Bootstrap must have initialized, not merely rendered its static Loading button.
   await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
@@ -208,19 +243,27 @@ test('time-of-day survives the weather refactor and can be changed in game', asy
 
 test('game canvas remains sized to the viewport after resizing', async ({ page }) => {
   const errors: string[] = [];
-  page.on('pageerror', err => errors.push(err.message));
+  page.on('pageerror', (err) => errors.push(err.message));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('./');
   await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
   const view = page.locator('#view');
   await expect(view).toBeVisible();
   await page.setViewportSize({ width: 844, height: 390 });
-  await expect.poll(async () => view.evaluate(canvas => {
-    const element = canvas as HTMLCanvasElement;
-    const bounds = element.getBoundingClientRect();
-    return Math.abs(bounds.width - window.innerWidth) < 2 &&
-      Math.abs(bounds.height - window.innerHeight) < 2 && element.width > 0 && element.height > 0;
-  })).toBe(true);
+  await expect
+    .poll(async () =>
+      view.evaluate((canvas) => {
+        const element = canvas as HTMLCanvasElement;
+        const bounds = element.getBoundingClientRect();
+        return (
+          Math.abs(bounds.width - window.innerWidth) < 2 &&
+          Math.abs(bounds.height - window.innerHeight) < 2 &&
+          element.width > 0 &&
+          element.height > 0
+        );
+      }),
+    )
+    .toBe(true);
   expect(errors).toEqual([]);
 });
 
@@ -241,7 +284,9 @@ test('a device without WebGL shows a safe retry rather than Loading forever', as
   await expect(page.locator('#overlay')).toBeVisible();
 });
 
-test('unavailable WebGL reveals safe startup recovery instead of infinite Loading', async ({ page }) => {
+test('unavailable WebGL reveals safe startup recovery instead of infinite Loading', async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (type: string, ...rest: unknown[]) {
@@ -255,9 +300,12 @@ test('unavailable WebGL reveals safe startup recovery instead of infinite Loadin
   await expect(page.locator('#sub')).toContainText('saved worlds');
 });
 
-test('the desktop and touch menu controls pause and preserve the active world', async ({ page, isMobile }) => {
+test('the desktop and touch menu controls pause and preserve the active world', async ({
+  page,
+  isMobile,
+}) => {
   const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('./');
   await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
   await page.locator('#play').click();
@@ -276,8 +324,9 @@ test('the desktop and touch menu controls pause and preserve the active world', 
   expect(errors).toEqual([]);
 });
 
-
-test('raid wave status, menu control and gameplay hints never cover one another', async ({ page }) => {
+test('raid wave status, menu control and gameplay hints never cover one another', async ({
+  page,
+}) => {
   await page.goto('./');
   await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
   await page.locator('#play').click();
@@ -286,11 +335,11 @@ test('raid wave status, menu control and gameplay hints never cover one another'
   // Gameplay updates the raid and hint display every frame. Force both visible
   // at the stylesheet level so this tests layout rather than raid timing.
   await page.addStyleTag({ content: '#raid, #hint { display: block !important; }' });
-  await page.locator('#raid').evaluate(element => {
+  await page.locator('#raid').evaluate((element) => {
     element.textContent = 'Raid: Wave 3';
     element.style.display = 'block';
   });
-  await page.locator('#hint').evaluate(element => {
+  await page.locator('#hint').evaluate((element) => {
     element.textContent = 'A gameplay hint';
     element.style.display = 'block';
   });

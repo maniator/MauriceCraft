@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { nextWorldName, nextWorldSeed, nextSavedWorldSeed64, parseWorldSeedInput, CURRENT_WORLD_GENERATOR_VERSION, timeAgo } from '../../src/game/session/world-session';
+import {
+  nextWorldName,
+  nextWorldSeed,
+  nextSavedWorldSeed64,
+  parseWorldSeedInput,
+  CURRENT_WORLD_GENERATOR_VERSION,
+  timeAgo,
+} from '../../src/game/session/world-session';
 import type { WorldRecord } from '../../src/game/storage/world-storage';
 import { deriveWorldSeed32 } from '../../src/game/world/seed64';
 
@@ -9,8 +16,7 @@ function world(name: string): WorldRecord {
 
 describe('saved world session naming and history', () => {
   it('chooses the next numbered world without reusing deleted names', () => {
-    expect(nextWorldName([world('World 2'), world('World 10'), world('Village')]))
-      .toBe('World 11');
+    expect(nextWorldName([world('World 2'), world('World 10'), world('Village')])).toBe('World 11');
     expect(nextWorldName([world('My favorite world')])).toBe('World 1');
     expect(nextWorldName([])).toBe('World 1');
   });
@@ -25,9 +31,17 @@ describe('saved world session naming and history', () => {
 
   it('creates unique canonical uint64 seeds even when legacy worlds use 32-bit seeds', () => {
     const old: WorldRecord = { ...world('old'), seed: 4294967295, generatorVersion: 4 };
-    const modern: WorldRecord = { ...world('modern'), seed: 5,
-      seed64: '4294967296', generatorVersion: 5 };
-    const candidates = [[0, 0xffffffff], [1, 0], [0x12345678, 0x9abcdef0]] as const;
+    const modern: WorldRecord = {
+      ...world('modern'),
+      seed: 5,
+      seed64: '4294967296',
+      generatorVersion: 5,
+    };
+    const candidates = [
+      [0, 0xffffffff],
+      [1, 0],
+      [0x12345678, 0x9abcdef0],
+    ] as const;
     let index = 0;
     const seed64 = nextSavedWorldSeed64([old, modern], () => candidates[index++]);
     expect(seed64).toBe('1311768467463790320');

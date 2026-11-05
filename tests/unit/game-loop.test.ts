@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createFrameLoop, startFrameLoop, type FrameLoopDependencies } from '../../src/game/runtime/frame-loop';
+import {
+  createFrameLoop,
+  startFrameLoop,
+  type FrameLoopDependencies,
+} from '../../src/game/runtime/frame-loop';
 
 function harness() {
   const calls: string[] = [];
@@ -8,18 +12,47 @@ function harness() {
   const deps: FrameLoopDependencies = {
     isReady: () => ready,
     isPlaying: () => playing,
-    streamChunks: () => { calls.push('stream'); },
-    update: (dt, now) => { calls.push('update:' + dt.toFixed(2) + ':' + now); },
-    updateIdleCamera: () => { calls.push('idle'); },
-    daylight: () => { calls.push('daylight'); },
-    updateWeather: () => { calls.push('weather'); },
-    updateRain: () => { calls.push('rain'); },
-    updateRainSound: () => { calls.push('rainSound'); },
-    updateRelics: () => { calls.push('relics'); },
-    updateInfo: fps => { calls.push('hud:' + fps); },
-    render: () => { calls.push('render'); },
+    streamChunks: () => {
+      calls.push('stream');
+    },
+    update: (dt, now) => {
+      calls.push('update:' + dt.toFixed(2) + ':' + now);
+    },
+    updateIdleCamera: () => {
+      calls.push('idle');
+    },
+    daylight: () => {
+      calls.push('daylight');
+    },
+    updateWeather: () => {
+      calls.push('weather');
+    },
+    updateRain: () => {
+      calls.push('rain');
+    },
+    updateRainSound: () => {
+      calls.push('rainSound');
+    },
+    updateRelics: () => {
+      calls.push('relics');
+    },
+    updateInfo: (fps) => {
+      calls.push('hud:' + fps);
+    },
+    render: () => {
+      calls.push('render');
+    },
   };
-  return { calls, deps, setReady: (value: boolean) => { ready = value; }, setPlaying: (value: boolean) => { playing = value; } };
+  return {
+    calls,
+    deps,
+    setReady: (value: boolean) => {
+      ready = value;
+    },
+    setPlaying: (value: boolean) => {
+      playing = value;
+    },
+  };
 }
 
 describe('game runtime frame loop', () => {
@@ -33,7 +66,16 @@ describe('game runtime frame loop', () => {
     const h = harness();
     h.setReady(true);
     createFrameLoop(h.deps, 0)(100);
-    expect(h.calls).toEqual(['stream', 'idle', 'daylight', 'weather', 'rain', 'rainSound', 'relics', 'render']);
+    expect(h.calls).toEqual([
+      'stream',
+      'idle',
+      'daylight',
+      'weather',
+      'rain',
+      'rainSound',
+      'relics',
+      'render',
+    ]);
   });
 
   it('updates simulation before weather, relics and rendering when playing', () => {
@@ -41,7 +83,16 @@ describe('game runtime frame loop', () => {
     h.setReady(true);
     h.setPlaying(true);
     createFrameLoop(h.deps, 0)(100);
-    expect(h.calls).toEqual(['stream', 'update:0.10:100', 'daylight', 'weather', 'rain', 'rainSound', 'relics', 'render']);
+    expect(h.calls).toEqual([
+      'stream',
+      'update:0.10:100',
+      'daylight',
+      'weather',
+      'rain',
+      'rainSound',
+      'relics',
+      'render',
+    ]);
   });
 
   it('retains HUD throttling and the sampled FPS after a second of frames', () => {
@@ -52,7 +103,7 @@ describe('game runtime frame loop', () => {
     frame(100);
     frame(250);
     frame(1100);
-    expect(h.calls.filter(call => call.startsWith('hud:'))).toEqual(['hud:0', 'hud:3']);
+    expect(h.calls.filter((call) => call.startsWith('hud:'))).toEqual(['hud:0', 'hud:3']);
   });
 
   it('resumes simulation from a paused frame without reinitializing the loop', () => {
@@ -64,7 +115,7 @@ describe('game runtime frame loop', () => {
     frame(200);
     expect(h.calls).toContain('idle');
     expect(h.calls).toContain('update:0.10:200');
-    expect(h.calls.filter(call => call === 'render')).toHaveLength(2);
+    expect(h.calls.filter((call) => call === 'render')).toHaveLength(2);
   });
 
   it('schedules one animation frame at a time', () => {
