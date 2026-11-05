@@ -114,7 +114,8 @@ export function createItemDropSystem(deps: ItemDropDependencies) {
         !['overworld', 'nether', 'end'].includes(d.dimension)) continue;
       spawn(d.id, d.count, d.x, d.y, d.z);
       drops[drops.length - 1].dimension = d.dimension;
-      drops[drops.length - 1].age = Math.max(0, Math.min(EXPIRE_AFTER - 1, d.age || 0));
+      // Retain fractional lifetime so nearly expired drops expire promptly after loading.
+      drops[drops.length - 1].age = Math.max(0, Math.min(EXPIRE_AFTER, d.age || 0));
     }
   }
   function clear(): void {
