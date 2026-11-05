@@ -16,6 +16,7 @@ export interface HudDependencies {
   getHunger: () => number;
   getHealth: () => number;
   canInteract: () => boolean;
+  isThirdPerson: () => boolean;
   maxHealth: number;
 }
 
@@ -153,7 +154,7 @@ export function createHud(deps: HudDependencies) {
     const heldId = deps.hotbar[selected] || 0;
     const holding = heldId > 0 && (!survival || deps.inventory[heldId] > 0);
     // The empty hand is still visible so players can see themselves punch or mine.
-    heldHand.hidden = deps.getMode() === 'spectator';
+    heldHand.hidden = deps.getMode() === 'spectator' || deps.isThirdPerson();
     heldCanvas.hidden = !holding;
     heldImageContext.clearRect(0, 0, 96, 96);
     if (holding) {

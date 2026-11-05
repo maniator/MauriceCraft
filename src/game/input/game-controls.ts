@@ -47,6 +47,7 @@ export interface InputControlDependencies {
   openInventory: () => void;
   openCommand: (command: string) => void;
   pause: () => void;
+  toggleView: () => void;
 }
 
 export function scrollHotbar(currentSlot: number, down: boolean): number {
@@ -122,6 +123,14 @@ export function createInputControls(deps: InputControlDependencies) {
     }
     if (event.code === 'Space' && !event.repeat) doubleTapFly();
     if (event.code === 'KeyF' && !event.repeat) toggleFly();
+    if (
+      event.code === 'KeyV' &&
+      !event.repeat &&
+      !(event.target instanceof HTMLInputElement) &&
+      !(event.target instanceof HTMLTextAreaElement)
+    ) {
+      deps.toggleView();
+    }
     if (event.code === 'KeyE' && !event.repeat) state.pulsePlace = true;
     if (event.code === 'KeyQ' && !event.repeat) state.pulseMine = true;
     if (event.code === 'KeyP' && state.fallback) deps.pause();
@@ -286,6 +295,9 @@ export function createInputControls(deps: InputControlDependencies) {
   );
   inventoryButton.addEventListener('click', () => {
     if (!isTouch && state.playing) deps.openInventory();
+  });
+  document.getElementById('btnView')?.addEventListener('click', () => {
+    if (state.playing) deps.toggleView();
   });
   commandButton.addEventListener(
     'touchstart',
