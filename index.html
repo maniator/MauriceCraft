@@ -104,6 +104,11 @@
     </div>
     <div class="invsub">Worlds</div>
     <div class="worlds" id="worlds"></div>
+    <div class="row world-actions">
+      <button class="btn ghost small" id="saveWorld" type="button" disabled>Save World</button>
+      <button class="btn ghost small" id="importWorld" type="button" disabled>Import World</button>
+      <input id="importWorldFile" type="file" accept=".mcraft,application/octet-stream" hidden aria-label="Choose MauriceCraft world file">
+    </div>
     <label class="world-seed-label" for="worldSeed">New world seed (optional)</label>
     <input id="worldSeed" type="text" autocomplete="off"
       spellcheck="false" placeholder="e.g. My Epic World, 677, or 123456789"

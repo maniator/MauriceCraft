@@ -152,3 +152,76 @@ test('survival bag hides zero-count items and recipe book reveals partial recipe
   await expect(page.locator('#craftBook')).not.toContainText('Cooked Meat');
   expect(errors).toEqual([]);
 });
+
+test('mobile and desktop can return to menu and confirm a manual save', async ({ page, isMobile }) => {
+  await startWorld(page);
+  const menu = page.getByRole('button', { name: 'Return to main menu' });
+  await expect(menu).toBeVisible();
+  if (isMobile) await menu.click();
+  else await page.keyboard.press('Escape'); // Releases desktop pointer lock and pauses.
+  await expect(page.locator('#overlay')).toBeVisible();
+  await expect(page.locator('#overlay')).toBeVisible();
+  await page.locator('#saveWorld').click();
+  await expect(page.locator('#sub')).toContainText('World saved successfully.');
+  await expect(page.locator('#play')).toBeEnabled();
+  await page.locator('#play').click();
+  await expect(page.locator('#overlay')).toBeHidden();
+  await expect(menu).toBeVisible();
+});
+
+test('binary world export/import preserves changes and never overwrites an existing world', async ({ page, isMobile }) => {
+  await startWorld(page);
+  await runCommand(page, '/setblock 0 45 0 stone');
+  await expect(page.locator('#chatlog')).toContainText('Set 0 45 0 to Stone');
+  if (isMobile) await page.locator('#btnMenu').click();
+  else await page.keyboard.press('Escape');
+  await expect(page.locator('#overlay')).toBeVisible();
+  await page.locator('#saveWorld').click();
+  await expect(page.locator('#sub')).toContainText('World saved successfully.');
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('.world.on .wexport').click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.mcraft$/);
+  const filePath = await download.path();
+  if (!filePath) throw new Error('Missing downloaded world file');
+  await page.locator('#importWorldFile').setInputFiles(filePath);
+  await expect(page.locator('#sub')).toContainText('Imported ');
+  await expect(page.locator('.world')).toHaveCount(2);
+
+  const results = await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('blockcraft-worlds');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    try {
+      const worlds = await new Promise<Array<{ id: string; seed: number; name: string }>>((resolve, reject) => {
+        const request = db.transaction('worlds', 'readonly').objectStore('worlds').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const blocks: number[] = [];
+      for (const world of worlds) {
+        const chunk = await new Promise<{ data: Uint8Array } | undefined>((resolve, reject) => {
+          const request = db.transaction('chunks', 'readonly').objectStore('chunks').get(world.id + ':0,0');
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+        blocks.push(chunk?.data[(45 * 16) * 16] ?? -1);
+      }
+      return { worlds, blocks };
+    } finally {
+      db.close();
+    }
+  });
+  expect(new Set(results.worlds.map(w => w.id)).size).toBe(2);
+  expect(new Set(results.worlds.map(w => w.seed)).size).toBe(1);
+  expect(results.blocks).toEqual([3, 3]);
+
+  // A second import must create a third independent ID, not replace either.
+  await page.locator('#importWorldFile').setInputFiles(filePath);
+  await expect(page.locator('.world')).toHaveCount(3);
+  await page.reload();
+  await expect(page.locator('.world')).toHaveCount(3);
+});

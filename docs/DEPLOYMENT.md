@@ -18,3 +18,7 @@ The site must remain at the same origin/path for existing browser saves to be re
 `.github/workflows/ci.yml` checks every change with ESLint, strict TypeScript, unit coverage, a production build, and desktop/mobile Playwright smoke tests. When the **CI** workflow succeeds for a push to `main`, `.github/workflows/pages.yml` builds and deploys **that exact tested commit** using `npm ci` and the GitHub Pages `/MauriceCraft/` base path.
 
 A failed or cancelled CI run does **not** publish a new version. The prior Pages deployment remains available. During a series of small commits, GitHub may cancel obsolete CI runs to save minutes; the latest successful run is the one that gets deployed. Pull-request test runs never publish a site.
+
+## Moving to a custom domain
+
+An origin change creates a separate IndexedDB database. Before changing domains, export each world to a `.mcraft` file from the old site and import it on the new one. See [world transfer](WORLD_FILES.md).

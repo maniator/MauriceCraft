@@ -25,6 +25,10 @@ New worlds use generator v3: 11 climate-driven biomes (plains, forest, flower me
 
 **Existing saves are preserved:** pre-biome worlds stay on generator v1; earlier biome saves stay on v2, including in unexplored chunks. Create a **New World** to see the new biomes and natural features. Do not rewrite an old world's generator version unless you deliberately accept terrain discontinuities.
 
+## Save, export, and import worlds
+
+Worlds autosave every **15 seconds**, when you pause, and when the app is hidden or closed. The menu now has a **Save World** button for a confirmed manual save. During gameplay tap/click **Menu** to return safely to the world menu on desktop or mobile. Every saved world has an **Export** button for a versioned binary `.mcraft` file; **Import World** accepts those files on any device. Imported worlds always receive unique IDs and cannot overwrite your existing saves. See the [world file format and transfer guide](docs/WORLD_FILES.md).
+
 ## Saved worlds
 
 Saves live **only in your current browser** in IndexedDB. They are not stored in this GitHub repository or synchronized across devices. Clearing site storage, switching browser profiles/devices, or changing the website origin can make saves inaccessible. The database name and saved data format are intentionally unchanged in this refactor.

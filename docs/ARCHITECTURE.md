@@ -16,6 +16,8 @@ MauriceCraft is a plain TypeScript, Three.js and Vite game. You do **not** need 
 | Weather, sky, meshes, active simulation and frame scheduling | `src/game/rendering/`, `src/game/runtime/game-tick.ts`, `frame-loop.ts`, `game-session-controls.ts` |
 | Sounds and music | `src/game/audio/` |
 | World saving, restoration, storage and autosaves | `src/game/session/gameplay-world-session.ts`, `world-restore.ts`, `world-persistence.ts`, `world-session.ts`; `src/game/storage/world-storage.ts` |
+| Binary world export/import | `src/game/storage/world-archive.ts`, `src/game/session/world-transfer.ts` |
+| Main-menu navigation | `src/game/runtime/game-session-controls.ts`, `index.html` |
 | Webpage and phone layout | `index.html`, `src/styles/global.css` |
 
 `src/main.ts` imports the CSS, installs startup error monitoring, dynamically imports `src/game/bootstrap.ts`, and explicitly calls `startGameApplication()`. Importing the game no longer starts an IIFE or starts the animation loop by itself. `bootstrap.ts` is the integration/composition boundary, **not** the owner of new gameplay rules. Its state facade is shared with typed subsystems rather than copied into each component.
@@ -65,6 +67,10 @@ The renderer and initialization can fail on some mobile devices. An error must s
 ## Versioned world generation
 
 Worlds made before the biome upgrade lack `generatorVersion` and use v1. Earlier biome saves remain at **v2**, while new worlds store **`generatorVersion: 3`** and full-range 32-bit seeds. The v2 biome maps, chunk generator, tree decorator, and lake/cascade planner are in `biomes.ts`, `chunk-generator-v2.ts`, `tree-decorator.ts` and `natural-features.ts`. V3 adds deterministic cave tunnels and ravines (`cave-carver.ts`), actual volcano cones and lava craters (`volcanoes.ts`), different tree palettes, bounded water/lava flow (`fluid-simulator.ts`, `fluid-blocks.ts`) and authentic natural-feature labels (`world-landmarks.ts`). They are all coordinate/seed driven. Fluid levels are stored as distinct block IDs without renumbering source water/lava. Legacy worlds keep their original generation; any future terrain changes must be version-gated, with unit and browser save-load tests.
+
+## Exported world files
+
+The `.mcraft` format is a versioned, little-endian binary container with UTF-8 world metadata, raw Uint8Array chunk data for Overworld/Nether/End and a CRC32 checksum. Import validates and atomically inserts a remapped world ID and chunk keys, preserving the original generatorVersion without replacing existing saves. See [world transfer](WORLD_FILES.md).
 
 ## Never break world saves
 

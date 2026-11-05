@@ -236,3 +236,13 @@
   #btnJump, #btnPlace { width: 56px; height: 56px; }
   #btnPlace { right: 84px; }
 }
+
+/* World save/import/export actions. Menu placement remains raid-safe. */
+.world-actions { margin: 5px 0 10px; }
+#importWorldFile[hidden] { display: none; }
+.wexport { flex: 0 0 auto; font: 14px var(--font); padding: 0 8px; cursor: pointer;
+  color: var(--text); background: transparent; border: 2px solid var(--panel-edge); }
+.wexport:hover { border-color: var(--accent); }
+.wexport:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.wexport:disabled { opacity: .5; }
+@media (max-width: 600px) { .wexport, .wdel { font-size: 12px; padding-inline: 6px; } }

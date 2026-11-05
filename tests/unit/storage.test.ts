@@ -50,6 +50,23 @@ describe('Dexie storage and cache', () => {
     expect(await current.getWorld('w1')).toMatchObject({ id: 'w1' });
   });
 
+  it('imports a world atomically without overwriting an existing ID', async () => {
+    current = await openWorldStorage(name());
+    await current.saveWorld(world('w1'), [chunk('w1')]);
+    await expect(current.importWorld({ ...world('w1'), name: 'Imported' }, [chunk('w1')]))
+      .rejects.toThrow();
+    expect((await current.getWorld('w1'))?.name).toBe('Practice world');
+    expect((await current.getChunks('w1'))).toEqual([chunk('w1')]);
+
+    const invalid = { ...chunk('new'), k: undefined } as unknown as ChunkRecord;
+    await expect(current.importWorld(world('new'), [invalid])).rejects.toThrow();
+    expect(await current.getWorld('new')).toBeUndefined();
+    expect(await current.getChunks('new')).toEqual([]);
+
+    await current.importWorld(world('new'), [chunk('new')]);
+    expect(await current.getWorld('new')).toMatchObject({ id: 'new' });
+  });
+
   it('removes only the chosen world and its chunks', async () => {
     current = await openWorldStorage(name());
     await current.saveWorld(world('w1'), [chunk('w1')]);
