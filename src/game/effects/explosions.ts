@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { bg, bm, part } from '../entities/mob-models';
+import { isTorchBlock } from '../world/torch-attachments';
 
 interface BlastMob {
   x: number; y: number; z: number; h: number; r: number;
@@ -143,7 +144,7 @@ export function createExplosionSystem(deps: ExplosionDependencies) {
       }
       const tough = (BREAK_TIME[b] || 1) >= 2 ? 0.75 : 1;
       if (d / rad > tough * (0.7 + Math.random() * 0.3)) continue;
-      setBlock(bx, by, bz, 0); queueRebuild(bx, bz, b === TORCH);
+      setBlock(bx, by, bz, 0); queueRebuild(bx, bz, isTorchBlock(b, TORCH));
     }
     flushRebuilds();
     const reach = rad * 2;
