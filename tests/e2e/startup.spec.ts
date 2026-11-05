@@ -252,3 +252,52 @@ test('unavailable WebGL reveals safe startup recovery instead of infinite Loadin
   await expect(page.locator('#play')).toBeEnabled();
   await expect(page.locator('#sub')).toContainText('saved worlds');
 });
+
+test('the desktop and touch menu controls pause and preserve the active world', async ({ page, isMobile }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('./');
+  await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
+  await page.locator('#play').click();
+  await expect(page.locator('#overlay')).toBeHidden();
+  await expect(page.locator('#btnMenu')).toBeVisible();
+
+  if (isMobile) await page.locator('#btnMenu').tap();
+  else await page.keyboard.press('Escape');
+
+  await expect(page.locator('#overlay')).toBeVisible();
+  await expect(page.locator('#play')).toHaveText('Resume');
+  await expect(page.locator('.world')).toHaveCount(1);
+  await expect(page.locator('#saveNote')).toContainText('save automatically');
+  await page.locator('#play').click();
+  await expect(page.locator('#overlay')).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+
+test('raid wave status, menu control and gameplay hints never cover one another', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
+  await page.locator('#play').click();
+  const menu = page.locator('#btnMenu');
+  await expect(menu).toBeVisible();
+  // Gameplay updates the raid and hint display every frame. Force both visible
+  // at the stylesheet level so this tests layout rather than raid timing.
+  await page.addStyleTag({ content: '#raid, #hint { display: block !important; }' });
+  await page.locator('#raid').evaluate(element => {
+    element.textContent = 'Raid: Wave 3';
+    element.style.display = 'block';
+  });
+  await page.locator('#hint').evaluate(element => {
+    element.textContent = 'A gameplay hint';
+    element.style.display = 'block';
+  });
+  const raid = await page.locator('#raid').boundingBox();
+  const control = await menu.boundingBox();
+  const hint = await page.locator('#hint').boundingBox();
+  expect(raid).not.toBeNull();
+  expect(control).not.toBeNull();
+  expect(hint).not.toBeNull();
+  expect(control!.y).toBeGreaterThan(raid!.y + raid!.height);
+  expect(hint!.y).toBeGreaterThan(control!.y + control!.height);
+});
