@@ -12,3 +12,9 @@ Regression coverage:
 - `tests/unit/recipe-discovery.test.ts`: partial ingredient discovery, missing material counts, known recipes, alternative recipes with the same output, and crafting table requirements
 - `tests/unit/world-restore.test.ts` and `tests/unit/world-persistence.test.ts`: learned recipe save/load and isolation across worlds
 - `tests/e2e/gameplay.spec.ts`: survival backpack and partial recipe discovery in desktop and mobile browser builds
+
+## Using a placed crafting table
+
+In Survival, aim the crosshair at the placed crafting table and **right-click**, press **E**, or **tap the world on mobile**. A short left click on desktop also opens the table; hold the mouse button if you intend to mine it. This opens the 3×3 grid. The `C` shortcut always opens the personal 2×2 grid; larger tool recipes such as pickaxes and axes require the table. In Creative mode, all items are available directly from the inventory, so the crafting screen is reserved for Survival.
+
+On mobile, a quick tap interacts (place/use, trade with villagers, open a table) and a press-and-hold mines or attacks. The separate **Use** button remains available but is not required for normal taps. Desktop still supports left-button mining and right-click / E for use.
