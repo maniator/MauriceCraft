@@ -11,7 +11,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-`npm run check` runs ESLint (including `bootstrap.ts`), strict TypeScript, Vitest with coverage thresholds, and a production Vite build. `npm run check:full` also runs Playwright. During development, `npm run test:watch` reruns Vitest automatically.
+`npm run check` runs Prettier, ESLint (including `bootstrap.ts`), Vitest with coverage thresholds, and a production build that includes strict TypeScript checking. Run `npm run check:style` for formatting and lint only, or `npm run check:tests` for unit coverage, TypeScript, and the build. `npm run check:full` also runs Playwright. During development, `npm run test:watch` reruns Vitest automatically.
 
 ## What each test protects
 
@@ -28,16 +28,18 @@ Browser tests run the **compiled production game**, not just isolated functions.
 
 ## GitHub Actions
 
-**Gameplay CI and GitHub Pages are independent.** A push to `main` starts both workflows; Pages publishes only after its **own production build** passes, regardless of the gameplay CI outcome. Pull requests do not deploy.
+**Lint/Prettier, tests, and GitHub Pages run in separate workflows.** On a pull request, the lint workflow and the tests workflow start independently, so formatting failures cannot skip tests. A push to `main` also runs Pages; Pages publishes only after its **own production build** passes. Pull requests do not deploy.
 
 ```mermaid
 flowchart TD
-    Change["Push or pull request"] --> CI["CI workflow"]
+    Change["Push or pull request"] --> Style["Lint and formatting workflow"]
+    Change --> Tests["Tests workflow"]
     Change -->|push to main| Pages["Pages workflow"]
-    CI --> Lint["ESLint and typing"]
-    Lint --> Unit["Unit / coverage"]
-    Unit --> Browser["Desktop and mobile browser tests"]
-    Pages --> Build["Typecheck and Vite production build"]
+    Style --> Format["Prettier and ESLint"]
+    Tests --> Unit["Unit tests with coverage"]
+    Unit --> TestBuild["TypeScript and production build"]
+    TestBuild --> Browser["Desktop and mobile browser tests"]
+    Pages --> Build["TypeScript and Vite production build"]
     Build --> Publish["Publish GitHub Pages"]
 ```
 

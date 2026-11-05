@@ -43,7 +43,9 @@ Saves live **only in your current browser** in IndexedDB. They are not stored in
 - `npm run format`: format TypeScript, JavaScript, CSS, SCSS, and Markdown files with Prettier
 - `npm run format:check`: verify code and documentation formatting without modifying files
 - `npm run typecheck`: TypeScript check
-- `npm run check`: Prettier, lint, typecheck, unit coverage and production build
+- `npm run check:style`: Prettier and ESLint checks (separate CI workflow)
+- `npm run check:tests`: unit coverage, TypeScript and production build (separate CI workflow)
+- `npm run check`: combined formatting, lint, coverage, TypeScript and production build
 - `npm run test:e2e`: browser regression tests on desktop and mobile
 - `npm run build`: check types and build to `dist/`
 - `npm run preview`: serve the production build

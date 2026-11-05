@@ -13,9 +13,11 @@ Refactor in small steps, and confirm Creative, Survival, Adventure, Spectator, p
 
 ## Formatting
 
-Use the repository's pinned Prettier version and `.prettierrc.json` for TypeScript, CSS, SCSS and Markdown (including agent skills). Run `npm run format` to update existing files or `npm run format:check` to check without changing them. Formatting is checked by `npm run check` and in the CI workflow. Do not add competing formatting rules in ESLint.
+Use the repository's pinned Prettier version and `.prettierrc.json` for TypeScript, CSS, SCSS and Markdown (including agent skills). Run `npm run format` to update existing files or `npm run format:check` to check without changing them. Formatting is checked by `npm run check:style`, by the combined `npm run check`, and independently in the Lint and formatting GitHub Actions workflow. Do not add competing formatting rules in ESLint.
 
 Until the legacy modules in [issue #42](https://github.com/maniator/MauriceCraft/issues/42) are split, seven files have fixed, non-growing line limits in `eslint.config.mjs` to accommodate Prettier's expansion of compressed source. All other TypeScript files still have the 500-effective-line limit. Do not raise these exceptions; remove each one when the module is split.
+
+The separate Tests workflow runs `npm run check:tests` (Vitest coverage, TypeScript and Vite build) followed by desktop/mobile Playwright. Lint and formatting runs only `npm run check:style`, avoiding duplicated lint and typechecks between the two workflows. Use `npm run check` for the same combined local gate.
 
 ## Code quality
 
