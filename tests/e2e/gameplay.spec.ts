@@ -136,6 +136,32 @@ test('switching dimensions preserves live gameplay and the saved world', async (
   expect(errors).toEqual([]);
 });
 
+test('mobile movement hint stays clear of survival status and touch controls', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'Mobile touch HUD only');
+  await startWorld(page);
+  await runCommand(page, '/gamemode survival');
+  await expect(page.locator('#stickHint')).toBeVisible();
+  await expect(page.locator('#hearts')).toBeVisible();
+  await expect(page.locator('#food')).toBeVisible();
+
+  for (const [width, height] of [[360, 640], [412, 915], [640, 360]]) {
+    await page.setViewportSize({ width, height });
+    const overlapping = await page.evaluate(() => {
+      const hint = document.getElementById('stickHint')!.getBoundingClientRect();
+      const ids = ['hearts', 'food', 'hotbar', 'btnJump', 'btnInv', 'btnCmd', 'btnFly', 'btnPlace'];
+      return ids.filter(id => {
+        const element = document.getElementById(id)!;
+        const style = window.getComputedStyle(element);
+        if (style.display === 'none' || style.visibility === 'hidden') return false;
+        const rect = element.getBoundingClientRect();
+        return hint.left < rect.right && hint.right > rect.left &&
+          hint.top < rect.bottom && hint.bottom > rect.top;
+      });
+    });
+    expect(overlapping, `HUD overlaps at ${width}x${height}`).toEqual([]);
+  }
+});
+
 test('survival bag hides zero-count items and recipe book reveals partial recipes on desktop and mobile', async ({ page, isMobile }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
