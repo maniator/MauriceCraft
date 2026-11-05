@@ -11,6 +11,7 @@ function fixture() {
   const getBlock = (x: number, y: number, z: number) => cells.get(key(x, y, z)) ?? 0;
   const setBlock = vi.fn((x: number, y: number, z: number, id: number) => { cells.set(key(x, y, z), id); });
   const hotbar = [17];
+  const mobs: SpawnMob[] = [];
   const inventory: Record<number, number> = { 17: 2, 19: 1, 31: 4, 13: 1 };
   let mode = 'survival';
   let target: BlockTarget | null = null;
@@ -25,7 +26,7 @@ function fixture() {
   const addMob = vi.fn((kind: string, x: number, y: number, z: number): SpawnMob =>
     ({ kind, x, y, z, hp: 20, persist: false, hx: 0, hz: 0 } as SpawnMob));
   const deps: BlockInteractionDependencies = {
-    camera, player, mobs: [], portals: [], hotbar, inventory,
+    camera, player, mobs, portals: [], hotbar, inventory,
     names: { 3: 'Stone', 13: 'Hay Bale', 17: 'Torch', 19: 'Bed', 31: 'Iron Block', 60: 'Beef' },
     tools: {}, kinds: { villager: { r: 0.3, h: 1.95, hp: 20 }, irongolem: { r: 0.45, h: 2.7, hp: 100 },
       zombie: { r: 0.3, h: 1.8, hp: 20, hostile: true } },
@@ -52,7 +53,7 @@ function fixture() {
     spawnTnt, addDynamite: vi.fn(), addMob,
   };
   const interactions = createBlockInteractions(deps);
-  return { interactions, cells, getBlock, setBlock, hotbar, inventory, flashName, showHint, refreshAround,
+  return { interactions, cells, getBlock, setBlock, mobs, hotbar, inventory, flashName, showHint, refreshAround,
     playSound, spawnTnt, addMob, spawnDrop,
     setCell: (x: number, y: number, z: number, id: number) => { cells.set(key(x, y, z), id); },
     setTarget: (value: BlockTarget | null) => { target = value; },
@@ -141,6 +142,46 @@ describe('block and item interactions', () => {
     f.interactions.doPlace();
     expect(f.getBlock(1, 1, 0)).toBe(3);
     expect(f.inventory[3]).toBeUndefined();
+  });
+
+  it.each(['survival', 'creative'])('rejects a solid block intersecting a mob in %s', mode => {
+    const f = fixture();
+    f.setMode(mode);
+    f.hotbar[0] = 3;
+    f.inventory[3] = 2;
+    // Side overlap counts even when the creature's center is outside this block.
+    f.mobs.push({ x: 2.2, y: 1.05, z: 0.5, r: 0.35, h: 1.4, hp: 10 } as SpawnMob);
+    f.setTarget({ x: 1, y: 0, z: 0, nx: 0, ny: 1, nz: 0 });
+    f.interactions.doPlace();
+    expect(f.getBlock(1, 1, 0)).toBe(0);
+    expect(f.inventory[3]).toBe(2);
+    expect(f.showHint).toHaveBeenCalledWith('A creature is in the way.', 1400);
+  });
+
+  it('allows adjacent solid blocks when no mob hitbox intersects', () => {
+    const f = fixture();
+    f.hotbar[0] = 3;
+    f.inventory[3] = 2;
+    f.mobs.push({ x: 2.5, y: 1, z: 0.5, r: 0.3, h: 1.4, hp: 10 } as SpawnMob);
+    f.setTarget({ x: 1, y: 0, z: 0, nx: 0, ny: 1, nz: 0 });
+    f.interactions.doPlace();
+    expect(f.getBlock(1, 1, 0)).toBe(3);
+    expect(f.inventory[3]).toBe(1);
+  });
+
+  it('blocks either bed half from intersecting a mob without consuming the bed', () => {
+    for (const z of [0.5, -0.5]) {
+      const f = fixture();
+      f.hotbar[0] = 19;
+      f.setCell(0, 0, 0, 3);
+      f.setCell(0, 0, -1, 3);
+      f.mobs.push({ x: 0.5, y: 1.1, z, r: 0.25, h: 1, hp: 10 } as SpawnMob);
+      f.setTarget({ x: 0, y: 0, z: 0, nx: 0, ny: 1, nz: 0 });
+      f.interactions.doPlace();
+      expect(f.getBlock(0, 1, 0)).toBe(0);
+      expect(f.getBlock(0, 1, -1)).toBe(0);
+      expect(f.inventory[19]).toBe(1);
+    }
   });
 
   it('places both halves of a bed and keeps the same orientation and inventory cost', () => {

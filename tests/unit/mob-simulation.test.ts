@@ -15,6 +15,7 @@ function makeActor(kind: string, hostile: boolean, x: number): MobActor {
 }
 function fixture(actors: MobActor[], options: {
   daylight?: boolean; water?: boolean; sheltered?: boolean;
+  getBlock?: (x: number, y: number, z: number) => number;
   movement?: (mob: MobActor, axis: number, distance: number) => void;
 } = {}) {
   const mobs = actors;
@@ -39,7 +40,7 @@ function fixture(actors: MobActor[], options: {
     raid: { st: null }, hostileActors, defenders,
     getDifficulty: () => ({ cap: 8, dmg: 1, fuse: 1.5, speed: 1, aggro: 32, shoot: 1 }),
     isDaylight: () => Boolean(options.daylight), isNight: () => !options.daylight, getRainLevel: () => 0,
-    isSunExposed: () => !options.sheltered, getBlock: () => options.water ? 34 : 0,
+    isSunExposed: () => !options.sheltered, getBlock: options.getBlock ?? (() => options.water ? 34 : 0),
     canTakeDamage: () => true,
     removeMobAt: index => { mobs.splice(index, 1); },
     damagePlayer, showHint: () => undefined, playSoundAt: () => undefined,
@@ -61,6 +62,43 @@ describe('mob simulation', () => {
     tick(0.1);
     expect(cow.vy).toBeGreaterThan(0);
   });
+  it('swims partly submerged rather than walking on top of a source block', () => {
+    const cow = makeActor('cow', false, 2);
+    cow.y = 1.1;
+    cow.h = 1.5;
+    const { tick } = fixture([cow], { getBlock: (_x, y) => y === 1 ? 34 : 0 });
+    for (let i = 0; i < 100; i++) tick(0.05);
+    // Water source top is Y = 1.94, and the cow's feet must be submerged.
+    expect(cow.y).toBeGreaterThan(1.3);
+    expect(cow.y).toBeLessThan(1.8);
+    expect(Math.abs(cow.vy)).toBeLessThan(0.2);
+    expect(cow.onGround).toBe(false);
+    expect(cow.group.position.y).toBe(cow.y);
+  });
+
+  it('follows the lower surface of flowing water instead of floating at full-block height', () => {
+    const cow = makeActor('cow', false, 2);
+    cow.y = 1.1;
+    cow.h = 1.5;
+    const { tick } = fixture([cow], { getBlock: (_x, y) => y === 1 ? 162 : 0 });
+    for (let i = 0; i < 100; i++) tick(0.05);
+    expect(cow.y).toBeGreaterThan(0.8);
+    expect(cow.y).toBeLessThan(1.5);
+  });
+
+  it('resumes gravity after leaving water', () => {
+    const cow = makeActor('cow', false, 2);
+    cow.y = 1.5;
+    let wet = true;
+    const { tick } = fixture([cow], { getBlock: (_x, y) => wet && y === 1 ? 34 : 0 });
+    tick(0.05);
+    wet = false;
+    const before = cow.y;
+    tick(0.05);
+    expect(cow.y).toBeLessThan(before);
+    expect(cow.vy).toBeLessThan(0);
+  });
+
   it('does not burn sheltered zombies or daylight creepers', () => {
     const zombie = makeActor('zombie', true, 5);
     const creeper = makeActor('creeper', true, 7);
