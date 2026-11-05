@@ -9,6 +9,8 @@ export interface CommandConsoleDependencies {
   /** Called after opening the text field, to pause and clear movement. */
   onOpen: () => void;
   onClose: (resumeGame: boolean) => void;
+  /** Optional feature loader: input stays disabled until commands are ready. */
+  loadCommands?: () => Promise<void>;
   isDead: () => boolean;
   canOpen: () => boolean;
   isCommandOpen: () => boolean;
@@ -32,6 +34,8 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
   let historyIndex = 0;
   const visibleLines: HTMLElement[] = [];
   const commands: Record<string, CommandDefinition> = {};
+  const inputPlaceholder = commandInput.placeholder;
+  let lastOpen = 0;
 
   function chat(message: string, kind = ''): void {
     const line = document.createElement('div');
@@ -88,7 +92,28 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     commandInput.value = prefill;
     historyIndex = history.length;
     if (document.pointerLockElement) document.exitPointerLock();
-    setTimeout(() => commandInput.focus(), 0);
+    const opened = ++lastOpen;
+    if (!deps.loadCommands) {
+      setTimeout(() => commandInput.focus(), 0);
+      return;
+    }
+    // Do not accept a command while its implementation is still downloading.
+    commandInput.disabled = true;
+    commandInput.placeholder = 'Loading commands…';
+    void deps.loadCommands().then(() => {
+      if (opened !== lastOpen) return;
+      commandInput.disabled = false;
+      commandInput.placeholder = inputPlaceholder;
+      if (deps.isCommandOpen()) commandInput.focus();
+    }).catch(error => {
+      if (opened !== lastOpen) return;
+      commandInput.disabled = false;
+      commandInput.placeholder = inputPlaceholder;
+      console.warn('Could not load game commands:', error);
+      if (!deps.isCommandOpen()) return;
+      chat('Commands failed to load. Open the command bar to try again.', 'bad');
+      deps.onClose(false);
+    });
   }
 
   function completeCmd(): void {

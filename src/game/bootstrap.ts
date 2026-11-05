@@ -29,7 +29,7 @@ import type { DragGesture, MovementTouch, CameraTouch } from './input/game-contr
 import type { SpawnMob } from './entities/mob-spawning';
 import { createGameUiComposition } from './ui/game-ui-composition';
 import { createCommandConsole } from './commands/command-console';
-import { registerCoreGameCommands } from './commands/core-game-commands';
+import { createLazyCommandLoader } from './commands/lazy-command-loader';
 import { createPortalSystem } from './portals/portal-system';
 import { snapshotPortals } from './portals/persistence';
 import { createGameplayWorldSession } from './session/gameplay-world-session';
@@ -446,6 +446,7 @@ const { commands: CMDS, commandBar: cmdBar, defCmd, openCmd } =
       touchMove.x = 0; touchMove.z = 0; touchJump = false; stick = null; lookT = null;
     },
     onClose: resume => closeInventory(resume),
+    loadCommands: () => ensureCommandsRegistered(),
     isDead: () => dead,
     canOpen: () => playing && !invOpen,
     isCommandOpen: () => cmdOpen,
@@ -468,7 +469,8 @@ const { clearPortalVisuals, showPortalVisual, buildPortalFrame,
   rebuildRegion, disposeMesh, resetChunkCache, clearStructures: () => structCache.clear(),
   clearMobs, collides, saveWorld, showHint,
 });
-registerCoreGameCommands({
+// The command registry stays out of the initial gameplay bundle.
+const ensureCommandsRegistered = createLazyCommandLoader({
   register: defCmd, commands: CMDS,
   state: gameState, player, world: worldServices,
   inventory: inv, hotbar, kinds: KINDS, mobs, jobs: JOBS,
