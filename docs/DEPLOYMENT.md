@@ -6,7 +6,7 @@ The GitHub Pages site is a **project site** at `https://maniator.github.io/Mauri
 
 1. On **maniator/MauriceCraft**, open **Settings → Pages**.
 2. Change **Build and deployment → Source** from **Deploy from a branch** to **GitHub Actions**.
-3. The `CI` workflow must pass before `Deploy GitHub Pages` runs automatically.
+3. Pushes to `main` automatically run `Deploy GitHub Pages`, independently of the `CI` workflow. The Pages workflow performs its own production build before publishing.
 4. Browse to `https://maniator.github.io/MauriceCraft/` and verify that the menu starts and a saved world can load.
 
 **Do not select `dist/` as a Pages branch directory.** It is generated, not committed. While branch publishing remains enabled, the source HTML will not work as a built Vite site, so switch to Actions once the workflow is committed. The Pages settings are not changed by source commits.
@@ -15,9 +15,9 @@ The site must remain at the same origin/path for existing browser saves to be re
 
 ## Verified deployment
 
-`.github/workflows/ci.yml` checks every change with ESLint, strict TypeScript, unit coverage, a production build, and desktop/mobile Playwright smoke tests. When the **CI** workflow succeeds for a push to `main`, `.github/workflows/pages.yml` is triggered by that completed CI run, checks out the CI commit SHA, and deploys **that exact tested commit** using `npm ci` and the GitHub Pages `/MauriceCraft/` base path. The publish job now gives GitHub Pages a longer window and retries once if the first publish times out while GitHub reports `updating_pages`.
+`.github/workflows/ci.yml` independently checks ESLint, strict TypeScript, unit coverage, a production build, and desktop/mobile Playwright smoke tests. A push to `main` also starts `.github/workflows/pages.yml`, which checks out that push, installs dependencies with `npm ci`, and runs its own TypeScript/production build before uploading the artifact for the `/MauriceCraft/` Pages site. A failed Pages build prevents publication, but a failed or cancelled gameplay CI run does not block a valid Pages build. Pull-request runs do not trigger publication; manual deployments are limited to `main`.
 
-A failed or cancelled CI run does **not** publish a new version. The prior Pages deployment remains available. During a series of small commits, GitHub may cancel obsolete CI runs to save minutes; the latest successful run is the one that gets deployed. Pull-request test runs never publish a site.
+The official `actions/deploy-pages` action caps each publication attempt at 10 minutes, even if a longer `timeout` input is supplied. If the first attempt fails, the workflow makes **one additional attempt**, which is a separate deployment rather than a continuous 20- or 30-minute window. Backend failures such as a stuck `updating_pages` status can still require a later rerun or GitHub intervention. Deployment jobs are serialized without cancelling an active publish, reducing the risk of leaving an orphaned Pages deployment. The previous published site remains available if a new deployment fails.
 
 ## Offline PWA deployment
 
