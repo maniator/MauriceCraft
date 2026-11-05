@@ -100,6 +100,41 @@ describe('input actions and cooldowns', () => {
     expect(f.openCraft).toHaveBeenCalledWith(3);
   });
 
+  it('uses crafting tables and talks to villagers on a brief click rather than destroying them', () => {
+    const f = fixture();
+    f.state.pulseMine = true;
+    f.setBlock(18);
+    f.actions.handleActions(0.01, 300);
+    expect(f.openCraft).toHaveBeenCalledWith(3);
+    expect(f.doBreak).not.toHaveBeenCalled();
+    f.state.pulseMine = true;
+    f.state.placeCd = 0;
+    f.setMob({ kind: 'villager', golem: false } as SpawnMob);
+    f.actions.handleActions(0.01, 320);
+    expect(f.openTrade).toHaveBeenCalledOnce();
+    expect(f.attackMob).not.toHaveBeenCalled();
+  });
+
+  it('attacks a mob in front of a crafting table rather than interacting through it', () => {
+    const f = fixture();
+    f.setBlock(18);
+    f.setMob({ kind: 'zombie', golem: false } as SpawnMob);
+    f.state.pulseMine = true;
+    f.actions.handleActions(0.01, 400);
+    expect(f.attackMob).toHaveBeenCalledOnce();
+    expect(f.openCraft).not.toHaveBeenCalled();
+  });
+
+  it('still mines blocks when left mouse is held down, not just clicked', () => {
+    const f = fixture();
+    f.state.mining = true;
+    f.state.drag = { t0: 0, moved: 0 };
+    f.setBlock(18);
+    f.actions.handleActions(0.01, 250);
+    expect(f.doBreak).toHaveBeenCalledOnce();
+    expect(f.openCraft).not.toHaveBeenCalled();
+  });
+
   it('blocks all interaction in spectator mode', () => {
     const f = fixture();
     f.state.mode = 'spectator';

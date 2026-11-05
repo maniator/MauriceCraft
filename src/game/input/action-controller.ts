@@ -47,7 +47,7 @@ export function createActionController(deps: ActionDependencies) {
     state.mineCd -= dt; state.placeCd -= dt; state.attackCd -= dt;
     const drag = state.drag, lookT = state.lookTouch;
     const holdOK = !drag || (tNow - drag.t0 > 160 && drag.moved < 6);
-    const touchHold = !!(lookT && lookT.moved < 10 && tNow - lookT.t0 > 220);
+    const touchHold = !!(lookT && lookT.moved < 10 && tNow - lookT.t0 >= 260);
     const heldMine = (state.mining && holdOK) || touchHold;
     const heldPlace = state.placing && holdOK;
     const wantMine = heldMine || state.pulseMine;
@@ -60,7 +60,16 @@ export function createActionController(deps: ActionDependencies) {
     const blockHit = deps.getBlockHit();
     const target = deps.getTarget();
     const mobHit = deps.raycastMobs(3.6);
-    if (wantMine) {
+    const shiftHeld = !!(keys.ShiftLeft || keys.ShiftRight);
+    const mobInFront = !!mobHit && (!blockHit || mobHit.t < blockHit.t);
+    const useVillager = mobInFront && mobHit?.mob.kind === 'villager';
+    const useBlock = !!target && !shiftHeld &&
+      (deps.isBed(get(target.x, target.y, target.z)) ||
+        get(target.x, target.y, target.z) === deps.craftingTableId);
+    // A brief desktop click uses interactable targets; holding still mines/attacks.
+    const contextClick = pm && !heldMine && !shiftHeld &&
+      (useVillager || (useBlock && !mobInFront));
+    if (wantMine && !contextClick) {
       if (mobHit && (!blockHit || mobHit.t < blockHit.t + 0.01)) {
         if (state.attackCd <= 0) { deps.attackMob(mobHit.mob); state.attackCd = 0.45; }
         resetMine();
@@ -82,14 +91,14 @@ export function createActionController(deps: ActionDependencies) {
       }
     } else resetMine();
 
-    if (wantPlace && deps.canInteract() && (pp || state.placeCd <= 0)) {
-      if (mobHit && mobHit.mob.kind === 'villager' && (!blockHit || mobHit.t < blockHit.t)) {
+    if ((wantPlace || contextClick) && deps.canInteract() && (pp || contextClick || state.placeCd <= 0)) {
+      if (useVillager) {
         deps.openTrade(mobHit.mob); state.placeCd = 0.4;
       } else if (mobHit && mobHit.mob.golem && (!blockHit || mobHit.t < blockHit.t) && deps.healGolem(mobHit.mob)) {
         state.placeCd = 0.5;
-      } else if (target && deps.isBed(get(target.x, target.y, target.z)) && !(keys.ShiftLeft || keys.ShiftRight)) {
+      } else if (target && deps.isBed(get(target.x, target.y, target.z)) && !shiftHeld) {
         deps.useBed(target); state.placeCd = 0.6;
-      } else if (target && get(target.x, target.y, target.z) === deps.craftingTableId && !(keys.ShiftLeft || keys.ShiftRight)) {
+      } else if (target && get(target.x, target.y, target.z) === deps.craftingTableId && !shiftHeld) {
         deps.openCraft(3); state.placeCd = 0.4;
       } else state.placeCd = deps.useSelected();
     }

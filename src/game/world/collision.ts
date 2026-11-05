@@ -29,14 +29,42 @@ export function createCollisionEngine(deps: CollisionDependencies) {
     }
     return false;
   }
-  /** Move in small substeps, sliding right up to walls without tunnelling. */
-  function moveEnt(e: MovableEntity, axis: number, d: number): void {
+  /**
+   * Step up onto a supported ledge when the player has opted in.
+   * The target must have room for the whole body, including its head.
+   */
+  function tryStep(e: MovableEntity, axis: number, distance: number, maxStepY: number): boolean {
+    const nx = e.x + (axis === 0 ? distance : 0);
+    const nz = e.z + (axis === 2 ? distance : 0);
+    const radius = e.r || PR, height = e.h || PH;
+    const maxRise = Math.min(1.001, maxStepY - e.y);
+    for (let increment = 1; increment <= 16; increment++) {
+      const rise = increment / 16 + 0.001;
+      if (rise > maxRise + 0.000001) break;
+      const raisedY = e.y + rise;
+      if (collides(e.x, raisedY, e.z, radius, height) ||
+          collides(nx, raisedY, nz, radius, height)) continue;
+      // The destination must actually be supported by the block we step onto.
+      if (!collides(nx, raisedY - 0.02, nz, radius, height)) continue;
+      e.x = nx; e.y = raisedY; e.z = nz;
+      e.onGround = true;
+      return true;
+    }
+    return false;
+  }
+
+  /** Move in small substeps, sliding right up to walls without tunnelling.
+   * maxStepY is a per-frame ceiling, preventing two diagonal step-ups in one frame.
+   */
+  function moveEnt(e: MovableEntity, axis: number, d: number, maxStepY?: number): void {
     if (!d) return;
     const steps = Math.max(1, Math.ceil(Math.abs(d) / 0.25));
     const sd = d / steps;
     for (let i = 0; i < steps; i++) {
       const nx = e.x + (axis === 0 ? sd : 0), ny = e.y + (axis === 1 ? sd : 0), nz = e.z + (axis === 2 ? sd : 0);
       if (collides(nx, ny, nz, e.r || PR, e.h || PH)) {
+        if (axis !== 1 && maxStepY !== undefined && maxStepY > e.y &&
+            tryStep(e, axis, sd, maxStepY)) continue;
         let lo = 0, hi = 1;
         for (let k = 0; k < 6; k++) {
           const mid = (lo + hi) / 2;

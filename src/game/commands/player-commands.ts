@@ -1,4 +1,5 @@
 import { coord } from './coordinates';
+import { grantInventoryItem } from '../items/inventory-grants';
 import type { RegisterCommand } from './world-commands';
 import type { GameMode, Difficulty } from '../ui/game-menu';
 import type { WeatherMode } from '../rendering/weather-system';
@@ -132,12 +133,14 @@ export function registerPlayerCommands(deps: PlayerCommandDependencies): void {
       let amount = args[1] === undefined ? 1 : Math.floor(Number(args[1]));
       if (!(amount >= 1)) throw new Error('The count must be 1 or more');
       amount = Math.min(amount, 9999);
-      if (!deps.hotbar.includes(itemId)) deps.hotbar[state.selected] = itemId;
       if (state.mode === 'creative') {
+        if (!deps.hotbar.includes(itemId)) deps.hotbar[state.selected] = itemId;
         deps.updateHotbar(true);
         return deps.names[itemId] + ' is in your hotbar (Creative items are unlimited)';
       }
-      deps.inventory[itemId] = Math.min(9999, (deps.inventory[itemId] || 0) + amount);
+      // Only /give applies a command quantity cap; world pickups must never lose existing stacks.
+      const available = Math.max(0, 9999 - (deps.inventory[itemId] || 0));
+      grantInventoryItem(deps.inventory, deps.hotbar, itemId, Math.min(amount, available));
       deps.updateHotbar(true);
       return 'Gave you ' + amount + ' ' + deps.names[itemId];
     }, index => index === 1 ? Object.keys(deps.itemMap()) : []);

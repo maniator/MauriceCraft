@@ -84,8 +84,8 @@ export function createGameMenu(deps: GameMenuDependencies) {
   if (deps.isTouch) {
     deps.touchUi.style.display = 'block';
     requireElement('controls').innerHTML =
-      '<dt>Left side</dt><dd>Drag to move</dd><dt>Right side</dt><dd>Drag to look, tap to break or hit, hold to mine</dd>' +
-      '<dt>Place</dt><dd>Puts down the selected block</dd><dt>Hotbar</dt><dd>Tap to choose a block</dd><dt>Bag</dt><dd>Open the inventory</dd>';
+      '<dt>Left side</dt><dd>Drag to move</dd><dt>Right side</dt><dd>Drag to look, tap to use or place items, talk to villagers, or open crafting tables; hold to mine or attack</dd>' +
+      '<dt>Use</dt><dd>Optional button to use or place the selected item</dd><dt>Hotbar</dt><dd>Tap to choose an item</dd><dt>Bag</dt><dd>Open the inventory</dd>';
   }
 
   function updateDifficultyUI(): void {

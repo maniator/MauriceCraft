@@ -1,5 +1,6 @@
 import { createRecipeMatcher, type Recipe } from '../crafting/recipes';
 import { describeRecipe, recipeFingerprint } from '../crafting/recipe-discovery';
+import { grantInventoryItem } from '../items/inventory-grants';
 
 export type Trade = { give: [number, number]; heal: true; get?: never } |
   { give: [number, number]; get: [number, number]; heal?: false };
@@ -99,7 +100,7 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     if (!m) return;
     if (!hasAll(counts)) { craftMsg.textContent = 'You are missing some of those items.'; sfx('no'); return; }
     for (const k in counts) inv[k] -= counts[k];
-    inv[m.out] = (inv[m.out] || 0) + m.n;
+    grantInventoryItem(inv, hotbar, m.out, m.n);
     deps.craftedRecipes.add(recipeFingerprint(m));
     craftMsg.textContent = 'Crafted ' + m.n + ' ' + NAMES[m.out].toLowerCase() + '.';
     sfx('pop'); updateHotbar(false); renderCraft();
@@ -334,7 +335,7 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     if ((inv[t.give[0]] || 0) < t.give[1]) { tradeMsg.textContent = 'You do not have enough.'; sfx('no'); return; }
     if (t.heal) { if (getHealth() >= MAXHP) { tradeMsg.textContent = 'You are already at full health.'; sfx('no'); return; } setHealth(MAXHP); updateHearts(); }
     inv[t.give[0]] -= t.give[1];
-    if (!t.heal) inv[t.get[0]] = (inv[t.get[0]] || 0) + t.get[1];
+    if (!t.heal) grantInventoryItem(inv, hotbar, t.get[0], t.get[1]);
     updateHotbar(false); renderTrade();
     tradeMsg.textContent = t.heal ? 'You feel much better.' : 'Trade complete.';
     sfx('yes');

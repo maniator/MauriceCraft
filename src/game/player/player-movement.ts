@@ -18,7 +18,7 @@ export interface PlayerMovementDependencies {
   isSleeping: () => boolean;
   getSpectatorSpeed: () => number;
   worldHeight: number;
-  moveEntity: (axis: 0 | 1 | 2, distance: number) => void;
+  moveEntity: (axis: 0 | 1 | 2, distance: number, maxStepY?: number) => void;
   checkPortal: (seconds: number) => void;
   respawn: () => void;
   exert: (amount: number) => void;
@@ -97,9 +97,13 @@ export function createPlayerMovement(deps: PlayerMovementDependencies) {
         deps.exert(sprinting ? 0.2 : 0.04);
       }
     }
+    // One-block ledges are walkable, but only from the ground, never while
+    // flying, falling, or jumping. Share one height ceiling for both axes.
+    const maxStepY = !flying && player.onGround && player.vy <= 0
+      ? player.y + 1.001 : undefined;
     player.onGround = false;
-    deps.moveEntity(0, player.vx * seconds);
-    deps.moveEntity(2, player.vz * seconds);
+    deps.moveEntity(0, player.vx * seconds, maxStepY);
+    deps.moveEntity(2, player.vz * seconds, maxStepY);
     deps.moveEntity(1, player.vy * seconds);
     deps.checkPortal(seconds);
     if (player.y < -30) deps.respawn();

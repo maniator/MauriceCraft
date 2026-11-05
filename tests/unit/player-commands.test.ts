@@ -73,11 +73,29 @@ describe('player and game commands', () => {
     game.run('gm', ['survival']);
     expect(game.run('give', ['beef', '3'])).toBe('Gave you 3 Raw Beef');
     expect(game.inventory[101]).toBe(3);
-    expect(game.hotbar[0]).toBe(101);
+    // The Creative hotbar entries had no Survival inventory, so the first
+    // depleted slot is available for the newly granted item.
+    expect(game.hotbar).toEqual([101, 2, 3, 4, 5, 6, 7, 8, 9]);
+    game.hotbar[5] = 0;
+    game.run('give', ['beef', '1']);
+    expect(game.hotbar.filter(item => item === 101)).toHaveLength(1);
+    expect(game.hotbar[5]).toBe(0);
+    expect(game.state.selected).toBe(0);
     game.run('clear');
     expect(game.inventory[101]).toBeUndefined();
     expect(() => game.run('give', ['stone', '0'])).toThrow('count');
     expect(game.getUpdates()).toBeGreaterThan(0);
+  });
+
+  it('caps /give without reducing saved inventory stacks above the cap', () => {
+    const game = fixture();
+    game.run('gm', ['survival']);
+    game.inventory[3] = 15000;
+    game.run('give', ['stone', '2']);
+    expect(game.inventory[3]).toBe(15000);
+    game.inventory[3] = 9998;
+    game.run('give', ['stone', '5']);
+    expect(game.inventory[3]).toBe(9999);
   });
 
   it('heals, feeds and toggles creative flight', () => {
