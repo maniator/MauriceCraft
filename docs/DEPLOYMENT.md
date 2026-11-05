@@ -2,6 +2,17 @@
 
 The GitHub Pages site is a **project site** at `https://maniator.github.io/MauriceCraft/`. Vite builds assets with the `/MauriceCraft/` base and outputs static files to `dist/`.
 
+## Local build steps
+
+Run these commands before expecting a deployment:
+
+1. `npm ci`
+2. `npm run check`
+3. `npm run build`
+4. `npm run preview` (quick manual check of the production bundle)
+
+The production bundle now uses Rollup manual chunks (`vendor-three`, `vendor-storage`, and `vendor`) so browser updates usually download smaller files instead of one giant vendor bundle.
+
 ## Repository setup
 
 1. On **maniator/MauriceCraft**, open **Settings → Pages**.
