@@ -23,6 +23,13 @@ generate two 32-bit entropy words and combine both halves losslessly.
   `seed` as a deterministically mixed 32-bit terrain stream for existing
   noise algorithms. An independent feature stream uses the same full 64-bit
   identity with different domain separation.
+- **v6** worlds (including existing exported `.mcraft` saves) preserve their
+  original Nether terrain generation for every unvisited chunk.
+- **v7** newly created worlds add deterministic biome vegetation, glowing
+  cave formations, and distinctive rock outcrops in the Nether. Decoration
+  is gated by generator version, so importing or loading a v6 world does not
+  silently alter its landscape. Creative and Peaceful mob-spawning fixes
+  apply to all world versions without changing saved terrain.
 - Restoring a v5 world validates the canonical seed and its derived terrain
   stream before resetting runtime state. An invalid record is left untouched
   and the user is shown a load error; there is no silent regeneration.
