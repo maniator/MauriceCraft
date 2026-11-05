@@ -30,14 +30,29 @@ describe('portal lifecycle and dimension transitions', () => {
   it('builds frame blocks, shows the purple plane and disposes visuals on unload', () => {
     const { scene, portals, blocks, portalSystem } = fixture();
     const portal = portalSystem.buildPortalFrame('overworld', 0, 12, 0);
-    expect(blocks).toHaveLength(20);
-    expect(blocks.filter(entry => entry[3] === 12)).toHaveLength(14);
+    expect(blocks).toHaveLength(62);
+    expect(blocks.filter(entry => entry[3] === 12)).toHaveLength(56);
+    expect(blocks).toContainEqual([-1, 12, 2, 12]);
     expect(portal.width).toBe(2);
     expect(portals).toHaveLength(1);
     expect(scene.children).toHaveLength(1);
     portalSystem.clearPortalVisuals();
     expect(scene.children).toHaveLength(0);
   });
+  it('provides solid ground on both sides of a Nether arrival portal above lava', () => {
+    const f = fixture();
+    f.portalSystem.changeDimension('nether', -500, -500, 15);
+    f.blocks.length = 0;
+    const portal = f.portalSystem.buildPortalFrame('nether', -500, 13, -500);
+    const exitX = Math.floor(portal.x);
+    const exitZ = Math.floor(portal.z + 2.1);
+    // These landing tiles are at y=13, above the Nether lava ocean (y<=12).
+    expect(f.blocks).toContainEqual([exitX, 13, exitZ, 12]);
+    expect(f.blocks).toContainEqual([exitX, 13, Math.floor(portal.z - 2.1), 12]);
+    expect(f.blocks.some(([x, y, z, id]) =>
+      x === exitX && y === 13 && z === exitZ && id === 0)).toBe(false);
+  });
+
   it('preserves edited Overworld chunks when moving to another dimension', () => {
     const { chunks, savedChunks, portalSystem, getDimension, player } = fixture();
     chunks.set(4, { cx: 4, cz: 0, edited: true, data: new Uint8Array([1, 2]) });
