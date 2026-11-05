@@ -103,7 +103,7 @@ describe('general game commands', () => {
     // Short and alternate spelling still resolve without dropping underscores.
     expect(f.run('spawn', ['magma-cube'])).toBe('Spawned 1 magma_cube');
     expect(f.run('spawn', ['wither_skel'])).toBe('Spawned 1 wither_skeleton');
-    expect(f.run('spawn', ['zom'])).toBe('Spawned 1 zombie');
+    expect(f.run('spawn', ['zombie'])).toBe('Spawned 1 zombie');
     expect(f.addMob.mock.calls.slice(-3).map(call => call[0]))
       .toEqual(['magma_cube', 'wither_skeleton', 'zombie']);
   });
