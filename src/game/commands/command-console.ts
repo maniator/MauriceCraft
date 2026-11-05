@@ -98,6 +98,14 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     }
   }
 
+  // A hidden but still-focused input intercepts T, number keys and other gameplay
+  // keyboard shortcuts because its keydown handler stops propagation.
+  function closeCmd(resumeGame: boolean): void {
+    ++lastOpen;
+    commandInput.blur();
+    deps.onClose(resumeGame);
+  }
+
   function openCmd(prefill = ''): void {
     deps.onOpen();
     commandBar.classList.remove('hidden');
@@ -106,7 +114,9 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     deps.releasePointerLockForUi();
     const opened = ++lastOpen;
     if (!deps.loadCommands) {
-      setTimeout(() => commandInput.focus(), 0);
+      setTimeout(() => {
+        if (opened === lastOpen && deps.isCommandOpen()) commandInput.focus();
+      }, 0);
       return;
     }
     // Do not accept a command while its implementation is still downloading.
@@ -127,7 +137,7 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
         console.warn('Could not load game commands:', error);
         if (!deps.isCommandOpen()) return;
         chat('Commands failed to load. Open the command bar to try again.', 'bad');
-        deps.onClose(false);
+        closeCmd(false);
       });
   }
 
@@ -164,10 +174,10 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
         if (history.length > 50) history.shift();
       }
       execute(line);
-      deps.onClose(!deps.isDead());
+      closeCmd(!deps.isDead());
     } else if (event.key === 'Escape') {
       event.preventDefault();
-      deps.onClose(false);
+      closeCmd(false);
     } else if (event.key === 'Tab') {
       event.preventDefault();
       completeCmd();
