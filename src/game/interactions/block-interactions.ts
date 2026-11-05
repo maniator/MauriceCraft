@@ -264,13 +264,26 @@ function healGolem(m: SpawnMob): boolean {
   m.hp = Math.min(K.hp, m.hp + K.hp * 0.25); sfx('pop'); flashName('Golem repaired');
   return true;
 }
+// Prevent a newly placed solid block from occupying a living creature's hitbox.
+// Mobs use a feet-level Y coordinate and an X/Z radius (not a block center).
+function overlapsMob(x: number, y: number, z: number, height: number): boolean {
+  return mobs.some(m => m.hp > 0 &&
+    x + 1 > m.x - m.r && x < m.x + m.r &&
+    y + height > m.y && y < m.y + m.h &&
+    z + 1 > m.z - m.r && z < m.z + m.r);
+}
 function placeBed(x: number, y: number, z: number): void {
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw);
   const dir = Math.abs(fx) > Math.abs(fz) ? (fx > 0 ? 0 : 2) : (fz > 0 ? 1 : 3);
   const dv = BED_DIR[dir], hx = x + dv[0], hz = z + dv[1];
   if (!chunkAt(hx >> 4, hz >> 4) || get(hx, y, hz) || !solid(get(x, y - 1, z)) || !solid(get(hx, y - 1, hz))) { flashName('A bed needs two free spots on solid ground'); return; }
   const cells = [[x, z], [hx, hz]];
-  for (let i = 0; i < 2; i++) { const c = cells[i]; if (c[0] + 1 > player.x - PLAYER_RADIUS && c[0] < player.x + PLAYER_RADIUS && y + BED_H > player.y && y < player.y + PLAYER_HEIGHT && c[1] + 1 > player.z - PLAYER_RADIUS && c[1] < player.z + PLAYER_RADIUS) return; }
+  for (const [cx, cz] of cells) {
+    if (cx + 1 > player.x - PLAYER_RADIUS && cx < player.x + PLAYER_RADIUS &&
+      y + BED_H > player.y && y < player.y + PLAYER_HEIGHT &&
+      cz + 1 > player.z - PLAYER_RADIUS && cz < player.z + PLAYER_RADIUS) return;
+    if (overlapsMob(cx, y, cz, BED_H)) { showHint('A creature is in the way.', 1400); return; }
+  }
   if (deps.getMode() === 'survival') {
     if (!(inv[BED] > 0)) { showHint('You have no bed.', 1500); return; }
     inv[BED]--; updateHotbar(false);
@@ -291,6 +304,7 @@ function doPlace(): void {
   if (hotbar[deps.getSelected()] === BED) { placeBed(x, y, z); return; }
   if (hotbar[deps.getSelected()] !== TORCH && x + 1 > player.x - PLAYER_RADIUS && x < player.x + PLAYER_RADIUS && y + 1 > player.y && y < player.y + PLAYER_HEIGHT && z + 1 > player.z - PLAYER_RADIUS && z < player.z + PLAYER_RADIUS) return;
   const b = hotbar[deps.getSelected()];
+  if (solid(b) && overlapsMob(x, y, z, 1)) { showHint('A creature is in the way.', 1400); return; }
   const torchPlacement = b === TORCH ? torchBlockForFace(target.nx, target.ny, target.nz, TORCH) : null;
   if (b === TORCH && (torchPlacement === null || !solid(get(target.x, target.y, target.z)))) {
     flashName('Torches need a solid floor or wall');
