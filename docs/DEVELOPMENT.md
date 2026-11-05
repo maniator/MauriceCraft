@@ -18,6 +18,7 @@ Use strict TypeScript, explicit dependency interfaces, two-space indentation, si
 ## Copilot setup and MCP tooling
 
 - Repository-wide Copilot coding rules live in `.github/copilot-instructions.md`.
+- Copilot code review also uses `.github/instructions/code-review.instructions.md` for review-focused checks.
 - Cloud-agent environment bootstrap runs from `.github/workflows/copilot-setup-steps.yml` and preinstalls Node 22 dependencies plus Playwright Chromium.
 - Local VS Code MCP servers are defined in `.vscode/mcp.json`:
   - `github` via `@modelcontextprotocol/server-github` (uses a prompted token)
