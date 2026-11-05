@@ -104,6 +104,42 @@ describe('mob world population cycle', () => {
     expect(f.trySpawnNetherMob).toHaveBeenCalledOnce();
   });
 
+  it('counts neutral Nether creatures toward the spawn budget even when hostiles die', () => {
+    const f = fixture();
+    f.setDimension('nether');
+    f.setMobCap(3);
+    f.mobs.push(
+      { kind: 'strider', hostile: false } as MobActor,
+      { kind: 'zombified_piglin', hostile: false } as MobActor,
+      { kind: 'blaze', hostile: true } as MobActor,
+    );
+    f.updateMobs(2.1);
+    expect(f.trySpawnNetherMob).not.toHaveBeenCalled();
+
+    // Killing a hostile frees one slot, but the neutrals still occupy two.
+    f.mobs.pop();
+    f.updateMobs(2.1);
+    expect(f.trySpawnNetherMob).toHaveBeenCalledOnce();
+    f.mobs.push({ kind: 'piglin', hostile: true } as MobActor);
+    f.updateMobs(2.1);
+    expect(f.trySpawnNetherMob).toHaveBeenCalledOnce();
+  });
+
+  it('retains the Overworld hostile-only cap and excludes illager patrols', () => {
+    const f = fixture();
+    f.setMobCap(1);
+    f.mobs.push({ kind: 'strider', hostile: false } as MobActor);
+    f.updateMobs(2.1);
+    expect(f.trySpawnMob).toHaveBeenCalledOnce();
+    f.mobs.push({ kind: 'zombie', hostile: true } as MobActor);
+    f.updateMobs(2.1);
+    expect(f.trySpawnMob).toHaveBeenCalledOnce();
+    f.mobs.pop();
+    f.mobs.push({ kind: 'pillager', hostile: true } as MobActor);
+    f.updateMobs(2.1);
+    expect(f.trySpawnMob).toHaveBeenCalledTimes(2);
+  });
+
   it('does not count time spent in the Nether towards Overworld patrols', () => {
     const f = fixture();
     f.setDimension('nether');
