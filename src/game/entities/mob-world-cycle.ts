@@ -65,9 +65,15 @@ function updateMobs(dt: number): void {
   spawnT -= dt; animalT -= dt; villT -= dt;
   if (deps.getDimension() !== 'end' && deps.hasHealth() && spawnT <= 0) {
     spawnT = D.every;
-    if (D.cap > 0 && mobs.filter(m => m.hostile && !KINDS[m.kind].illager).length < D.cap) {
+    // Nether spawns include neutral striders and zombified piglins. Count
+    // them with monsters or repeated spawns can grow the actor list forever.
+    const nether = deps.getDimension() === 'nether';
+    const population = mobs.filter(m =>
+      (m.hostile && !KINDS[m.kind]?.illager) ||
+      (nether && (m.kind === 'strider' || m.kind === 'zombified_piglin'))).length;
+    if (D.cap > 0 && population < D.cap) {
       if (deps.getDimension() === 'overworld') trySpawnMob();
-      else if (deps.getDimension() === 'nether') deps.trySpawnNetherMob?.();
+      else if (nether) deps.trySpawnNetherMob?.();
     }
   }
   if (deps.getDimension() === 'overworld' && animalT <= 0) {
