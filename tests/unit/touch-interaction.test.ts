@@ -6,6 +6,7 @@ describe('mobile world interactions', () => {
     const documentBefore = Object.getOwnPropertyDescriptor(globalThis, 'document');
     const windowBefore = Object.getOwnPropertyDescriptor(globalThis, 'window');
     const canvasListeners = new Map<string, (event: unknown) => void>();
+    const windowListeners = new Map<string, (event: unknown) => void>();
     const canvas = {
       addEventListener: (name: string, listener: (event: unknown) => void) => {
         canvasListeners.set(name, listener);
@@ -16,7 +17,8 @@ describe('mobile world interactions', () => {
       configurable: true, value: { getElementById: () => button },
     });
     Object.defineProperty(globalThis, 'window', {
-      configurable: true, value: { innerWidth: 800, addEventListener: () => undefined },
+      configurable: true, value: { innerWidth: 800,
+        addEventListener: (name: string, listener: (event: unknown) => void) => windowListeners.set(name, listener) },
     });
 
     const state: InputControlState = {
@@ -50,6 +52,21 @@ describe('mobile world interactions', () => {
       state.lookT.t0 = performance.now() - 500;
       end!(event);
       expect(state.pulsePlace).toBe(false);
+      expect(state.pulseMine).toBe(false);
+
+      const mouseDown = canvasListeners.get('mousedown');
+      const mouseUp = windowListeners.get('mouseup');
+      expect(mouseDown).toBeDefined();
+      expect(mouseUp).toBeDefined();
+      mouseDown!({ button: 1, ctrlKey: false, metaKey: false, altKey: false });
+      mouseUp!({});
+      expect(state.drag).toBeNull();
+      expect(state.pulseMine).toBe(false);
+      expect(state.pulsePlace).toBe(false);
+
+      mouseDown!({ button: 2, ctrlKey: false, metaKey: false, altKey: false });
+      mouseUp!({});
+      expect(state.pulsePlace).toBe(true);
       expect(state.pulseMine).toBe(false);
     } finally {
       if (documentBefore) Object.defineProperty(globalThis, 'document', documentBefore);

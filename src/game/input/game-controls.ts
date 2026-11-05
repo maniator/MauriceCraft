@@ -139,7 +139,7 @@ export function createInputControls(deps: InputControlDependencies) {
   window.addEventListener('contextmenu', event => event.preventDefault());
 
   canvas.addEventListener('mousedown', event => {
-    if (!state.playing) return;
+    if (!state.playing || (event.button !== 0 && event.button !== 2)) return;
     const place = event.button === 2 ||
       (event.button === 0 && (event.ctrlKey || event.metaKey || event.altKey));
     state.drag = { place, moved: 0, t0: performance.now() };
