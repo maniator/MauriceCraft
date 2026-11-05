@@ -273,3 +273,28 @@ test('the desktop and touch menu controls pause and preserve the active world', 
   await expect(page.locator('#overlay')).toBeHidden();
   expect(errors).toEqual([]);
 });
+
+
+test('raid wave status, menu control and gameplay hints never cover one another', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
+  await page.locator('#play').click();
+  const menu = page.locator('#btnMenu');
+  await expect(menu).toBeVisible();
+  await page.locator('#raid').evaluate(element => {
+    element.textContent = 'Raid: Wave 3';
+    element.style.display = 'block';
+  });
+  await page.locator('#hint').evaluate(element => {
+    element.textContent = 'A gameplay hint';
+    element.style.display = 'block';
+  });
+  const raid = await page.locator('#raid').boundingBox();
+  const control = await menu.boundingBox();
+  const hint = await page.locator('#hint').boundingBox();
+  expect(raid).not.toBeNull();
+  expect(control).not.toBeNull();
+  expect(hint).not.toBeNull();
+  expect(control!.y).toBeGreaterThan(raid!.y + raid!.height);
+  expect(hint!.y).toBeGreaterThan(control!.y + control!.height);
+});
