@@ -18,6 +18,7 @@ function fixture() {
     remove: () => void;
     addEventListener: (type: string, listener: (event: KeyboardEvent) => void) => void;
     focus: () => void;
+    blur: () => void;
   };
   function makeNode(): FakeNode {
     const node: FakeNode = {
@@ -36,7 +37,8 @@ function fixture() {
       addEventListener(type, listener) {
         node.listeners[type] = listener;
       },
-      focus: () => undefined,
+      focus: vi.fn(),
+      blur: vi.fn(),
     };
     return node;
   }
@@ -90,6 +92,48 @@ describe('command registry', () => {
       expect(nodes.chatlog.children.map((line) => line.textContent)).toContain(
         'Unknown command "missing". Type /help for the list.',
       );
+    } finally {
+      restore();
+    }
+  });
+
+  it('releases keyboard focus on Enter and Escape instead of trapping gameplay keys', () => {
+    const { nodes, restore } = fixture();
+    let commandOpen = false;
+    const close = vi.fn(() => {
+      commandOpen = false;
+    });
+    try {
+      const system = createCommandConsole({
+        onOpen: () => {
+          commandOpen = true;
+        },
+        onClose: close,
+        releasePointerLockForUi: vi.fn(),
+        isDead: () => false,
+        canOpen: () => !commandOpen,
+        isCommandOpen: () => commandOpen,
+        isTouch: false,
+      });
+
+      const press = (key: string) =>
+        nodes.cmdinput.listeners.keydown({
+          key,
+          stopPropagation: vi.fn(),
+          preventDefault: vi.fn(),
+        } as unknown as KeyboardEvent);
+
+      system.openCmd('/help');
+      press('Enter');
+      expect(nodes.cmdinput.blur).toHaveBeenCalledTimes(1);
+      expect(close).toHaveBeenLastCalledWith(true);
+      expect(commandOpen).toBe(false);
+
+      system.openCmd('/');
+      press('Escape');
+      expect(nodes.cmdinput.blur).toHaveBeenCalledTimes(2);
+      expect(close).toHaveBeenLastCalledWith(false);
+      expect(commandOpen).toBe(false);
     } finally {
       restore();
     }
