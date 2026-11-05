@@ -46,6 +46,8 @@ export interface PortalSystemDependencies<Chunk extends PortalChunk> {
   collides: (x: number, y: number, z: number) => boolean;
   saveWorld: () => void;
   showHint: (message: string, milliseconds: number) => void;
+  /** Monotonic wall time, injectable for deterministic cooldown tests. */
+  now?: () => number;
 }
 
 /** Owns portal meshes and safe dimension transitions; does not own saved world metadata. */
@@ -78,6 +80,7 @@ export function createPortalSystem<Chunk extends PortalChunk>(
   } = deps;
   const portalVisuals: THREE.Mesh[] = [];
   let portalCooldown = 0;
+  let lastPortalClock = deps.now?.() ?? performance.now();
 
   function clearPortalVisuals(): void {
     for (const mesh of portalVisuals) {
@@ -222,7 +225,14 @@ export function createPortalSystem<Chunk extends PortalChunk>(
   }
 
   function checkPortal(deltaSeconds: number): void {
-    portalCooldown = Math.max(0, portalCooldown - deltaSeconds);
+    // Physics caps frame time during slow frames; the portal cooldown must
+    // expire in real time, including on slow CI runners.
+    const now = deps.now?.() ?? performance.now();
+    portalCooldown = Math.max(
+      0,
+      portalCooldown - Math.max(deltaSeconds, (now - lastPortalClock) / 1000),
+    );
+    lastPortalClock = now;
     const dimension = getDimension();
     if (portalCooldown > 0 || !isPlaying() || dimension === 'end') return;
     const player = getPlayer();

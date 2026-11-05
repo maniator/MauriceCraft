@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createPortalSystem, type WorldDimension } from '../../src/game/portals/portal-system';
 import type { PortalFrame } from '../../src/game/portals/frame';
 
-function fixture(netherFloor?: number) {
+function fixture(netherFloor?: number, now?: () => number) {
   const scene = new THREE.Scene();
   const portals: PortalFrame[] = [];
   const chunks = new Map<number, { cx: number; cz: number; edited: boolean; data: Uint8Array }>();
@@ -41,6 +41,7 @@ function fixture(netherFloor?: number) {
     collides: () => false,
     saveWorld,
     showHint: () => undefined,
+    now,
   });
   return {
     scene,
@@ -122,6 +123,31 @@ describe('portal lifecycle and dimension transitions', () => {
     portalSystem.checkPortal(0.016);
     expect(saveWorld).toHaveBeenCalledTimes(saveCount);
   });
+  it('allows return travel after real elapsed cooldown even if frame deltas are capped', () => {
+    let clock = 1000;
+    const f = fixture(undefined, () => clock);
+    const origin = f.portalSystem.buildPortalFrame('overworld', 0, 12, 0);
+    f.player.x = origin.x + 0.5;
+    f.player.y = origin.y + 1;
+    f.player.z = origin.z + 0.5;
+    f.portalSystem.checkPortal(0.016);
+    expect(f.getDimension()).toBe('nether');
+
+    const destination = f.portals.find((p) => p.dimension === 'nether');
+    expect(destination).toBeDefined();
+    f.player.x = destination!.x + 0.5;
+    f.player.y = destination!.y + 1;
+    f.player.z = destination!.z + 0.5;
+
+    clock += 250;
+    f.portalSystem.checkPortal(0.016);
+    expect(f.getDimension()).toBe('nether');
+
+    clock += 2501;
+    f.portalSystem.checkPortal(0.016);
+    expect(f.getDimension()).toBe('overworld');
+  });
+
   it('links nearby Overworld command portals to one Nether frame instead of stacking them', () => {
     const f = fixture(23);
     const first = f.portalSystem.buildPortalFrame('overworld', 72, 21, 32);

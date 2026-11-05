@@ -73,6 +73,7 @@ describe('command registry', () => {
       const system = createCommandConsole({
         onOpen: () => undefined,
         onClose: () => undefined,
+        releasePointerLockForUi: vi.fn(),
         isDead: () => false,
         canOpen: () => true,
         isCommandOpen: () => false,
@@ -102,6 +103,7 @@ describe('command registry', () => {
     });
     const loadCommands = vi.fn(() => pending);
     let commandOpen = false;
+    const releasePointerLockForUi = vi.fn();
     try {
       const system = createCommandConsole({
         onOpen: () => {
@@ -113,10 +115,12 @@ describe('command registry', () => {
         isDead: () => false,
         canOpen: () => true,
         isCommandOpen: () => commandOpen,
+        releasePointerLockForUi,
         isTouch: false,
         loadCommands,
       });
       system.openCmd('/help');
+      expect(releasePointerLockForUi).toHaveBeenCalledOnce();
       expect(loadCommands).toHaveBeenCalledOnce();
       expect(nodes.cmdinput.disabled).toBe(true);
       expect(nodes.cmdinput.placeholder).toBe('Loading commands…');

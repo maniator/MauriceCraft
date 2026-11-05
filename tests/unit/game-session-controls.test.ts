@@ -119,6 +119,7 @@ function fixture(isTouch = true) {
     renderFood,
     listeners,
     canvas,
+    documentStub,
   };
 }
 
@@ -185,6 +186,35 @@ describe('game lifecycle controls', () => {
     expect(f.respawn).toHaveBeenCalledOnce();
     expect(f.updateHearts).toHaveBeenCalledOnce();
     expect(f.renderFood).toHaveBeenCalledOnce();
+  });
+
+  it('does not pause if an intentional command UI unlock arrives after resuming', () => {
+    const f = fixture(false);
+    f.state.playing = true;
+    f.state.locked = true;
+    Object.defineProperty(f.documentStub, 'pointerLockElement', {
+      configurable: true,
+      writable: true,
+      value: f.canvas,
+    });
+    f.actions.releasePointerLockForUi();
+    expect(f.documentStub.exitPointerLock).toHaveBeenCalledOnce();
+
+    // A command can finish and resume before the browser dispatches unlock.
+    f.state.invOpen = false;
+    Object.defineProperty(f.documentStub, 'pointerLockElement', { value: null });
+    const onPointerLockChange = f.listeners.get('pointerlockchange') as EventListener;
+    onPointerLockChange({} as Event);
+    expect(f.state.playing).toBe(true);
+    expect(f.saveWorld).not.toHaveBeenCalled();
+
+    // Losing the pointer lock unexpectedly must still pause and autosave.
+    Object.defineProperty(f.documentStub, 'pointerLockElement', { value: f.canvas });
+    onPointerLockChange({} as Event);
+    Object.defineProperty(f.documentStub, 'pointerLockElement', { value: null });
+    onPointerLockChange({} as Event);
+    expect(f.state.playing).toBe(false);
+    expect(f.saveWorld).toHaveBeenCalledWith('menu', 1);
   });
 
   it('uses mouse-capture fallback when pointer-lock is unavailable', () => {

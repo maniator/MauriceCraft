@@ -38,6 +38,7 @@ export interface GameUiCompositionDependencies {
   playSound: (event: string) => void;
   playSoundAt: (event: string, x: number, y: number, z: number) => void;
   requestPointerLock: () => void;
+  releasePointerLockForUi: () => void;
   pauseGame: () => void;
   getCommandBar: () => HTMLElement;
   openCommand: (command: string) => void;
@@ -95,6 +96,7 @@ export function createGameUiComposition(deps: GameUiCompositionDependencies) {
     playSound: deps.playSound,
     playSoundAt: deps.playSoundAt,
     requestPointerLock: deps.requestPointerLock,
+    releasePointerLockForUi: deps.releasePointerLockForUi,
     pauseGame: deps.pauseGame,
     getCommandBar: deps.getCommandBar,
   });
