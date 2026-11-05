@@ -66,6 +66,35 @@ describe('typed chunk meshing', () => {
     mesher.disposeMesh(chunk);
     expect(scene.children).toHaveLength(0);
   });
+  it.each([
+    [57, 'x', true],
+    [58, 'x', false],
+    [59, 'z', true],
+    [60, 'z', false],
+  ] as const)('renders wall torch block %i tilted away from its support', (blockId, axis, positive) => {
+    const { chunk, mesher } = fixture(blockId);
+    mesher.buildChunk(0, 0);
+    expect(chunk.mesh2).toBeInstanceOf(THREE.Mesh);
+    expect(chunk.glow).toBeInstanceOf(THREE.Points);
+    const geometry = chunk.mesh2!.geometry as THREE.BufferGeometry;
+    const p = geometry.getAttribute('position');
+    const base = axis === 'x' ? p.getX(0) : p.getZ(0);
+    const tip = axis === 'x' ? p.getX(2) : p.getZ(2);
+    if (positive) expect(base).toBeGreaterThan(tip);
+    else expect(base).toBeLessThan(tip);
+    // The supporting solid block begins at x/z = 2 or ends at x/z = 1.
+    // The base of the torch must actually reach its wall, not float in air.
+    const foot: number[] = [];
+    for (let i = 0; i < p.count; i++) {
+      if (Math.abs(p.getY(i) - 1) < 0.0001)
+        foot.push(axis === 'x' ? p.getX(i) : p.getZ(i));
+    }
+    expect(foot.length).toBeGreaterThan(0);
+    if (positive) expect(Math.max(...foot)).toBeGreaterThanOrEqual(2);
+    else expect(Math.min(...foot)).toBeLessThanOrEqual(1);
+    mesher.disposeMesh(chunk);
+  });
+
   it('shares canonical six-face geometry with explosive block entities', () => {
     const { mesher } = fixture(3);
     const geometry = mesher.blockGeo(3);

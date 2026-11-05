@@ -1,4 +1,5 @@
 import { liquidKind, WATER_FLOW_START, LAVA_FLOW_START, WATER_REACH, LAVA_REACH } from './fluid-blocks';
+import { isTorchBlock, WALL_TORCH_EAST, WALL_TORCH_WEST, WALL_TORCH_SOUTH, WALL_TORCH_NORTH } from './torch-attachments';
 
 /** Persistent IDs and item metadata. Never renumber items in an existing save. */
 export function createBlockCatalog() {
@@ -31,6 +32,7 @@ export function createBlockCatalog() {
     56: [123, 123, 123],
     27: [68, 68, 68], 28: [69, 69, 69], 29: [70, 70, 70], 30: [71, 71, 71], 31: [72, 72, 72], 32: [73, 73, 73], 33: [74, 74, 74]
   };
+  for (const id of [WALL_TORCH_EAST, WALL_TORCH_WEST, WALL_TORCH_SOUTH, WALL_TORCH_NORTH]) TILES[id] = TILES[TORCH];
   for (let n = 0; n < WATER_REACH; n++) TILES[WATER_FLOW_START + n] = [96, 96, 96];
   for (let n = 0; n < LAVA_REACH; n++) TILES[LAVA_FLOW_START + n] = [97, 97, 97];
   const tileOf = (b: number): number | undefined => TILES[b] ? TILES[b][1] : ITEM_TILE[b];
@@ -39,8 +41,8 @@ export function createBlockCatalog() {
   const isBed = (b: number): boolean => b >= 19 && b <= 26;                        // 19 + facing * 2 + (head ? 1 : 0)
   const BED_H = 0.5625;                                         // beds are only a little over half a block tall
   const BED_DIR = [[1, 0], [0, 1], [-1, 0], [0, -1]];           // direction from the foot towards the head
-  const solid = (b: number): boolean => b !== 0 && b !== TORCH && !liquidKind(b);
-  const opq = (b: number): boolean => b !== 0 && b !== TORCH && !liquidKind(b) && !(b >= 19 && b <= 26);
+  const solid = (b: number): boolean => b !== 0 && !isTorchBlock(b, TORCH) && !liquidKind(b);
+  const opq = (b: number): boolean => b !== 0 && !isTorchBlock(b, TORCH) && !liquidKind(b) && !(b >= 19 && b <= 26);
   const NAMES: Record<number, string> = { 1: 'Grass', 2: 'Dirt', 3: 'Stone', 4: 'Sand', 5: 'Log', 6: 'Leaves', 7: 'Planks', 8: 'Brick', 9: 'Cobblestone', 10: 'Stone Brick', 11: 'Sandstone', 12: 'Gravel', 13: 'Hay Bale', 14: 'Gold Block', 15: 'Mossy Cobble', 16: 'TNT', 17: 'Torch', 18: 'Crafting Table', 19: 'Bed', 34: 'Water', 35: 'Lava', 36: 'Obsidian', 37: 'Snow', 38: 'Pine Leaves', 39: 'Red Sand', 40: 'Dark Wood', 41: 'Birch Log', 42: 'Birch Leaves', 43: 'Acacia Log',
     44: 'Acacia Leaves', 45: 'Willow Log', 46: 'Willow Leaves', 47: 'Autumn Leaves',
     48: 'Mud', 49: 'Flowering Grass', 50: 'Netherrack', 51: 'Basalt',
@@ -48,14 +50,21 @@ export function createBlockCatalog() {
     55: 'Blackstone', 56: 'Glowstone', 27: 'Coal Ore', 28: 'Copper Ore', 29: 'Iron Ore', 30: 'Diamond Ore', 31: 'Iron Block', 32: 'Copper Block', 33: 'Diamond Block',
     101: 'Raw Beef', 102: 'Raw Pork', 103: 'Raw Mutton', 104: 'Raw Chicken', 105: 'Cooked Meat', 106: 'Wool', 107: 'Feather', 108: 'Leather', 109: 'Gunpowder', 110: 'Dynamite', 111: 'Flint & Steel', 112: 'Emerald', 113: 'Bone', 114: 'String', 115: 'Stick', 116: 'Coal', 117: 'Raw Copper', 118: 'Raw Iron', 119: 'Copper Ingot', 151: 'Iron Ingot', 152: 'Diamond',
     120: 'Cow Spawn Egg', 121: 'Pig Spawn Egg', 122: 'Sheep Spawn Egg', 123: 'Chicken Spawn Egg', 124: 'Villager Spawn Egg', 125: 'Zombie Spawn Egg', 126: 'Creeper Spawn Egg', 127: 'Skeleton Spawn Egg', 128: 'Spider Spawn Egg' };
-  const ALL_BLOCKS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 120, 121, 122, 123, 124, 125, 126, 127, 128];   // blocks first, then items (tools are appended below)
-  // Survival: seconds to break, and what a block drops
-  const BREAK_TIME: Record<number, number> = { 37: 0.25, 38: 0.25, 39: 0.5, 40: 1.3, 41: 1.3, 42: 0.25, 43: 1.3,
-    44: 0.25, 45: 1.3, 46: 0.25, 47: 0.25, 48: 0.55, 49: 0.6,
-    50: 0.7, 51: 2.5, 52: 0.6, 53: 0.7, 54: 0.7, 55: 2.8, 56: 0.5, 36: 5.5, 1: 0.6, 2: 0.5, 3: 2.2, 4: 0.5, 5: 1.3, 6: 0.25, 7: 1.0, 8: 2.4, 9: 2.2, 10: 2.4, 11: 1.2, 12: 0.6, 13: 0.5, 14: 2.0, 15: 2.2, 16: 0.3, 17: 0.1, 18: 1.2 };
+const ALL_BLOCKS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 120, 121, 122, 123, 124, 125, 126, 127, 128];   // blocks first, then items (tools are appended below)
+for (const id of [WALL_TORCH_EAST, WALL_TORCH_WEST, WALL_TORCH_SOUTH, WALL_TORCH_NORTH]) NAMES[id] = 'Torch';
+// Survival: seconds to break, and what a block drops
+const BREAK_TIME: Record<number, number> = { 37: 0.25, 38: 0.25, 39: 0.5, 40: 1.3, 41: 1.3, 42: 0.25, 43: 1.3,
+  44: 0.25, 45: 1.3, 46: 0.25, 47: 0.25, 48: 0.55, 49: 0.6,
+  50: 0.7, 51: 2.5, 52: 0.6, 53: 0.7, 54: 0.7, 55: 2.8, 56: 0.5,
+  36: 5.5, 1: 0.6, 2: 0.5, 3: 2.2, 4: 0.5, 5: 1.3, 6: 0.25, 7: 1.0, 8: 2.4, 9: 2.2, 10: 2.4, 11: 1.2, 12: 0.6, 13: 0.5, 14: 2.0, 15: 2.2, 16: 0.3, 17: 0.1, 18: 1.2 };
+for (const id of [WALL_TORCH_EAST, WALL_TORCH_WEST, WALL_TORCH_SOUTH, WALL_TORCH_NORTH]) {
+  BREAK_TIME[id] = BREAK_TIME[TORCH];
+}
   for (let bi = 19; bi <= 26; bi++) BREAK_TIME[bi] = 0.4;
   Object.assign(BREAK_TIME, { 27: 2.6, 28: 3, 29: 3.2, 30: 4.2, 31: 4, 32: 3.5, 33: 5 });
-  const DROPS: Record<number, number> = { 1: 2, 49: 2, 3: 9, 27: COAL, 28: RAW_COPPER, 29: RAW_IRON, 30: DIAMOND };
+  const DROPS: Record<number, number> = { 1: 2, 49: 2, 3: 9, 27: COAL, 28: RAW_COPPER, 29: RAW_IRON, 30: DIAMOND,
+    [WALL_TORCH_EAST]: TORCH, [WALL_TORCH_WEST]: TORCH,
+    [WALL_TORCH_SOUTH]: TORCH, [WALL_TORCH_NORTH]: TORCH };
   // Tools. Tool ids run 130..141: tier * 4 + kind.
   const TOOL_KINDS = ['pickaxe', 'axe', 'shovel', 'sword'], TOOL_TIERS = ['Wooden', 'Stone', 'Emerald', 'Iron', 'Diamond'];
   const toolId = (ti: number, ki: number): number => ti < 3 ? 130 + ti * 4 + ki : 143 + (ti - 3) * 4 + ki;

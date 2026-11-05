@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { findPortalFrame, type PortalFrame, type PortalDimension } from '../portals/frame';
 import type { SpawnMob } from '../entities/mob-spawning';
+import { isTorchBlock, torchBlockForFace, wallTorchSupport } from '../world/torch-attachments';
 
 export interface BlockPosition { x: number; y: number; z: number }
 export interface BlockTarget extends BlockPosition { nx: number; ny: number; nz: number }
@@ -104,7 +105,7 @@ function doBreak(t: BlockPosition): void {
   if (deps.getMode() === 'survival') {
     exert(0.02);
     if (canCollect(b)) {
-      const drop = isBed(b) ? BED : (DROPS[b] || b);
+      const drop = isBed(b) ? BED : isTorchBlock(b, TORCH) ? TORCH : (DROPS[b] || b);
       deps.spawnDrop(drop, 1, t.x + 0.5, t.y + 0.5, t.z + 0.5);
     }
     else flashName('You need a ' + (NEEDS_PICK[b] > 0 ? 'stronger ' : '') + 'pickaxe to collect this');
@@ -121,10 +122,19 @@ function doBreak(t: BlockPosition): void {
     if (get(px, t.y, pz) === pid) { setBlock(px, t.y, pz, 0); refreshAround(px, pz); }
   }
   sfx('break', 1, 0, b);
-  let torchGone = b === TORCH;
-  if (get(t.x, t.y + 1, t.z) === TORCH) {
-    setBlock(t.x, t.y + 1, t.z, 0); torchGone = true;
-    if (deps.getMode() === 'survival') deps.spawnDrop(TORCH, 1, t.x + 0.5, t.y + 1.5, t.z + 0.5);
+  let torchGone = isTorchBlock(b, TORCH);
+  const detachTorch = (x: number, y: number, z: number): void => {
+    setBlock(x, y, z, 0);
+    torchGone = true;
+    if (deps.getMode() === 'survival') deps.spawnDrop(TORCH, 1, x + 0.5, y + 0.5, z + 0.5);
+  };
+  if (get(t.x, t.y + 1, t.z) === TORCH) detachTorch(t.x, t.y + 1, t.z);
+  // Side-attached torches fall if their supporting block is mined.
+  for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const wallId = get(t.x + dx, t.y, t.z + dz);
+    const support = wallTorchSupport(wallId);
+    if (support && support[0] === -dx && support[1] === -dz)
+      detachTorch(t.x + dx, t.y, t.z + dz);
   }
   refreshAround(t.x, t.z, torchGone);
 }
@@ -281,12 +291,16 @@ function doPlace(): void {
   if (hotbar[deps.getSelected()] === BED) { placeBed(x, y, z); return; }
   if (hotbar[deps.getSelected()] !== TORCH && x + 1 > player.x - PLAYER_RADIUS && x < player.x + PLAYER_RADIUS && y + 1 > player.y && y < player.y + PLAYER_HEIGHT && z + 1 > player.z - PLAYER_RADIUS && z < player.z + PLAYER_RADIUS) return;
   const b = hotbar[deps.getSelected()];
-  if (b === TORCH && !solid(get(x, y - 1, z))) { flashName('Torches need something to stand on'); return; }
+  const torchPlacement = b === TORCH ? torchBlockForFace(target.nx, target.ny, target.nz, TORCH) : null;
+  if (b === TORCH && (torchPlacement === null || !solid(get(target.x, target.y, target.z)))) {
+    flashName('Torches need a solid floor or wall');
+    return;
+  }
   if (deps.getMode() === 'survival') {
     if (!(inv[b] > 0)) { showHint('You have no ' + NAMES[b].toLowerCase() + '. Mine some first.', 1800); return; }
     inv[b]--; updateHotbar(false);
   }
-  setBlock(x, y, z, b);
+  setBlock(x, y, z, torchPlacement ?? b);
   if (b === OBSIDIAN) detectObsidianPortal(x, y, z);
   sfx('place', 1, 0, b);
   refreshAround(x, z, b === TORCH);

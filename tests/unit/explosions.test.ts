@@ -34,6 +34,17 @@ describe('explosion module', () => {
     expect(chunksBuilt).toContain('0,0');
     expect(system.rebuildSet.size).toBe(0);
   });
+  it.each([17, 57, 58, 59, 60])(
+    'refreshes neighboring chunk lighting after destroying torch state %i', id => {
+      const { system, blocks, key, chunksBuilt } = fixture();
+      blocks.set(key(10, 10, 10), id);
+      system.explode(10.5, 10.5, 10.5, 2.1, 20);
+      expect(blocks.get(key(10, 10, 10))).toBe(0);
+      expect(new Set(chunksBuilt)).toEqual(new Set([
+        '-1,-1', '-1,0', '-1,1', '0,-1', '0,0', '0,1', '1,-1', '1,0', '1,1',
+      ]));
+    },
+  );
   it('cleans up primed TNT meshes after removal', () => {
     const { system, scene } = fixture();
     system.spawnTnt(1, 2, 3, 1);

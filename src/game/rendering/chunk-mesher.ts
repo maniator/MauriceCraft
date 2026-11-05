@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { ckey } from '../world/chunk-key';
 import { liquidKind, liquidCornerHeight } from '../world/fluid-blocks';
+import { isTorchBlock, wallTorchSupport } from '../world/torch-attachments';
 
 export interface MeshChunk {
   cx: number;
@@ -57,7 +58,8 @@ export function createChunkMesher<T extends MeshChunk>(deps: MesherDependencies<
     c.meshed = false;
   }
   // A torch is a thin stick with a small flame on top, drawn in its own always-bright mesh
-  function addTorch(pos: number[], uv: number[], col: number[], ind: number[], gpos: number[], x: number, y: number, z: number): void {
+  function addTorch(pos: number[], uv: number[], col: number[], ind: number[], gpos: number[], x: number, y: number, z: number, blockId: number): void {
+    const support = wallTorchSupport(blockId);
     [[0.4375, 0, 0.5625, 0.6, 32], [0.40625, 0.6, 0.59375, 0.78, 33]].forEach(function (bx) {
       const lo = bx[0], y0 = bx[1], hi = bx[2], y1 = bx[3], tile = bx[4];
       const u0 = tile / ATLAS_N + EPS, u1 = (tile + 1) / ATLAS_N - EPS;
@@ -65,14 +67,22 @@ export function createChunkMesher<T extends MeshChunk>(deps: MesherDependencies<
         const vi = pos.length / 3;
         for (let i = 0; i < 4; i++) {
           const c = f.c[i];
-          pos.push(x + (c[0] ? hi : lo), y + (c[1] ? y1 : y0), z + (c[2] ? hi : lo));
+          const height = c[1] ? y1 : y0;
+          // The foot sits on the supporting wall. The tip leans toward the
+          // center of the empty voxel; the encoded face survives save/reload.
+          // Extend the foot slightly into its supporting wall, leaving no visible gap.
+          const tilt = support ? 0.46 - height / 0.78 * 0.44 : 0;
+          pos.push(x + (c[0] ? hi : lo) + (support?.[0] ?? 0) * tilt,
+            y + height,
+            z + (c[2] ? hi : lo) + (support?.[1] ?? 0) * tilt);
           uv.push((i === 1 || i === 2) ? u1 : u0, i < 2 ? EPS : 1 - EPS);
           const sh = tile === 33 ? 1 : 0.75 + f.s * 0.25; col.push(sh, sh, sh);
         }
         ind.push(vi, vi + 1, vi + 2, vi, vi + 2, vi + 3);
       });
     });
-    gpos.push(x + 0.5, y + 0.8, z + 0.5);
+    gpos.push(x + 0.5 + (support?.[0] ?? 0) * 0.02,
+      y + 0.8, z + 0.5 + (support?.[1] ?? 0) * 0.02);
   }
   // A bed is two low blocks (foot and head). The top texture is turned so the pillow sits at the head end.
   function addBed(pos: number[], uv: number[], col: number[], ind: number[], light: number[], x: number, y: number, z: number, id: number, lv: number): void {
@@ -113,7 +123,7 @@ export function createChunkMesher<T extends MeshChunk>(deps: MesherDependencies<
   function torchesOf(c: T): number[][] {
     if (c.torches) return c.torches;
     const out: number[][] = [], d = c.data;
-    for (let i = 0; i < d.length; i++) if (d[i] === TORCH) out.push([c.cx * 16 + (i & 15), i >> 8, c.cz * 16 + ((i >> 4) & 15)]);
+    for (let i = 0; i < d.length; i++) if (isTorchBlock(d[i], TORCH)) out.push([c.cx * 16 + (i & 15), i >> 8, c.cz * 16 + ((i >> 4) & 15)]);
     c.torches = out;
     return out;
   }
@@ -168,7 +178,7 @@ export function createChunkMesher<T extends MeshChunk>(deps: MesherDependencies<
         for (let x = x0; x < x0 + CS; x++) {
           const b = data[(y * 16 + (z - z0)) * 16 + (x - x0)];
           if (!b) continue;
-          if (b === TORCH) { addTorch(tpos, tuv, tcol, tind, gpos, x, y, z); continue; }
+          if (isTorchBlock(b, TORCH)) { addTorch(tpos, tuv, tcol, tind, gpos, x, y, z, b); continue; }
           if (isBed(b)) { addBed(pos, uv, col, ind, light, x, y, z, b, lightAt ? Math.pow(lightAt(x, y, z) / TORCH_LEVEL, 1.3) : 0); continue; }
           const tl = TILES[b];
           for (let fi = 0; fi < 6; fi++) {

@@ -77,12 +77,20 @@ describe('mob spawning and raids', () => {
     expect(f.addMob).toHaveBeenCalled();
   });
 
-  it('does not spawn natural monsters near a torch', () => {
-    const f = fixture();
-    f.setBlock(17);
-    f.spawning.trySpawnMob();
-    expect(f.addMob).not.toHaveBeenCalled();
-  });
+  it.each([17, 57, 58, 59, 60])(
+    'prevents hostile spawns near floor or wall torch state %i', torchId => {
+      const f = fixture();
+      f.setBlock(torchId);
+      // Force a surface spawn attempt rather than a cave attempt.
+      const random = vi.spyOn(Math, 'random').mockReturnValue(0.9);
+      try {
+        f.spawning.trySpawnMob();
+        expect(f.addMob).not.toHaveBeenCalled();
+      } finally {
+        random.mockRestore();
+      }
+    },
+  );
 
   it('populates a village only once and marks it spawned', () => {
     const f = fixture();

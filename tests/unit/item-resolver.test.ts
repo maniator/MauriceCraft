@@ -15,6 +15,18 @@ describe('item command resolution', () => {
     expect(findItem('iron ingot')).toBe(151);
     expect(itemMap().stone).toBe(3);
   });
+  it('keeps the normal torch name bound to the floor torch item', () => {
+    const torchNames: Record<number, string> = {
+      17: 'Torch',
+      57: 'Torch',
+      58: 'Torch',
+      59: 'Torch',
+      60: 'Torch',
+    };
+    const { findItem, itemMap } = createItemResolver(torchNames, 19);
+    expect(itemMap().torch).toBe(17);
+    expect(findItem('torch')).toBe(17);
+  });
   it('allows unique prefixes but reports ambiguous names', () => {
     expect(findItem('flint')).toBe(111);
     expect(() => findItem('iron')).toThrow('Did you mean');

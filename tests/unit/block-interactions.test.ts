@@ -74,6 +74,56 @@ describe('block and item interactions', () => {
     expect(f.refreshAround).toHaveBeenCalledWith(0, 0, true);
   });
 
+  it.each([
+    [1, 0, 0, 58],
+    [-1, 0, 0, 57],
+    [0, 0, 1, 60],
+    [0, 0, -1, 59],
+  ])('places a torch on wall face (%i,%i,%i) with a persistent directional ID',
+    (nx, ny, nz, expectedId) => {
+      const f = fixture();
+      f.setCell(5, 10, 5, 3);
+      f.setTarget({ x: 5, y: 10, z: 5, nx, ny, nz });
+      f.interactions.doPlace();
+      expect(f.getBlock(5 + nx, 10, 5 + nz)).toBe(expectedId);
+      expect(f.inventory[17]).toBe(1);
+      expect(f.refreshAround).toHaveBeenCalledWith(5 + nx, 5 + nz, true);
+    });
+
+  it('rejects placing a torch on a ceiling or non-solid support', () => {
+    const f = fixture();
+    f.setCell(5, 10, 5, 3);
+    f.setTarget({ x: 5, y: 10, z: 5, nx: 0, ny: -1, nz: 0 });
+    f.interactions.doPlace();
+    expect(f.getBlock(5, 9, 5)).toBe(0);
+    f.setCell(5, 10, 5, 0);
+    f.setTarget({ x: 5, y: 10, z: 5, nx: 1, ny: 0, nz: 0 });
+    f.interactions.doPlace();
+    expect(f.getBlock(6, 10, 5)).toBe(0);
+    expect(f.inventory[17]).toBe(2);
+  });
+
+  it('detaches a wall torch and drops an ordinary torch when its support breaks', () => {
+    const f = fixture();
+    f.setCell(5, 10, 5, 3);
+    f.setTarget({ x: 5, y: 10, z: 5, nx: 1, ny: 0, nz: 0 });
+    f.interactions.doPlace();
+    expect(f.getBlock(6, 10, 5)).toBe(58);
+    f.spawnDrop.mockClear();
+    f.interactions.doBreak({ x: 5, y: 10, z: 5 });
+    expect(f.getBlock(6, 10, 5)).toBe(0);
+    expect(f.spawnDrop).toHaveBeenCalledWith(17, 1, 6.5, 10.5, 5.5);
+    expect(f.refreshAround).toHaveBeenLastCalledWith(5, 5, true);
+  });
+
+  it('breaking a wall torch directly drops the normal inventory torch', () => {
+    const f = fixture();
+    f.setCell(6, 10, 5, 58);
+    f.interactions.doBreak({ x: 6, y: 10, z: 5 });
+    expect(f.spawnDrop).toHaveBeenCalledWith(17, 1, 6.5, 10.5, 5.5);
+    expect(f.getBlock(6, 10, 5)).toBe(0);
+  });
+
   it('does not place blocks or change inventory when the selected hotbar slot is empty', () => {
     const f = fixture();
     f.hotbar[0] = 0;

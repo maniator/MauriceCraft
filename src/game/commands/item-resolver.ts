@@ -13,7 +13,20 @@ export function createItemResolver(
   function itemMap(): Record<string, number> {
     if (!cachedItems) {
       const map: Record<string, number> = {};
-      Object.keys(names).forEach(key => { map[slug(names[Number(key)])] = Number(key); });
+      Object.keys(names).forEach(key => {
+        const id = Number(key);
+        const slugName = slug(names[id]);
+        const existing = map[slugName];
+        if (existing === undefined) {
+          map[slugName] = id;
+        } else if (id === 17) {
+          map[slugName] = 17;
+        } else if (existing === 17 || (existing >= 57 && existing <= 60 && id >= 57 && id <= 60)) {
+          // Keep the canonical floor Torch and avoid letting wall-state IDs replace it.
+        } else {
+          map[slugName] = id;
+        }
+      });
       cachedItems = map;
     }
     return cachedItems;

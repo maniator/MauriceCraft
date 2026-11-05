@@ -1,4 +1,5 @@
 import { hash2 } from '../world/noise';
+import { isTorchBlock } from '../world/torch-attachments';
 import type { MobActor } from './mob-simulation';
 import type { GeneratedStructure } from '../world/structure-regions';
 
@@ -52,7 +53,7 @@ export function createMobSpawning(deps: MobSpawnDependencies) {
 
 function nearTorch(x: number, y: number, z: number, rad: number): boolean {
   const bx = Math.floor(x), by = Math.floor(y), bz = Math.floor(z);
-  for (let dy = -3; dy <= 4; dy++) for (let dz = -rad; dz <= rad; dz++) for (let dx = -rad; dx <= rad; dx++) if (get(bx + dx, by + dy, bz + dz) === TORCH) return true;
+  for (let dy = -3; dy <= 4; dy++) for (let dz = -rad; dz <= rad; dz++) for (let dx = -rad; dx <= rad; dx++) if (isTorchBlock(get(bx + dx, by + dy, bz + dz), TORCH)) return true;
   return false;
 }
 function trySpawnMob(): void {
