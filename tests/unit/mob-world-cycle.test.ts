@@ -109,9 +109,9 @@ describe('mob world population cycle', () => {
     f.setDimension('nether');
     f.setMobCap(3);
     f.mobs.push(
-      { kind: 'strider', hostile: false } as MobActor,
-      { kind: 'zombified_piglin', hostile: false } as MobActor,
-      { kind: 'blaze', hostile: true } as MobActor,
+      { kind: 'strider', x: 2, z: 3, hostile: false } as MobActor,
+      { kind: 'zombified_piglin', x: 2, z: 3, hostile: false } as MobActor,
+      { kind: 'blaze', x: 2, z: 3, hostile: true } as MobActor,
     );
     f.updateMobs(2.1);
     expect(f.trySpawnNetherMob).not.toHaveBeenCalled();
@@ -120,7 +120,7 @@ describe('mob world population cycle', () => {
     f.mobs.pop();
     f.updateMobs(2.1);
     expect(f.trySpawnNetherMob).toHaveBeenCalledOnce();
-    f.mobs.push({ kind: 'piglin', hostile: true } as MobActor);
+    f.mobs.push({ kind: 'piglin', x: 2, z: 3, hostile: true } as MobActor);
     f.updateMobs(2.1);
     expect(f.trySpawnNetherMob).toHaveBeenCalledOnce();
   });
@@ -128,14 +128,14 @@ describe('mob world population cycle', () => {
   it('retains the Overworld hostile-only cap and excludes illager patrols', () => {
     const f = fixture();
     f.setMobCap(1);
-    f.mobs.push({ kind: 'strider', hostile: false } as MobActor);
+    f.mobs.push({ kind: 'strider', x: 2, z: 3, hostile: false } as MobActor);
     f.updateMobs(2.1);
     expect(f.trySpawnMob).toHaveBeenCalledOnce();
-    f.mobs.push({ kind: 'zombie', hostile: true } as MobActor);
+    f.mobs.push({ kind: 'zombie', x: 2, z: 3, hostile: true } as MobActor);
     f.updateMobs(2.1);
     expect(f.trySpawnMob).toHaveBeenCalledOnce();
     f.mobs.pop();
-    f.mobs.push({ kind: 'pillager', hostile: true } as MobActor);
+    f.mobs.push({ kind: 'pillager', x: 2, z: 3, hostile: true } as MobActor);
     f.updateMobs(2.1);
     expect(f.trySpawnMob).toHaveBeenCalledTimes(2);
   });
