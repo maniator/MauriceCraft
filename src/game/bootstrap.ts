@@ -349,7 +349,7 @@ const { updateMovement: updatePlayerMovement } = createPlayerMovement({
   isSleeping: () => sleepT > 0,
   getSpectatorSpeed: () => specSpeed,
   worldHeight: WORLD_HEIGHT,
-  moveEntity: (axis, distance) => moveEnt(player, axis, distance),
+  moveEntity: (axis, distance, maxStepY) => moveEnt(player, axis, distance, maxStepY),
   checkPortal: seconds => checkPortal(seconds),
   respawn: () => respawn(),
   exert: amount => exert(amount),

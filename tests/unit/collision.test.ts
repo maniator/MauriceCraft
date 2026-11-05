@@ -38,4 +38,61 @@ describe('player and mob collision rules', () => {
     expect(entity.onGround).toBe(true);
     expect(entity.vy).toBe(0);
   });
+  it('automatically steps onto a one-block ledge with space above it', () => {
+    blocks.clear();
+    blocks.set(key(1, 1, 0), 3);
+    const player = { x: 0.5, y: 1, z: 0.5, vx: 4, vy: -1, vz: 0, onGround: false };
+    engine.moveEnt(player, 0, 1, 2.001);
+    expect(player.x).toBeCloseTo(1.5);
+    expect(player.y).toBeCloseTo(2.001);
+    expect(player.onGround).toBe(true);
+    expect(player.vx).toBe(4);
+  });
+
+  it('still blocks walls when no step was authorized or the wall is two blocks tall', () => {
+    blocks.clear();
+    blocks.set(key(1, 1, 0), 3);
+    const blocked = { x: 0.5, y: 1, z: 0.5, vx: 4, vy: 0, vz: 0 };
+    engine.moveEnt(blocked, 0, 1);
+    expect(blocked.x).toBeLessThan(0.71);
+    expect(blocked.y).toBe(1);
+    blocks.set(key(1, 2, 0), 3);
+    const tooTall = { x: 0.5, y: 1, z: 0.5, vx: 4, vy: 0, vz: 0 };
+    engine.moveEnt(tooTall, 0, 1, 2.001);
+    expect(tooTall.x).toBeLessThan(0.71);
+    expect(tooTall.y).toBe(1);
+  });
+
+  it('does not step into a low ceiling or through a wall while rising', () => {
+    blocks.clear();
+    blocks.set(key(1, 1, 0), 3);
+    blocks.set(key(1, 3, 0), 3);
+    const player = { x: 0.5, y: 1, z: 0.5, vx: 4, vy: 0, vz: 0 };
+    engine.moveEnt(player, 0, 1, 2.001);
+    expect(player.x).toBeLessThan(0.71);
+    expect(player.y).toBe(1);
+  });
+
+  it('steps onto a bed at its actual height, rather than jumping a full block', () => {
+    blocks.clear();
+    blocks.set(key(1, 1, 0), 19);
+    const player = { x: 0.5, y: 1, z: 0.5, vx: 4, vy: 0, vz: 0 };
+    engine.moveEnt(player, 0, 0.75, 2.001);
+    expect(player.x).toBeCloseTo(1.25);
+    expect(player.y).toBeGreaterThan(1.5625);
+    expect(player.y).toBeLessThan(1.6);
+  });
+
+  it('cannot combine X and Z movement to climb two blocks in one frame', () => {
+    blocks.clear();
+    blocks.set(key(1, 1, 0), 3);
+    blocks.set(key(1, 2, 1), 3);
+    const player = { x: 0.5, y: 1, z: 0.5, vx: 4, vy: 0, vz: 4 };
+    engine.moveEnt(player, 0, 1, 2.001);
+    engine.moveEnt(player, 2, 1, 2.001);
+    expect(player.x).toBeCloseTo(1.5);
+    expect(player.y).toBeCloseTo(2.001);
+    expect(player.z).toBeLessThan(0.71);
+  });
+
 });

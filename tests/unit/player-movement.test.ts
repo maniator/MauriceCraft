@@ -13,14 +13,16 @@ function fixture() {
   let sleeping = false;
   const damage: number[] = [];
   let collisions = 0;
+  const stepCeilings: Array<number | undefined> = [];
   const movement = createPlayerMovement({
     player, keys, touchMovement: { x: 0, z: 0 },
     getMode: () => mode, getHunger: () => hunger,
     isJumpPressed: () => Boolean(keys.Space),
     isSleeping: () => sleeping, getSpectatorSpeed: () => 1,
     worldHeight: 48,
-    moveEntity: (axis, distance) => {
+    moveEntity: (axis, distance, maxStepY) => {
       collisions++;
+      if (axis !== 1) stepCeilings.push(maxStepY);
       if (axis === 0) player.x += distance;
       if (axis === 2) player.z += distance;
       if (axis === 1) {
@@ -35,7 +37,7 @@ function fixture() {
     applyFallDamage: amount => { damage.push(amount); },
   });
   return {
-    player, keys, damage, movement,
+    player, keys, damage, movement, stepCeilings,
     setMode: (next: GameMode) => { mode = next; },
     setHunger: (next: number) => { hunger = next; },
     setSleeping: (next: boolean) => { sleeping = next; },
@@ -55,6 +57,31 @@ describe('player movement and physics', () => {
     diagonal.keys.KeyD = true;
     diagonal.movement.updateMovement(0.05);
     expect(Math.hypot(diagonal.player.x, diagonal.player.z)).toBeCloseTo(forwardDistance, 8);
+  });
+
+  it('enables a one-block step only during grounded walking or sprinting', () => {
+    const game = fixture();
+    game.keys.KeyW = true;
+    game.movement.updateMovement(0.05);
+    expect(game.stepCeilings).toEqual([2.001, 2.001]);
+
+    game.stepCeilings.length = 0;
+    game.player.onGround = false;
+    game.movement.updateMovement(0.05);
+    expect(game.stepCeilings).toEqual([undefined, undefined]);
+
+    game.stepCeilings.length = 0;
+    game.player.onGround = true;
+    game.player.fly = true;
+    game.movement.updateMovement(0.05);
+    expect(game.stepCeilings).toEqual([undefined, undefined]);
+
+    game.stepCeilings.length = 0;
+    game.player.fly = false;
+    game.player.onGround = true;
+    game.keys.Space = true;
+    game.movement.updateMovement(0.05);
+    expect(game.stepCeilings).toEqual([undefined, undefined]);
   });
 
   it('skips collisions for spectator mode and clamps vertical travel', () => {
