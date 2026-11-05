@@ -26,12 +26,12 @@ Browser tests run the **compiled production game**, not just isolated functions.
 
 ## GitHub Actions
 
-**CI and GitHub Pages are separate independent workflows.** A failing unit test must not block publishing a buildable website, but a failing TypeScript check or production build must stop Pages deployment.
+**Gameplay CI and GitHub Pages are independent.** A push to `main` starts both workflows; Pages publishes only after its **own production build** passes, regardless of the gameplay CI outcome. Pull requests do not deploy.
 
 ```mermaid
 flowchart TD
     Change["Push or pull request"] --> CI["CI workflow"]
-    Change --> Pages["Pages workflow on main"]
+    Change -->|push to main| Pages["Pages workflow"]
     CI --> Lint["ESLint and typing"]
     Lint --> Unit["Unit / coverage"]
     Unit --> Browser["Desktop and mobile browser tests"]
