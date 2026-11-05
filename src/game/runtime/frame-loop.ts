@@ -4,6 +4,8 @@
 export interface FrameLoopDependencies {
   isReady: () => boolean;
   isPlaying: () => boolean;
+  /** Only the visual-test build uses this hook; normal gameplay never freezes. */
+  isVisualFrozen?: () => boolean;
   streamChunks: () => void;
   update: (deltaSeconds: number, now: number) => void;
   updateFluids?: (deltaSeconds: number) => void;
@@ -33,6 +35,10 @@ export function createFrameLoop(deps: FrameLoopDependencies, startTime: number):
     last = now;
     if (deps.isReady()) {
       deps.streamChunks();
+      if (deps.isVisualFrozen?.()) {
+        deps.render();
+        return;
+      }
       if (deps.isPlaying()) {
         deps.update(dt, now);
         deps.updateFluids?.(dt);
