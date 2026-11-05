@@ -1,4 +1,4 @@
-import { liquidKind } from '../world/fluid-blocks';
+import { liquidHeight, liquidKind } from '../world/fluid-blocks';
 import * as THREE from 'three';
 import { SpatialIndex } from './spatial-index';
 import type { MovableEntity } from '../world/collision';
@@ -261,17 +261,28 @@ export function createMobSimulation(deps: MobCombatDependencies) {
     const k = Math.min(1, 8 * dt);
     if (m.kind === 'spider' && !m.onGround) { /* keep the pounce going */ }
     else { m.vx += (tx - m.vx) * k; m.vz += (tz - m.vz) * k; }
-    m.vy = Math.max(-50, m.vy - 28 * dt);
-    // Passive animals that wander into water should swim, not sink indefinitely.
+    // Swimming uses the actual fluid surface. A constant upward impulse made
+    // creatures bounce above the water and look as though they were walking on it.
+    let swimming = false;
     if (['cow', 'pig', 'sheep', 'chicken', 'strider'].includes(m.kind) && deps.getBlock) {
       const x = Math.floor(m.x), z = Math.floor(m.z);
-      const feet = Math.floor(m.y - 0.3);
       const fluid = m.kind === 'strider' ? 'lava' : 'water';
-      if (liquidKind(deps.getBlock(x, feet, z)) === fluid ||
-        liquidKind(deps.getBlock(x, feet + 1, z)) === fluid) {
-        m.vy = Math.max(m.vy, 1.9);
+      let y = Math.floor(m.y - 0.3);
+      if (liquidKind(deps.getBlock(x, y, z)) !== fluid) y++;
+      if (liquidKind(deps.getBlock(x, y, z)) === fluid) {
+        // Stacked liquid blocks form one column; seek the exposed surface.
+        for (let n = 0; n < 6 && liquidKind(deps.getBlock(x, y + 1, z)) === fluid; n++) y++;
+        const surface = y + liquidHeight(deps.getBlock(x, y, z), deps.getBlock(x, y + 1, z));
+        const submergedFeet = m.kind === 'strider' ? 0.08 : Math.min(0.45, m.h * 0.35);
+        const targetY = surface - submergedFeet;
+        // Damped buoyancy keeps the body partly submerged, including while
+        // moving over flowing/shallow water with a lower surface.
+        m.vy = Math.max(-1.4, Math.min(1.5,
+          (m.vy + (targetY - m.y) * 12 * dt) * Math.max(0, 1 - 4 * dt)));
+        swimming = true;
       }
     }
+    if (!swimming) m.vy = Math.max(-50, m.vy - 28 * dt);
     m.onGround = false; m.hit = false;
     moveEnt(m, 0, m.vx * dt); moveEnt(m, 2, m.vz * dt); moveEnt(m, 1, m.vy * dt);
     if (m.hit && m.onGround && (!m.hostile || dist > 1)) m.vy = m.hostile ? 8.2 : 7.8;
