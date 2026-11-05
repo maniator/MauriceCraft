@@ -11,7 +11,7 @@ describe('automatic hotbar pickup', () => {
   });
 
   it('stacks existing items without creating duplicate hotbar entries', () => {
-    const inventory = { 45: 1 };
+    const inventory: Record<number, number> = { 45: 1 };
     const hotbar = [0, 45, 0, 0, 0, 0, 0, 0, 0];
     grantInventoryItem(inventory, hotbar, 45, 3);
     expect(inventory[45]).toBe(4);

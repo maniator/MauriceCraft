@@ -45,7 +45,8 @@ export function createHud(deps: HudDependencies) {
   heldCanvas.setAttribute('aria-label', 'No item held');
   const heldContext = heldCanvas.getContext('2d');
   if (!heldContext) throw new Error('Held item preview needs a 2D canvas');
-  heldContext.imageSmoothingEnabled = false;
+  const heldImageContext: CanvasRenderingContext2D = heldContext;
+  heldImageContext.imageSmoothingEnabled = false;
   document.body.appendChild(heldCanvas);
   type SlotButton = HTMLButtonElement & {
     countElement: HTMLElement;
@@ -116,9 +117,9 @@ export function createHud(deps: HudDependencies) {
     const heldId = deps.hotbar[selected] || 0;
     const holding = heldId > 0 && (!survival || deps.inventory[heldId] > 0);
     heldCanvas.hidden = !holding;
-    heldContext.clearRect(0, 0, 96, 96);
+    heldImageContext.clearRect(0, 0, 96, 96);
     if (holding) {
-      heldContext.drawImage(deps.atlasCanvas, (deps.tileOf(heldId) ?? 0) * 16,
+      heldImageContext.drawImage(deps.atlasCanvas, (deps.tileOf(heldId) ?? 0) * 16,
         0, 16, 16, 0, 0, 96, 96);
     }
     heldCanvas.setAttribute('aria-label', holding ? 'Holding ' + deps.names[heldId] : 'No item held');
