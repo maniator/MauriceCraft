@@ -1,10 +1,20 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { resolveManualChunk } from './src/build/manual-chunks.js';
 
 // GitHub Pages project site is hosted under /MauriceCraft/.
 export default defineConfig(({ command, isPreview }) => ({
   base: (command === 'build' || isPreview === true) ? '/MauriceCraft/' : '/',
-  build: { outDir: 'dist', emptyOutDir: true },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    chunkSizeWarningLimit: 650,
+    rollupOptions: {
+      output: {
+        manualChunks: resolveManualChunk,
+      },
+    },
+  },
   plugins: [VitePWA({
     // Never forcibly reload gameplay; the client activates a waiting update
     // when the menu is shown after a successful saved-world write.
