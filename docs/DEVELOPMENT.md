@@ -14,3 +14,13 @@ Refactor in small steps, and confirm Creative, Survival, Adventure, Spectator, p
 ## Code quality
 
 Use strict TypeScript, explicit dependency interfaces, two-space indentation, single-purpose modules, no unexplained magic numbers, and clear ownership of persistent data. The bootstrap only wires modules together. Do not use `@ts-nocheck` or bypass the 500-effective-line lint limit. Make small meaningful commits, and keep the architecture and testing docs current. Treat generation versions, inventory/block IDs, save data, and mobile input as high risk.
+
+## Copilot setup and MCP tooling
+
+- Repository-wide Copilot coding rules live in `.github/copilot-instructions.md`.
+- Copilot code review also uses `.github/instructions/code-review.instructions.md` for review-focused checks.
+- Cloud-agent environment bootstrap runs from `.github/workflows/copilot-setup-steps.yml` and preinstalls Node 22 dependencies plus Playwright Chromium.
+- Local VS Code MCP servers are defined in `.vscode/mcp.json`:
+  - `github` via `@modelcontextprotocol/server-github` (uses a prompted token)
+  - `playwright` via `@playwright/mcp`
+- For cloud-agent secrets/variables, use the repository `copilot` environment in GitHub settings.

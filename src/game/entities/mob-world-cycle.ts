@@ -24,6 +24,7 @@ export interface MobWorldCycleDeps<T extends MobActor> {
   getWeather: () => string;
   addMob: (kind: string, x: number, y: number, z: number, opts?: { boss?: boolean } | null) => T;
   trySpawnMob: () => void;
+  trySpawnNetherMob?: () => void;
   trySpawnAnimals: () => void;
   manageVillagers: () => void;
   trySpawnPatrol: () => void;
@@ -64,13 +65,22 @@ function updateMobs(dt: number): void {
   spawnT -= dt; animalT -= dt; villT -= dt;
   if (deps.getDimension() !== 'end' && deps.hasHealth() && spawnT <= 0) {
     spawnT = D.every;
-    if (D.cap > 0 && deps.getDimension() === 'overworld' && mobs.filter(function (m) { return m.hostile && !KINDS[m.kind].illager; }).length < D.cap) trySpawnMob();
+    // Nether spawns include neutral striders and zombified piglins. Count
+    // them with monsters or repeated spawns can grow the actor list forever.
+    const nether = deps.getDimension() === 'nether';
+    const population = mobs.filter(m =>
+      (m.hostile && !KINDS[m.kind]?.illager) ||
+      (nether && (m.kind === 'strider' || m.kind === 'zombified_piglin'))).length;
+    if (D.cap > 0 && population < D.cap) {
+      if (deps.getDimension() === 'overworld') trySpawnMob();
+      else if (nether) deps.trySpawnNetherMob?.();
+    }
   }
-  if (deps.getDimension() !== 'end' && animalT <= 0) {
+  if (deps.getDimension() === 'overworld' && animalT <= 0) {
     animalT = 2.5;
     if (!deps.isNight() && mobs.filter(function (m) { return !m.hostile && m.kind !== 'villager'; }).length < 12) trySpawnAnimals();
   }
-  if (deps.getDimension() !== 'end' && villT <= 0) { villT = 1.5; manageVillagers(); }
+  if (deps.getDimension() === 'overworld' && villT <= 0) { villT = 1.5; manageVillagers(); }
   // Patrol timing pauses outside the Overworld (including the Nether).
   if (deps.getDimension() === 'overworld') {
     patrolT -= dt;
@@ -79,7 +89,7 @@ function updateMobs(dt: number): void {
       if (deps.hasHealth() && D.cap > 0 && mobs.filter(function (m) { return KINDS[m.kind].illager && !m.raid; }).length < 6) trySpawnPatrol();
     }
   }
-  if (deps.getDimension() !== 'end') updateRaid(dt, D);
+  if (deps.getDimension() === 'overworld') updateRaid(dt, D);
   // Index mobs once per frame instead of searching everyone for every AI actor.
   hostileActors.clear();
   defenders.clear();

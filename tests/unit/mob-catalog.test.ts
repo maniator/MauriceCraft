@@ -7,11 +7,16 @@ describe('canonical creature catalog', () => {
   const { KINDS, ANIMALS } = createMobCatalog(blocks);
 
   it('keeps existing creature identities and spawnable animal types', () => {
-    expect(Object.keys(KINDS)).toEqual([
+    const originalKinds = [
       'zombie', 'enderdragon', 'creeper', 'skeleton', 'spider',
       'pillager', 'vindicator', 'irongolem', 'coppergolem', 'diamondgolem',
       'villager', 'cow', 'pig', 'sheep', 'chicken',
-    ]);
+    ];
+    const netherKinds = [
+      'piglin', 'zombified_piglin', 'hoglin', 'ghast', 'blaze',
+      'magma_cube', 'strider', 'wither_skeleton',
+    ];
+    expect(Object.keys(KINDS)).toEqual([...netherKinds, ...originalKinds]);
     expect(ANIMALS).toEqual(['cow', 'pig', 'sheep', 'chicken']);
   });
 

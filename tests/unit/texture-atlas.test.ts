@@ -25,7 +25,7 @@ describe('game texture atlas regression', () => {
     for (const tile of [99, 100, 101, 102, 103])
       expect(pixels.get(`${tile * 16 + 3},3`)).toMatch(/^rgb\(/);
     expect(pixels.get(`${80 * 16 + 8},8`)).toBeDefined();
-    for (const tile of [104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116])
+    for (const tile of [104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123])
       expect(pixels.get(`${tile * 16 + 7},7`)).toMatch(/^rgb\(/);
     expect(createElement).toHaveBeenCalledWith('canvas');
   });

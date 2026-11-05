@@ -42,7 +42,9 @@ export function createWorldRuntime(deps: WorldRuntimeDependencies) {
     COAL_ORE, COPPER_ORE, DIAMOND_ORE, GRASS, IRON_ORE, LAVA,
     SAND, STONE, WATER, SNOW, PINE_LEAVES, RED_SAND, DARK_WOOD,
     BIRCH_WOOD, BIRCH_LEAVES, ACACIA_WOOD, ACACIA_LEAVES, WILLOW_WOOD,
-    WILLOW_LEAVES, AUTUMN_LEAVES, MUD, FLOWERING_GRASS, toolTile, TILES,
+    WILLOW_LEAVES, AUTUMN_LEAVES, MUD, FLOWERING_GRASS,
+    NETHERRACK, BASALT, SOUL_SOIL, CRIMSON_NYLIUM, WARPED_NYLIUM, BLACKSTONE, GLOWSTONE,
+    toolTile, TILES,
     ATLAS_N, BED_H, isBed, opq, solid,
   } = catalog;
   // Hotbar slots are empty until the player explicitly assigns an item.
@@ -123,7 +125,8 @@ export function createWorldRuntime(deps: WorldRuntimeDependencies) {
       GOLD, GRASS, IRON_ORE, LAVA, LEAVES, SAND, SANDSTONE,
       STONE, STONEBRICK, TORCH, WATER, WOOD, SNOW, PINE_LEAVES, RED_SAND, DARK_WOOD,
       BIRCH_WOOD, BIRCH_LEAVES, ACACIA_WOOD, ACACIA_LEAVES, WILLOW_WOOD,
-      WILLOW_LEAVES, AUTUMN_LEAVES, MUD, FLOWERING_GRASS },
+      WILLOW_LEAVES, AUTUMN_LEAVES, MUD, FLOWERING_GRASS,
+      NETHERRACK, BASALT, SOUL_SOIL, CRIMSON_NYLIUM, WARPED_NYLIUM, BLACKSTONE, GLOWSTONE },
   });
   const lifecycle = createChunkLifecycle({
     chunks, savedChunks, dimensionChunks, height: WORLD_HEIGHT,

@@ -153,6 +153,63 @@ test('survival bag hides zero-count items and recipe book reveals partial recipe
   expect(errors).toEqual([]);
 });
 
+test('first-person hand equips hotbar items and swings on desktop and mobile mining input', async ({ page, isMobile }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await startWorld(page);
+  const hand = page.locator('#heldHand');
+  const heldItem = page.locator('#heldItem');
+  await expect(hand).toBeVisible();
+  await expect(heldItem).toBeHidden();
+
+  await runCommand(page, '/gamemode survival');
+  await runCommand(page, '/give stick 1');
+  await expect(heldItem).toHaveAttribute('aria-label', 'Holding Stick');
+  await expect(heldItem).toBeVisible();
+  await runCommand(page, '/give stone 1');
+  // Desktop pointer lock uses number keys; touch devices select hotbar buttons.
+  if (isMobile) await page.locator('#hotbar .slot').nth(1).tap();
+  else await page.keyboard.press('2');
+  await expect(heldItem).toHaveAttribute('aria-label', 'Holding Stone');
+  if (isMobile) await page.locator('#hotbar .slot').nth(0).tap();
+  else await page.keyboard.press('1');
+  await expect(heldItem).toHaveAttribute('aria-label', 'Holding Stick');
+
+  if (isMobile) {
+    await page.evaluate(() => {
+      const canvas = document.querySelector<HTMLCanvasElement>('#view');
+      if (!canvas) throw new Error('Missing game canvas');
+      const touch = new Touch({
+        identifier: 42, target: canvas, clientX: innerWidth * 0.8, clientY: innerHeight * 0.4,
+      });
+      canvas.dispatchEvent(new TouchEvent('touchstart', {
+        touches: [touch], targetTouches: [touch], changedTouches: [touch], bubbles: true, cancelable: true,
+      }));
+    });
+  } else {
+    await page.locator('#view').dispatchEvent('mousedown', { button: 0 });
+  }
+  await expect(hand).toHaveClass(/swing/);
+  if (isMobile) {
+    await page.evaluate(() => {
+      const canvas = document.querySelector<HTMLCanvasElement>('#view');
+      if (!canvas) throw new Error('Missing game canvas');
+      const touch = new Touch({
+        identifier: 42, target: canvas, clientX: innerWidth * 0.8, clientY: innerHeight * 0.4,
+      });
+      canvas.dispatchEvent(new TouchEvent('touchend', {
+        touches: [], targetTouches: [], changedTouches: [touch], bubbles: true, cancelable: true,
+      }));
+    });
+  } else await page.evaluate(() => window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })));
+
+  if (isMobile) await page.locator('#hotbar .slot').nth(2).tap();
+  else await page.keyboard.press('3');
+  await expect(heldItem).toBeHidden();
+  await expect(hand).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test('mobile and desktop can return to menu and confirm a manual save', async ({ page, isMobile }) => {
   await startWorld(page);
   const menu = page.getByRole('button', { name: 'Return to main menu' });

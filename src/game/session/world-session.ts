@@ -31,7 +31,7 @@ export function timeAgo(timestamp: number, now = Date.now()): string {
 }
 
 /** World names are human-readable; IDs must not depend on name or order. */
-export const CURRENT_WORLD_GENERATOR_VERSION = 5;
+export const CURRENT_WORLD_GENERATOR_VERSION = 6;
 
 /** Full 32-bit seeds; avoid reuse among locally saved worlds where possible. */
 export function nextWorldSeed(worlds: readonly WorldRecord[], random: () => number = Math.random): number {

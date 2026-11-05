@@ -19,7 +19,7 @@ test('production build loads the game menu without startup exceptions', async ({
   expect(pageErrors).toEqual([]);
 });
 
-test('new v5 worlds retain their full 64-bit seeds and weather across reloads', async ({ page }) => {
+test('new v6 worlds retain their full 64-bit seeds and weather across reloads', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('./');
@@ -50,7 +50,7 @@ test('new v5 worlds retain their full 64-bit seeds and weather across reloads', 
   const before = await readWorlds();
   expect(before).toHaveLength(2);
   for (const world of before) {
-    expect(world.generatorVersion).toBe(5);
+    expect(world.generatorVersion).toBe(6);
     expect(world.seed64).toMatch(/^(0|[1-9][0-9]*)$/);
     expect(BigInt(world.seed64!)).toBeLessThanOrEqual((1n << 64n) - 1n);
     expect(world.seed).toBeGreaterThanOrEqual(0);

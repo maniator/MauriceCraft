@@ -92,3 +92,6 @@ The `blockcraft-worlds` IndexedDB database is **stored in the player's browser**
 The per-frame code runs roughly 60 times per second. Keep its work bounded. Chunk streaming uses a fixed generation/meshing budget; mob spatial buckets avoid repeated full-crowd scans; target raycasts avoid per-actor temporary arrays. Avoid quadratic loops (`O(n²)`) and unnecessary allocations in game loops. Use representative unit tests and browser profiling before claiming a performance problem has been eliminated.
 
 See [Testing](TESTING.md) and [Start here](START_HERE.md) for the workflow.
+
+
+Nether versioning: **v5 is the previously released lossless 64-bit seed generator**, and keeps its original Nether chunks/structures. **v6** introduces seeded Nether biome materials, lava seas, structures and native Nether fauna; new worlds get v6, while loaded and imported v1–v5 worlds keep their saved generator version and original terrain algorithms. Do not retarget v5 to new terrain in a future refactor.

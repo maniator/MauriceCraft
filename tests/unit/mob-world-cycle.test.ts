@@ -9,7 +9,8 @@ function fixture() {
   const defenders = new SpatialIndex<MobActor>(16);
   const pendingHits: Array<{ m: MobActor; d: number }> = [];
   const pendingBlasts: Array<{ x: number; y: number; z: number; r: number; p: number }> = [];
-  const trySpawnMob = vi.fn(), trySpawnAnimals = vi.fn(), manageVillagers = vi.fn();
+  const trySpawnMob = vi.fn(), trySpawnNetherMob = vi.fn();
+  const trySpawnAnimals = vi.fn(), manageVillagers = vi.fn();
   const trySpawnPatrol = vi.fn(), updateRaid = vi.fn(), stepMobActors = vi.fn();
   const setActiveIndexes = vi.fn();
   const damageMob = vi.fn(), explode = vi.fn(), showHint = vi.fn(), addMob = vi.fn();
@@ -20,13 +21,14 @@ function fixture() {
     getDifficulty: () => ({ cap: mobCap, every: 2, patrol: [90, 160], raid: 1 }),
     getDimension: () => dimension, isDragonDefeated: () => dragonDefeated,
     hasHealth: () => health, isNight: () => night, getWeather: () => 'clear',
-    addMob, trySpawnMob, trySpawnAnimals, manageVillagers, trySpawnPatrol, updateRaid,
+    addMob, trySpawnMob, trySpawnNetherMob, trySpawnAnimals, manageVillagers, trySpawnPatrol, updateRaid,
     stepMobActors, setActiveIndexes, damageMob, explode, showHint,
     random: () => 0,
   };
   const { updateMobs, resetSpawnTimers } = createMobWorldCycle(deps);
   return { mobs, hostileActors, defenders, pendingHits, pendingBlasts,
-    updateMobs, resetSpawnTimers, trySpawnMob, trySpawnAnimals, manageVillagers,
+    updateMobs, resetSpawnTimers, trySpawnMob, trySpawnNetherMob,
+    trySpawnAnimals, manageVillagers,
     trySpawnPatrol, updateRaid, stepMobActors, setActiveIndexes, damageMob, explode, addMob,
     setDimension: (v: string) => { dimension = v; }, setNight: (v: boolean) => { night = v; },
     setHealth: (v: boolean) => { health = v; }, setMobCap: (v: number) => { mobCap = v; },
@@ -86,6 +88,56 @@ describe('mob world population cycle', () => {
     expect(f.trySpawnPatrol).toHaveBeenCalledTimes(1);
     f.updateMobs(1);
     expect(f.trySpawnPatrol).toHaveBeenCalledTimes(2);
+  });
+
+  it('spawns native Nether creatures without Overworld animals, villages or patrols', () => {
+    const f = fixture();
+    f.setDimension('nether');
+    f.updateMobs(2.1);
+    expect(f.trySpawnNetherMob).toHaveBeenCalledOnce();
+    expect(f.trySpawnMob).not.toHaveBeenCalled();
+    expect(f.trySpawnAnimals).not.toHaveBeenCalled();
+    expect(f.manageVillagers).not.toHaveBeenCalled();
+    expect(f.updateRaid).not.toHaveBeenCalled();
+    f.setMobCap(0);
+    f.updateMobs(2.1);
+    expect(f.trySpawnNetherMob).toHaveBeenCalledOnce();
+  });
+
+  it('counts neutral Nether creatures toward the spawn budget even when hostiles die', () => {
+    const f = fixture();
+    f.setDimension('nether');
+    f.setMobCap(3);
+    f.mobs.push(
+      { kind: 'strider', x: 2, z: 3, hostile: false } as MobActor,
+      { kind: 'zombified_piglin', x: 2, z: 3, hostile: false } as MobActor,
+      { kind: 'blaze', x: 2, z: 3, hostile: true } as MobActor,
+    );
+    f.updateMobs(2.1);
+    expect(f.trySpawnNetherMob).not.toHaveBeenCalled();
+
+    // Killing a hostile frees one slot, but the neutrals still occupy two.
+    f.mobs.pop();
+    f.updateMobs(2.1);
+    expect(f.trySpawnNetherMob).toHaveBeenCalledOnce();
+    f.mobs.push({ kind: 'piglin', x: 2, z: 3, hostile: true } as MobActor);
+    f.updateMobs(2.1);
+    expect(f.trySpawnNetherMob).toHaveBeenCalledOnce();
+  });
+
+  it('retains the Overworld hostile-only cap and excludes illager patrols', () => {
+    const f = fixture();
+    f.setMobCap(1);
+    f.mobs.push({ kind: 'strider', x: 2, z: 3, hostile: false } as MobActor);
+    f.updateMobs(2.1);
+    expect(f.trySpawnMob).toHaveBeenCalledOnce();
+    f.mobs.push({ kind: 'zombie', x: 2, z: 3, hostile: true } as MobActor);
+    f.updateMobs(2.1);
+    expect(f.trySpawnMob).toHaveBeenCalledOnce();
+    f.mobs.pop();
+    f.mobs.push({ kind: 'pillager', x: 2, z: 3, hostile: true } as MobActor);
+    f.updateMobs(2.1);
+    expect(f.trySpawnMob).toHaveBeenCalledTimes(2);
   });
 
   it('does not count time spent in the Nether towards Overworld patrols', () => {
