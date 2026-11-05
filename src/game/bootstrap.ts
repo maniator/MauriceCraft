@@ -51,8 +51,7 @@ const worldServices = createWorldRuntime({
   setSeed: newSeed => { seed = newSeed; },
   getGeneratorVersion: () => generatorVersion,
   setGeneratorVersion: version => { generatorVersion = version; },
-  getDimension: () => dimension,
-  getPlayer: () => player,
+  getDimension: () => dimension, getPlayer: () => player,
 });
 const {
   GRASS, DIRT, STONE, SAND, WOOD, LEAVES, DARK_WOOD, BIRCH_WOOD,
