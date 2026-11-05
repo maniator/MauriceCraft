@@ -66,7 +66,7 @@ test('a real portal frame travels to the generated Nether, returns and survives 
   await enterPortal(page, origin);
   await expect.poll(async () => (await storedWorld(page)).dimension, { timeout: 15_000 })
     .toBe('nether');
-  expect((await storedWorld(page)).generatorVersion).toBe(6);
+  expect((await storedWorld(page)).generatorVersion).toBe(7);
 
   const nether = await findPortal(page, 'nether');
   // Avoid the intentional cooldown that prevents immediate portal ping-pong.

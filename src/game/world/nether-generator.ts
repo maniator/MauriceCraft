@@ -1,4 +1,5 @@
 import { fbm, hash2 } from './noise';
+import { decorateNetherChunk } from './nether-decorations';
 import { netherBiomeAt, netherFloorAt, netherCeilingAt, netherStructureAt,
   NETHER_STRUCTURE_REGION, type NetherStructure } from './nether-biomes';
 import type { ChunkGeneratorDependencies } from './chunk-generator';
@@ -67,6 +68,14 @@ export function createNetherGenerator(deps: ChunkGeneratorDependencies) {
           put(x + dx, ceiling - 1, z + dz, BASALT);
         }
       }
+    // Keep v6 saves byte-for-byte consistent in unexplored terrain. New
+    // decoration is enabled only for worlds created with generator v7+.
+    if ((deps.getGeneratorVersion?.() ?? 6) >= 7)
+      decorateNetherChunk(cx, cz, seed, H, {
+        basalt: BASALT, blackstone: BLACKSTONE, crimson: CRIMSON_NYLIUM,
+        warped: WARPED_NYLIUM, soul: SOUL_SOIL,
+        glowstone: GLOWSTONE,
+      }, put);
     const rx0 = Math.floor((x0 - 20) / NETHER_STRUCTURE_REGION);
     const rz0 = Math.floor((z0 - 20) / NETHER_STRUCTURE_REGION);
     const rx1 = Math.floor((x0 + 35) / NETHER_STRUCTURE_REGION);

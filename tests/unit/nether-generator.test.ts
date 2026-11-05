@@ -59,4 +59,32 @@ describe('versioned Nether terrain', () => {
     expect(b(-16, 9)).toEqual(first);
     expect(createNetherGenerator(deps(142))(-16, 9)).not.toEqual(first);
   });
+  it('adds deterministic biome vegetation and ceiling lights only in v7 worlds', () => {
+    const old = createNetherGenerator(deps(677, 6));
+    const enhanced = createNetherGenerator(deps(677, 7));
+    let changedChunks = 0, oldLight = 0, newLight = 0;
+    for (let cz = -5; cz <= 5; cz += 2) for (let cx = -5; cx <= 5; cx += 2) {
+      const before = old(cx, cz), after = enhanced(cx, cz);
+      if (before.some((value, index) => value !== after[index])) changedChunks++;
+      oldLight += before.filter(value => value === blocks.GLOWSTONE).length;
+      newLight += after.filter(value => value === blocks.GLOWSTONE).length;
+    }
+    expect(changedChunks).toBeGreaterThan(6);
+    expect(newLight).toBeGreaterThan(oldLight);
+
+    // A v6 save (including World 5) must keep its existing unseen terrain rules.
+    expect(createNetherGenerator(deps(677, 6))(3, -4)).toEqual(old(3, -4));
+    expect(createChunkGenerator(deps(677, 7))(3, -4))
+      .toEqual(enhanced(3, -4));
+  });
+
+  it('keeps v7 chunks independent of visitation and generation order', () => {
+    const generate = createNetherGenerator(deps(141, 7));
+    const first = generate(-3, 2);
+    generate(8, -11);
+    expect(generate(-3, 2)).toEqual(first);
+    expect(createNetherGenerator(deps(141, 7))(-3, 2)).toEqual(first);
+    expect(createNetherGenerator(deps(142, 7))(-3, 2)).not.toEqual(first);
+  });
+
 });
