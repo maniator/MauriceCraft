@@ -225,7 +225,7 @@ const gameState = {
 };
 
 const {
-  hotbarEl, heartsEl, foodEl, flashEl, mineBar, updateHotbar, craftedRecipes,
+  hotbarEl, heartsEl, foodEl, flashEl, mineBar, updateHotbar, swingHeldItem, craftedRecipes,
   flashName, updateFood, updateHearts, openCraft, closeInventory, openTrade,
   touchUI, jumpButton: bJump, placeButton: bPlace, flyButton: bFly, inventoryButton: bInv, toggleFly,
 } = createGameUiComposition({
@@ -338,7 +338,7 @@ const { handleActions, resetMine } = createActionController({
   getTarget: () => target,
   raycastMobs, getBlock: get, breakTimes: BREAK_TIME, toolSpeed, doBreak,
   attackMob, canInteract, openTrade: mob => openTrade(mob as SpawnMob & { job: string }), healGolem, isBed, useBed,
-  craftingTableId: CTABLE, openCraft, useSelected,
+  craftingTableId: CTABLE, openCraft, useSelected, swingHeldItem,
 });
 
 /* ---------- Update loop ---------- */

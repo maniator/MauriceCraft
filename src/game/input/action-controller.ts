@@ -31,12 +31,19 @@ export interface ActionDependencies {
   craftingTableId: number;
   openCraft: (size: number) => void;
   useSelected: () => number;
+  swingHeldItem: () => void;
 }
 
 /** Input intent and cooldowns are kept distinct from block and mob rules. */
 export function createActionController(deps: ActionDependencies) {
   const { state, mine, miningBar: mineBar, keys } = deps;
   const get = deps.getBlock;
+  let swingCooldown = 0;
+  const swing = (): void => {
+    if (swingCooldown > 0) return;
+    deps.swingHeldItem();
+    swingCooldown = 0.28;
+  };
   const resetMine = (): void => {
     mine.t = 0;
     mine.x = mine.y = mine.z = -1;
@@ -45,6 +52,7 @@ export function createActionController(deps: ActionDependencies) {
 
   function handleActions(dt: number, tNow: number): void {
     state.mineCd -= dt; state.placeCd -= dt; state.attackCd -= dt;
+    swingCooldown = Math.max(0, swingCooldown - dt);
     const drag = state.drag, lookT = state.lookTouch;
     const holdOK = !drag || (tNow - drag.t0 > 160 && drag.moved < 6);
     const touchHold = !!(lookT && lookT.moved < 10 && tNow - lookT.t0 >= 260);
@@ -71,13 +79,15 @@ export function createActionController(deps: ActionDependencies) {
       (useVillager || (useBlock && !mobInFront));
     if (wantMine && !contextClick) {
       if (mobHit && (!blockHit || mobHit.t < blockHit.t + 0.01)) {
-        if (state.attackCd <= 0) { deps.attackMob(mobHit.mob); state.attackCd = 0.45; }
+        if (state.attackCd <= 0) { deps.attackMob(mobHit.mob); swing(); state.attackCd = 0.45; }
         resetMine();
       } else if (state.mode === 'creative') {
+        swing();
         if (target && target.y > 0 && (pm || state.mineCd <= 0)) {
           deps.doBreak(target); state.mineCd = 0.2;
         }
       } else if (state.mode === 'survival') {
+        if (heldMine || pm) swing();
         if (heldMine && target && target.y > 0) {
           if (mine.x === target.x && mine.y === target.y && mine.z === target.z) mine.t += dt;
           else { mine.x = target.x; mine.y = target.y; mine.z = target.z; mine.t = dt; }
@@ -100,7 +110,7 @@ export function createActionController(deps: ActionDependencies) {
         deps.useBed(target); state.placeCd = 0.6;
       } else if (target && get(target.x, target.y, target.z) === deps.craftingTableId && !shiftHeld) {
         deps.openCraft(3); state.placeCd = 0.4;
-      } else state.placeCd = deps.useSelected();
+      } else { swing(); state.placeCd = deps.useSelected(); }
     }
   }
 

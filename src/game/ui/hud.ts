@@ -47,7 +47,13 @@ export function createHud(deps: HudDependencies) {
   if (!heldContext) throw new Error('Held item preview needs a 2D canvas');
   const heldImageContext: CanvasRenderingContext2D = heldContext;
   heldImageContext.imageSmoothingEnabled = false;
-  document.body.appendChild(heldCanvas);
+  const heldHand = document.createElement('div');
+  heldHand.id = 'heldHand';
+  const arm = document.createElement('div');
+  arm.className = 'playerArm';
+  arm.setAttribute('aria-hidden', 'true');
+  heldHand.append(arm, heldCanvas);
+  document.body.appendChild(heldHand);
   type SlotButton = HTMLButtonElement & {
     countElement: HTMLElement;
     durabilityElement: HTMLElement;
@@ -116,6 +122,8 @@ export function createHud(deps: HudDependencies) {
     }
     const heldId = deps.hotbar[selected] || 0;
     const holding = heldId > 0 && (!survival || deps.inventory[heldId] > 0);
+    // The empty hand is still visible so players can see themselves punch or mine.
+    heldHand.hidden = deps.getMode() === 'spectator';
     heldCanvas.hidden = !holding;
     heldImageContext.clearRect(0, 0, 96, 96);
     if (holding) {
@@ -129,6 +137,13 @@ export function createHud(deps: HudDependencies) {
       clearTimeout(nameTimer);
       nameTimer = setTimeout(() => { blockName.style.opacity = '0'; }, 1400);
     }
+  }
+  function swingHeldItem(): void {
+    if (deps.getMode() === 'spectator') return;
+    // Restart the animation for successive hits, including a long mining hold.
+    heldHand.classList.remove('swing');
+    void heldHand.offsetWidth;
+    heldHand.classList.add('swing');
   }
   function updateFood(): void {
     const hunger = deps.getHunger();
@@ -149,5 +164,5 @@ export function createHud(deps: HudDependencies) {
     heartsEl.setAttribute('aria-label', 'Health ' + health + ' of ' + deps.maxHealth);
   }
   return { hotbarEl, heartsEl, foodEl, flashEl, mineBar,
-    updateHotbar, flashName, updateFood, updateHearts };
+    updateHotbar, swingHeldItem, flashName, updateFood, updateHearts };
 }
