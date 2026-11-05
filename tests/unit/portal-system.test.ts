@@ -96,4 +96,45 @@ describe('portal lifecycle and dimension transitions', () => {
     portalSystem.checkPortal(0.016);
     expect(saveWorld).toHaveBeenCalledTimes(saveCount);
   });
+  it('links nearby Overworld command portals to one Nether frame instead of stacking them', () => {
+    const f = fixture(23);
+    const first = f.portalSystem.buildPortalFrame('overworld', 72, 21, 32);
+    f.player.x = first.x + 0.5;
+    f.player.y = first.y + 1;
+    f.player.z = first.z + 0.5;
+    f.portalSystem.checkPortal(0.016);
+    const originalNether = f.portals.find(p => p.dimension === 'nether');
+    expect(originalNether).toBeDefined();
+
+    // These Overworld locations are separate but only about one Nether block apart.
+    f.portalSystem.changeDimension('overworld', 64, 24, 15);
+    const nearby = f.portalSystem.buildPortalFrame('overworld', 64, 24, 32);
+    f.player.x = nearby.x + 0.5;
+    f.player.y = nearby.y + 1;
+    f.player.z = nearby.z + 0.5;
+    f.portalSystem.checkPortal(3);
+    expect(f.getDimension()).toBe('nether');
+    expect(f.portals.filter(p => p.dimension === 'nether')).toEqual([originalNether]);
+
+    f.portalSystem.changeDimension('overworld', 400, 24, 32);
+    const distant = f.portalSystem.buildPortalFrame('overworld', 400, 24, 32);
+    f.player.x = distant.x + 0.5;
+    f.player.y = distant.y + 1;
+    f.player.z = distant.z + 0.5;
+    f.portalSystem.checkPortal(3);
+    const netherPortals = f.portals.filter(p => p.dimension === 'nether');
+    expect(netherPortals).toHaveLength(2);
+    expect(Math.abs(netherPortals[1].x - netherPortals[0].x)).toBeGreaterThan(16);
+  });
+
+  it('does not carve a second generated portal through an existing frame', () => {
+    const f = fixture();
+    f.portalSystem.buildPortalFrame('nether', 9, 15, 4);
+    const editedBlocks = f.blocks.length;
+    expect(() => f.portalSystem.buildPortalFrame('nether', 9, 15, 10))
+      .toThrow(/already too close/);
+    expect(f.blocks).toHaveLength(editedBlocks);
+    expect(f.portals).toHaveLength(1);
+  });
+
 });

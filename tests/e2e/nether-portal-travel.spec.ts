@@ -84,3 +84,58 @@ test('a real portal frame travels to the generated Nether, returns and survives 
   expect(restored.portals?.some(p => p.dimension === 'overworld')).toBe(true);
   expect(errors).toEqual([]);
 });
+
+// Portal linking must be exercised through actual /portal and /tp commands,
+// not only by calling the pure nearest-portal helper in unit tests.
+test('nearby command portals share a Nether destination; distant ones create another', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('./');
+  await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
+  await page.locator('#play').click();
+  await expect(page.locator('#overlay')).toBeHidden();
+
+  await command(page, '/portal build');
+  const first = await findPortal(page, 'overworld');
+  await enterPortal(page, first);
+  await expect.poll(async () => (await storedWorld(page)).dimension, { timeout: 15_000 })
+    .toBe('nether');
+  const initialNether = (await storedWorld(page)).portals?.filter(p => p.dimension === 'nether') ?? [];
+  expect(initialNether).toHaveLength(1);
+
+  await command(page, '/dimension overworld');
+  await command(page, '/tp 80 30 80');
+  await command(page, '/portal build');
+  await expect.poll(async () =>
+    (await storedWorld(page)).portals?.filter(p => p.dimension === 'overworld').length, {
+    timeout: 15_000,
+  }).toBe(2);
+  const second = (await storedWorld(page)).portals?.filter(p => p.dimension === 'overworld').at(-1);
+  expect(second).toBeDefined();
+  // Wait for the intentional portal cooldown, then enter the second frame.
+  await page.waitForTimeout(2700);
+  await enterPortal(page, second!);
+  await expect.poll(async () => (await storedWorld(page)).dimension, { timeout: 15_000 })
+    .toBe('nether');
+  expect((await storedWorld(page)).portals?.filter(p => p.dimension === 'nether'))
+    .toEqual(initialNether);
+
+  await command(page, '/dimension overworld');
+  await command(page, '/tp 400 30 400');
+  await command(page, '/portal build');
+  await expect.poll(async () =>
+    (await storedWorld(page)).portals?.filter(p => p.dimension === 'overworld').length, {
+    timeout: 15_000,
+  }).toBe(3);
+  const third = (await storedWorld(page)).portals?.filter(p => p.dimension === 'overworld').at(-1);
+  expect(third).toBeDefined();
+  await page.waitForTimeout(2700);
+  await enterPortal(page, third!);
+  await expect.poll(async () => (await storedWorld(page)).dimension, { timeout: 15_000 })
+    .toBe('nether');
+  await expect.poll(async () =>
+    (await storedWorld(page)).portals?.filter(p => p.dimension === 'nether').length, {
+    timeout: 15_000,
+  }).toBe(2);
+  expect(errors).toEqual([]);
+});
