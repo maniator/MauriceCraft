@@ -8,4 +8,4 @@ monitorStartup();
 setupPwa();
 void import('./game/bootstrap')
   .then(({ startGameApplication }) => startGameApplication())
-  .catch(error => showStartupFailure(error));
+  .catch((error) => showStartupFailure(error));

@@ -4,6 +4,8 @@ Thanks for improving MauriceCraft! Make changes in small, focused commits so it'
 
 ## Before you submit
 
+- Run `npm run format` after changing TypeScript, CSS, SCSS, or Markdown. `npm run format:check` verifies formatting without modifying files; `npm run check` includes that check.
+
 - Run `npm run typecheck`, `npm run build`, and `npm test` when the test suite is available.
 - Include unit tests for gameplay rules, and smoke tests for UI, saving, and mobile flows when those change.
 - Update README or `docs/` if commands, controls, or architecture change.

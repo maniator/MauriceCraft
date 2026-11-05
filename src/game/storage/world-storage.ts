@@ -64,7 +64,8 @@ export class WorldStorage extends Dexie {
   async getChunks(worldId: string): Promise<ChunkRecord[]> {
     // Chunks are loaded once per selected world into the gameplay chunk map.
     // Do not duplicate large Uint8Arrays in another long-lived cache.
-    return this.chunks.where('k')
+    return this.chunks
+      .where('k')
       .between(worldId + ':', worldId + ':\uffff', true, true)
       .toArray();
   }
@@ -90,7 +91,8 @@ export class WorldStorage extends Dexie {
   async deleteWorld(id: string): Promise<void> {
     await this.transaction('rw', this.worlds, this.chunks, async () => {
       await this.worlds.delete(id);
-      await this.chunks.where('k')
+      await this.chunks
+        .where('k')
         .between(id + ':', id + ':\uffff', true, true)
         .delete();
     });

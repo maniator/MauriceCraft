@@ -16,7 +16,10 @@ describe('crafting rules', () => {
   it('mirrors shaped recipes but rejects incorrect rotations', () => {
     expect(matchRecipe([7, 3, 0, 7], 2)?.out).toBe(18);
     expect(matchRecipe([3, 7, 0, 7], 2)).toBeNull();
-    expect(recipePattern(recipes[1])).toEqual([[3, 7], [7, 0]]);
+    expect(recipePattern(recipes[1])).toEqual([
+      [3, 7],
+      [7, 0],
+    ]);
   });
   it('matches shapeless recipes in either order', () => {
     expect(matchRecipe([9, 12, 0, 0], 2)?.out).toBe(111);

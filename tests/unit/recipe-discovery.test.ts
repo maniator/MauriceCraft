@@ -20,8 +20,11 @@ describe('recipe book discovery and missing materials', () => {
   });
 
   it('shows a craftable new recipe even when it has not been crafted before', () => {
-    expect(describeRecipe(torch, { 116: 1, 115: 1 }, new Set(), 2))
-      .toMatchObject({ visible: true, canCraft: true, missing: [] });
+    expect(describeRecipe(torch, { 116: 1, 115: 1 }, new Set(), 2)).toMatchObject({
+      visible: true,
+      canCraft: true,
+      missing: [],
+    });
   });
 
   it('hides unrelated recipes when none of their ingredients is owned', () => {
@@ -32,8 +35,11 @@ describe('recipe book discovery and missing materials', () => {
 
   it('keeps previously crafted recipes visible even with an empty backpack', () => {
     const previouslyCrafted = new Set([recipeFingerprint(shovel)]);
-    expect(describeRecipe(shovel, {}, previouslyCrafted, 3))
-      .toMatchObject({ visible: true, canCraft: false, previouslyCrafted: true });
+    expect(describeRecipe(shovel, {}, previouslyCrafted, 3)).toMatchObject({
+      visible: true,
+      canCraft: false,
+      previouslyCrafted: true,
+    });
   });
 
   it('distinguishes recipes with the same product but different ingredients', () => {
@@ -44,16 +50,25 @@ describe('recipe book discovery and missing materials', () => {
   });
 
   it('recognizes table-only recipes even if all ingredients are available', () => {
-    expect(describeRecipe(shovel, { 9: 1, 115: 2 }, new Set(), 2))
-      .toMatchObject({ visible: true, canCraft: false, needsCraftingTable: true, missing: [] });
-    expect(describeRecipe(shovel, { 9: 1, 115: 2 }, new Set(), 3))
-      .toMatchObject({ visible: true, canCraft: true, needsCraftingTable: false, missing: [] });
+    expect(describeRecipe(shovel, { 9: 1, 115: 2 }, new Set(), 2)).toMatchObject({
+      visible: true,
+      canCraft: false,
+      needsCraftingTable: true,
+      missing: [],
+    });
+    expect(describeRecipe(shovel, { 9: 1, 115: 2 }, new Set(), 3)).toMatchObject({
+      visible: true,
+      canCraft: true,
+      needsCraftingTable: false,
+      missing: [],
+    });
   });
 
   it('uses stable fingerprints for shaped and shapeless equivalents', () => {
     const same: Recipe = { out: 105, n: 1, shapeless: [101] };
     expect(recipeFingerprint(cookedBeef)).toBe(recipeFingerprint(same));
-    expect(recipeFingerprint({ out: 111, n: 1, shapeless: [12, 9] }))
-      .toBe(recipeFingerprint({ out: 111, n: 1, shapeless: [9, 12] }));
+    expect(recipeFingerprint({ out: 111, n: 1, shapeless: [12, 9] })).toBe(
+      recipeFingerprint({ out: 111, n: 1, shapeless: [9, 12] }),
+    );
   });
 });

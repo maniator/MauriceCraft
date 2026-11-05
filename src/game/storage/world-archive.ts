@@ -29,8 +29,7 @@ function checksum(bytes: Uint8Array, length = bytes.length): number {
   let value = 0xffffffff;
   for (let i = 0; i < length; i++) {
     value ^= bytes[i];
-    for (let bit = 0; bit < 8; bit++) value =
-      (value >>> 1) ^ ((value & 1) ? 0xedb88320 : 0);
+    for (let bit = 0; bit < 8; bit++) value = (value >>> 1) ^ (value & 1 ? 0xedb88320 : 0);
   }
   return (value ^ 0xffffffff) >>> 0;
 }
@@ -50,49 +49,61 @@ function numberMap(value: unknown): boolean {
 function validGameplayMetadata(record: Record<string, unknown>): boolean {
   const optional = (key: string, isValid: (value: unknown) => boolean): boolean =>
     record[key] === undefined || isValid(record[key]);
-  const validDimension = (value: unknown): boolean => typeof value === 'string' &&
-    dimensions.includes(value as typeof dimensions[number]);
+  const validDimension = (value: unknown): boolean =>
+    typeof value === 'string' && dimensions.includes(value as (typeof dimensions)[number]);
   const validMode = (value: unknown): boolean =>
     ['creative', 'survival', 'adventure', 'spectator'].includes(String(value));
   const validDifficulty = (value: unknown): boolean =>
     ['peaceful', 'easy', 'normal', 'hard'].includes(String(value));
-  const validRelic = (value: unknown): boolean =>
-    position(value) && typeof value.got === 'boolean';
+  const validRelic = (value: unknown): boolean => position(value) && typeof value.got === 'boolean';
   const validGolem = (value: unknown): boolean =>
-    position(value) && typeof value.kind === 'string' && finite(value.hp) &&
-    finite(value.hx) && finite(value.hz);
+    position(value) &&
+    typeof value.kind === 'string' &&
+    finite(value.hp) &&
+    finite(value.hx) &&
+    finite(value.hz);
   const validDrop = (value: unknown): boolean =>
-    position(value) && Number.isInteger(value.id) && (value.id as number) > 0 &&
-    Number.isInteger(value.count) && (value.count as number) > 0 &&
-    validDimension(value.dimension) && finite(value.age);
+    position(value) &&
+    Number.isInteger(value.id) &&
+    (value.id as number) > 0 &&
+    Number.isInteger(value.count) &&
+    (value.count as number) > 0 &&
+    validDimension(value.dimension) &&
+    finite(value.age);
   const validPlayer = (value: unknown): boolean =>
-    position(value) && finite(value.yaw) && finite(value.pitch) &&
-    typeof value.fly === 'boolean';
+    position(value) && finite(value.yaw) && finite(value.pitch) && typeof value.fly === 'boolean';
   const validWeather = (value: unknown): boolean =>
-    isObject(value) && typeof value.w === 'string' &&
-    finite(value.t) && finite(value.r);
-  return optional('seedText', v => typeof v === 'string' && v.length <= 128) &&
+    isObject(value) && typeof value.w === 'string' && finite(value.t) && finite(value.r);
+  return (
+    optional('seedText', (v) => typeof v === 'string' && v.length <= 128) &&
     optional('dimension', validDimension) &&
     optional('mode', validMode) &&
     optional('difficulty', validDifficulty) &&
-    optional('enderDragonDefeated', v => typeof v === 'boolean') &&
-    optional('omen', v => typeof v === 'boolean') &&
+    optional('enderDragonDefeated', (v) => typeof v === 'boolean') &&
+    optional('omen', (v) => typeof v === 'boolean') &&
     optional('player', validPlayer) &&
-    optional('spawn', v => v === null || position(v)) &&
+    optional('spawn', (v) => v === null || position(v)) &&
     optional('portals', Array.isArray) &&
     optional('inv', numberMap) &&
     optional('toolWear', numberMap) &&
-    optional('hotbar', v => Array.isArray(v) && v.length === 9 &&
-      v.every(n => Number.isInteger(n) && n >= 0)) &&
-    optional('craftedRecipes', v => Array.isArray(v) &&
-      v.every(x => typeof x === 'string' && x.length <= 256)) &&
-    optional('selected', v => Number.isInteger(v) && (v as number) >= 0 && (v as number) < 9) &&
-    optional('tod', finite) && optional('hp', finite) &&
-    optional('hunger', finite) && optional('sat', finite) &&
+    optional(
+      'hotbar',
+      (v) => Array.isArray(v) && v.length === 9 && v.every((n) => Number.isInteger(n) && n >= 0),
+    ) &&
+    optional(
+      'craftedRecipes',
+      (v) => Array.isArray(v) && v.every((x) => typeof x === 'string' && x.length <= 256),
+    ) &&
+    optional('selected', (v) => Number.isInteger(v) && (v as number) >= 0 && (v as number) < 9) &&
+    optional('tod', finite) &&
+    optional('hp', finite) &&
+    optional('hunger', finite) &&
+    optional('sat', finite) &&
     optional('weather', validWeather) &&
-    optional('relics', v => Array.isArray(v) && v.every(validRelic)) &&
-    optional('golems', v => Array.isArray(v) && v.every(validGolem)) &&
-    optional('itemDrops', v => Array.isArray(v) && v.every(validDrop));
+    optional('relics', (v) => Array.isArray(v) && v.every(validRelic)) &&
+    optional('golems', (v) => Array.isArray(v) && v.every(validGolem)) &&
+    optional('itemDrops', (v) => Array.isArray(v) && v.every(validDrop))
+  );
 }
 
 function validateWorld(data: unknown): asserts data is WorldRecord {
@@ -100,18 +111,29 @@ function validateWorld(data: unknown): asserts data is WorldRecord {
     throw new Error('The file does not contain a world.');
   }
   const record = data as Record<string, unknown>;
-  if (typeof record.id !== 'string' || record.id.length < 1 || record.id.length > 200 ||
-      typeof record.name !== 'string' || !record.name.trim() || record.name.length > 200 ||
-      typeof record.seed !== 'number' || !Number.isInteger(record.seed) ||
-      record.seed < -2147483648 || record.seed > 0xffffffff ||
-      !Number.isFinite(record.created) || !Number.isFinite(record.lastPlayed)) {
+  if (
+    typeof record.id !== 'string' ||
+    record.id.length < 1 ||
+    record.id.length > 200 ||
+    typeof record.name !== 'string' ||
+    !record.name.trim() ||
+    record.name.length > 200 ||
+    typeof record.seed !== 'number' ||
+    !Number.isInteger(record.seed) ||
+    record.seed < -2147483648 ||
+    record.seed > 0xffffffff ||
+    !Number.isFinite(record.created) ||
+    !Number.isFinite(record.lastPlayed)
+  ) {
     throw new Error('The world metadata is invalid.');
   }
-  if (record.generatorVersion !== undefined &&
-    (!Number.isInteger(record.generatorVersion) || (record.generatorVersion as number) < 1)) {
+  if (
+    record.generatorVersion !== undefined &&
+    (!Number.isInteger(record.generatorVersion) || (record.generatorVersion as number) < 1)
+  ) {
     throw new Error('The world has an invalid terrain generator version.');
   }
-  if ((record.generatorVersion as number | undefined ?? 1) >= 5) {
+  if (((record.generatorVersion as number | undefined) ?? 1) >= 5) {
     if (typeof record.seed64 !== 'string') {
       throw new Error('The world is missing its canonical 64-bit seed.');
     }
@@ -137,9 +159,17 @@ function writeHeader(view: DataView, metadataSize: number, count: number): void 
 }
 
 function validateChunk(record: ChunkRecord): void {
-  if (!Number.isInteger(record.cx) || record.cx < -2147483648 || record.cx > 2147483647 ||
-      !Number.isInteger(record.cz) || record.cz < -2147483648 || record.cz > 2147483647 ||
-      !(record.data instanceof Uint8Array) || record.data.length !== CHUNK_BYTES || !dimensions.includes(chunkDimension(record) as typeof dimensions[number])) {
+  if (
+    !Number.isInteger(record.cx) ||
+    record.cx < -2147483648 ||
+    record.cx > 2147483647 ||
+    !Number.isInteger(record.cz) ||
+    record.cz < -2147483648 ||
+    record.cz > 2147483647 ||
+    !(record.data instanceof Uint8Array) ||
+    record.data.length !== CHUNK_BYTES ||
+    !dimensions.includes(chunkDimension(record) as (typeof dimensions)[number])
+  ) {
     throw new Error('The world contains an invalid chunk.');
   }
 }
@@ -167,7 +197,7 @@ export function encodeWorldArchive(world: WorldRecord, chunks: readonly ChunkRec
   let offset = HEADER_SIZE + metadata.length;
   for (const chunk of chunks) {
     const dimension = chunkDimension(chunk);
-    bytes[offset] = dimensions.indexOf(dimension as typeof dimensions[number]);
+    bytes[offset] = dimensions.indexOf(dimension as (typeof dimensions)[number]);
     view.setInt32(offset + 1, chunk.cx, true);
     view.setInt32(offset + 5, chunk.cz, true);
     view.setUint32(offset + 9, chunk.data.length, true);
@@ -203,8 +233,11 @@ export function decodeWorldArchive(bytes: Uint8Array): WorldArchive {
   if (HEADER_SIZE + metadataSize > end) throw new Error('The world file is truncated.');
   let world: unknown;
   try {
-    world = JSON.parse(new TextDecoder('utf-8', { fatal: true })
-      .decode(bytes.subarray(HEADER_SIZE, HEADER_SIZE + metadataSize))) as unknown;
+    world = JSON.parse(
+      new TextDecoder('utf-8', { fatal: true }).decode(
+        bytes.subarray(HEADER_SIZE, HEADER_SIZE + metadataSize),
+      ),
+    ) as unknown;
   } catch {
     throw new Error('World metadata could not be read.');
   }
@@ -226,7 +259,10 @@ export function decodeWorldArchive(bytes: Uint8Array): WorldArchive {
     if (seen.has(key)) throw new Error('The world file contains duplicate chunks.');
     seen.add(key);
     chunks.push({
-      k: '', w: world.id, cx, cz,
+      k: '',
+      w: world.id,
+      cx,
+      cz,
       ...(dimension === 'overworld' ? {} : { dimension }),
       data: bytes.slice(offset, offset + size),
     });

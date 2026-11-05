@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { canApplyUpdate, createDeferredReload, matchesCurrentSavedRevision } from '../../src/pwa/update-policy';
+import {
+  canApplyUpdate,
+  createDeferredReload,
+  matchesCurrentSavedRevision,
+} from '../../src/pwa/update-policy';
 
 describe('safe automatic PWA updates', () => {
   it('updates on the initial menu only before any unsaved settings edits', () => {
@@ -7,8 +11,12 @@ describe('safe automatic PWA updates', () => {
     expect(canApplyUpdate(true, true, false, false, true)).toBe(false);
     expect(canApplyUpdate(true, true, false, true, true)).toBe(true);
     // Persisted initial-menu edits have no gameplay pause token.
-    expect(matchesCurrentSavedRevision({ pauseToken: null, revision: 1 }, null, 1, true)).toBe(true);
-    expect(matchesCurrentSavedRevision({ pauseToken: null, revision: 0 }, null, 1, true)).toBe(false);
+    expect(matchesCurrentSavedRevision({ pauseToken: null, revision: 1 }, null, 1, true)).toBe(
+      true,
+    );
+    expect(matchesCurrentSavedRevision({ pauseToken: null, revision: 0 }, null, 1, true)).toBe(
+      false,
+    );
     expect(matchesCurrentSavedRevision({ pauseToken: null, revision: 1 }, null, 1)).toBe(false);
   });
 
@@ -26,7 +34,8 @@ describe('safe automatic PWA updates', () => {
     let currentPauseSaved = false;
     const reload = vi.fn();
     const gate = createDeferredReload(
-      () => canApplyUpdate(menuVisible, true, true, currentPauseSaved), reload,
+      () => canApplyUpdate(menuVisible, true, true, currentPauseSaved),
+      reload,
     );
     expect(gate.request()).toBe(false); // A different tab activated the worker.
     expect(reload).not.toHaveBeenCalled();
@@ -60,5 +69,4 @@ describe('safe automatic PWA updates', () => {
     // No stored world or active pause means updates must remain pending.
     expect(matchesCurrentSavedRevision({ pauseToken: null, revision: 1 }, null, 1)).toBe(false);
   });
-
 });

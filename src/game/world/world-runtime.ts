@@ -33,19 +33,64 @@ export interface WorldRuntimeDependencies {
  * Game, input and session systems only receive the explicit returned services.
  */
 export function createWorldRuntime(deps: WorldRuntimeDependencies) {
-  const { height: WORLD_HEIGHT, chunkSize: CHUNK_SIZE, seaLevel: SEA_LEVEL,
-    viewDistance: VIEW_DISTANCE } = deps;
+  const {
+    height: WORLD_HEIGHT,
+    chunkSize: CHUNK_SIZE,
+    seaLevel: SEA_LEVEL,
+    viewDistance: VIEW_DISTANCE,
+  } = deps;
   const catalog = createBlockCatalog();
   const {
-    BRICK, COBBLE, CTABLE, DIRT, GOLD, GRAVEL, HAY, LEAVES,
-    MOSSY, PLANKS, SANDSTONE, STONEBRICK, TORCH, WOOD,
-    COAL_ORE, COPPER_ORE, DIAMOND_ORE, GRASS, IRON_ORE, LAVA,
-    SAND, STONE, WATER, SNOW, PINE_LEAVES, RED_SAND, DARK_WOOD,
-    BIRCH_WOOD, BIRCH_LEAVES, ACACIA_WOOD, ACACIA_LEAVES, WILLOW_WOOD,
-    WILLOW_LEAVES, AUTUMN_LEAVES, MUD, FLOWERING_GRASS,
-    NETHERRACK, BASALT, SOUL_SOIL, CRIMSON_NYLIUM, WARPED_NYLIUM, BLACKSTONE, GLOWSTONE,
-    toolTile, TILES,
-    ATLAS_N, BED_H, isBed, opq, solid,
+    BRICK,
+    COBBLE,
+    CTABLE,
+    DIRT,
+    GOLD,
+    GRAVEL,
+    HAY,
+    LEAVES,
+    MOSSY,
+    PLANKS,
+    SANDSTONE,
+    STONEBRICK,
+    TORCH,
+    WOOD,
+    COAL_ORE,
+    COPPER_ORE,
+    DIAMOND_ORE,
+    GRASS,
+    IRON_ORE,
+    LAVA,
+    SAND,
+    STONE,
+    WATER,
+    SNOW,
+    PINE_LEAVES,
+    RED_SAND,
+    DARK_WOOD,
+    BIRCH_WOOD,
+    BIRCH_LEAVES,
+    ACACIA_WOOD,
+    ACACIA_LEAVES,
+    WILLOW_WOOD,
+    WILLOW_LEAVES,
+    AUTUMN_LEAVES,
+    MUD,
+    FLOWERING_GRASS,
+    NETHERRACK,
+    BASALT,
+    SOUL_SOIL,
+    CRIMSON_NYLIUM,
+    WARPED_NYLIUM,
+    BLACKSTONE,
+    GLOWSTONE,
+    toolTile,
+    TILES,
+    ATLAS_N,
+    BED_H,
+    isBed,
+    opq,
+    solid,
   } = catalog;
   // Hotbar slots are empty until the player explicitly assigns an item.
   const hotbar = Array<number>(9).fill(0);
@@ -53,21 +98,43 @@ export function createWorldRuntime(deps: WorldRuntimeDependencies) {
   const renderer = createGameRenderer(toolTile);
   const { scene, mat, torchMat, glowMat } = renderer;
   const chunks = new Map<number, WritableChunk>();
-  const { chunkAt, resetChunkCache, getBlock: get, setBlock: rawSetBlock, inBounds } =
-    createBlockAccess(chunks, WORLD_HEIGHT);
+  const {
+    chunkAt,
+    resetChunkCache,
+    getBlock: get,
+    setBlock: rawSetBlock,
+    inBounds,
+  } = createBlockAccess(chunks, WORLD_HEIGHT);
   const mesher = createChunkMesher({
-    scene, mat, torchMat, glowMat, chunks, chunkAt,
-    getBlock: get, opq, isBed, tiles: TILES,
-    height: WORLD_HEIGHT, chunkSize: CHUNK_SIZE,
-    atlasTiles: ATLAS_N, bedHeight: BED_H, torchId: TORCH,
-    waterId: WATER, lavaId: LAVA,
+    scene,
+    mat,
+    torchMat,
+    glowMat,
+    chunks,
+    chunkAt,
+    getBlock: get,
+    opq,
+    isBed,
+    tiles: TILES,
+    height: WORLD_HEIGHT,
+    chunkSize: CHUNK_SIZE,
+    atlasTiles: ATLAS_N,
+    bedHeight: BED_H,
+    torchId: TORCH,
+    waterId: WATER,
+    lavaId: LAVA,
   });
   const { disposeMesh, buildChunk } = mesher;
   const fluids = createFluidSimulator({
-    height: WORLD_HEIGHT, getBlock: get, setBlock: rawSetBlock,
+    height: WORLD_HEIGHT,
+    getBlock: get,
+    setBlock: rawSetBlock,
     isLoaded: (x, z) => Boolean(chunkAt(x >> 4, z >> 4)),
-    refreshChunk: (cx, cz) => { if (chunkAt(cx, cz)?.meshed) buildChunk(cx, cz); },
-    getDimension: deps.getDimension, getGeneratorVersion: deps.getGeneratorVersion,
+    refreshChunk: (cx, cz) => {
+      if (chunkAt(cx, cz)?.meshed) buildChunk(cx, cz);
+    },
+    getDimension: deps.getDimension,
+    getGeneratorVersion: deps.getGeneratorVersion,
   });
   const setBlock = (x: number, y: number, z: number, block: number): void => {
     rawSetBlock(x, y, z, block);
@@ -80,7 +147,9 @@ export function createWorldRuntime(deps: WorldRuntimeDependencies) {
     const seed = deps.getSeed();
     if (deps.getGeneratorVersion() >= 2) {
       const base = biomeHeightAt(x, z, seed, WORLD_HEIGHT);
-      return deps.getGeneratorVersion() >= 3 ? volcanoHeightAt(x, z, seed, base, WORLD_HEIGHT) : base;
+      return deps.getGeneratorVersion() >= 3
+        ? volcanoHeightAt(x, z, seed, base, WORLD_HEIGHT)
+        : base;
     }
     const n = fbm(x / 40, z / 40, seed);
     const n2 = fbm(x / 170, z / 170, seed + 300);
@@ -89,57 +158,136 @@ export function createWorldRuntime(deps: WorldRuntimeDependencies) {
     return Math.max(3, Math.min(WORLD_HEIGHT - 12, height));
   }
 
-  const getFeatureSeed = (): number => deps.getGeneratorVersion() >= 5
-    ? (deps.getFeatureSeed?.() ?? deps.getSeed()) : deps.getSeed();
+  const getFeatureSeed = (): number =>
+    deps.getGeneratorVersion() >= 5 ? (deps.getFeatureSeed?.() ?? deps.getSeed()) : deps.getSeed();
   const regions = createStructureRegions({
-    heightAt, getSeed: getFeatureSeed, getPlayer: deps.getPlayer,
+    heightAt,
+    getSeed: getFeatureSeed,
+    getPlayer: deps.getPlayer,
     getGeneratorVersion: deps.getGeneratorVersion,
     getBiome: (x, z) => biomeAt(x, z, deps.getSeed()),
-    seaLevel: SEA_LEVEL, maxHeight: WORLD_HEIGHT,
+    seaLevel: SEA_LEVEL,
+    maxHeight: WORLD_HEIGHT,
   });
-  const { REG: STRUCTURE_REGION_SIZE, groundH, forceSand,
-    inStructZone, structureFor } = regions;
+  const { REG: STRUCTURE_REGION_SIZE, groundH, forceSand, inStructZone, structureFor } = regions;
   const landmarks = createLandmarkFinder({
-    getSeed: deps.getSeed, getVersion: deps.getGeneratorVersion,
-    getDimension: deps.getDimension, getPlayer: deps.getPlayer,
-    heightAt, inStructureZone: inStructZone,
-    seaLevel: SEA_LEVEL, worldHeight: WORLD_HEIGHT,
+    getSeed: deps.getSeed,
+    getVersion: deps.getGeneratorVersion,
+    getDimension: deps.getDimension,
+    getPlayer: deps.getPlayer,
+    heightAt,
+    inStructureZone: inStructZone,
+    seaLevel: SEA_LEVEL,
+    worldHeight: WORLD_HEIGHT,
   });
-  const { buildStructure } = createStructureBuilders(getFeatureSeed, {
-    BRICK, COBBLE, CTABLE, DIRT, GOLD, GRAVEL, HAY,
-    LEAVES, MOSSY, PLANKS, SANDSTONE, STONEBRICK, TORCH, WOOD,
-  }, deps.getGeneratorVersion);
+  const { buildStructure } = createStructureBuilders(
+    getFeatureSeed,
+    {
+      BRICK,
+      COBBLE,
+      CTABLE,
+      DIRT,
+      GOLD,
+      GRAVEL,
+      HAY,
+      LEAVES,
+      MOSSY,
+      PLANKS,
+      SANDSTONE,
+      STONEBRICK,
+      TORCH,
+      WOOD,
+    },
+    deps.getGeneratorVersion,
+  );
   const caveCarver = createCaveCarver({
-    getSeed: getFeatureSeed, heightAt: groundH, inStructureZone: inStructZone,
+    getSeed: getFeatureSeed,
+    heightAt: groundH,
+    inStructureZone: inStructZone,
     worldHeight: WORLD_HEIGHT,
   });
   const generateChunkData = createChunkGenerator({
-    getSeed: deps.getSeed, getDimension: deps.getDimension,
+    getSeed: deps.getSeed,
+    getDimension: deps.getDimension,
     getGeneratorVersion: deps.getGeneratorVersion,
     getBiome: (x, z) => biomeAt(x, z, deps.getSeed()),
-    maxHeight: WORLD_HEIGHT, seaLevel: SEA_LEVEL,
-    regionSize: STRUCTURE_REGION_SIZE, groundH, heightAt,
-    forceSand, inStructZone, structureFor, buildStructure,
+    maxHeight: WORLD_HEIGHT,
+    seaLevel: SEA_LEVEL,
+    regionSize: STRUCTURE_REGION_SIZE,
+    groundH,
+    heightAt,
+    forceSand,
+    inStructZone,
+    structureFor,
+    buildStructure,
     carveCaves: caveCarver.carve,
-    blocks: { BRICK, COAL_ORE, COPPER_ORE, DIAMOND_ORE, DIRT,
-      GOLD, GRASS, IRON_ORE, LAVA, LEAVES, SAND, SANDSTONE,
-      STONE, STONEBRICK, TORCH, WATER, WOOD, SNOW, PINE_LEAVES, RED_SAND, DARK_WOOD,
-      BIRCH_WOOD, BIRCH_LEAVES, ACACIA_WOOD, ACACIA_LEAVES, WILLOW_WOOD,
-      WILLOW_LEAVES, AUTUMN_LEAVES, MUD, FLOWERING_GRASS,
-      NETHERRACK, BASALT, SOUL_SOIL, CRIMSON_NYLIUM, WARPED_NYLIUM, BLACKSTONE, GLOWSTONE },
+    blocks: {
+      BRICK,
+      COAL_ORE,
+      COPPER_ORE,
+      DIAMOND_ORE,
+      DIRT,
+      GOLD,
+      GRASS,
+      IRON_ORE,
+      LAVA,
+      LEAVES,
+      SAND,
+      SANDSTONE,
+      STONE,
+      STONEBRICK,
+      TORCH,
+      WATER,
+      WOOD,
+      SNOW,
+      PINE_LEAVES,
+      RED_SAND,
+      DARK_WOOD,
+      BIRCH_WOOD,
+      BIRCH_LEAVES,
+      ACACIA_WOOD,
+      ACACIA_LEAVES,
+      WILLOW_WOOD,
+      WILLOW_LEAVES,
+      AUTUMN_LEAVES,
+      MUD,
+      FLOWERING_GRASS,
+      NETHERRACK,
+      BASALT,
+      SOUL_SOIL,
+      CRIMSON_NYLIUM,
+      WARPED_NYLIUM,
+      BLACKSTONE,
+      GLOWSTONE,
+    },
   });
   const lifecycle = createChunkLifecycle({
-    chunks, savedChunks, dimensionChunks, height: WORLD_HEIGHT,
-    getDimension: deps.getDimension, setSeed: deps.setSeed,
+    chunks,
+    savedChunks,
+    dimensionChunks,
+    height: WORLD_HEIGHT,
+    getDimension: deps.getDimension,
+    setSeed: deps.setSeed,
     setGeneratorVersion: deps.setGeneratorVersion,
     clearStructures: () => regions.structCache.clear(),
-    onChunkLoaded: fluids.onChunkLoaded, onWorldReset: fluids.reset,
-    chunkAt, resetChunkCache, generateChunkData, buildChunk,
-    disposeMesh, solid, getBlock: get,
+    onChunkLoaded: fluids.onChunkLoaded,
+    onWorldReset: fluids.reset,
+    chunkAt,
+    resetChunkCache,
+    generateChunkData,
+    buildChunk,
+    disposeMesh,
+    solid,
+    getBlock: get,
   });
   const streamChunks = createChunkStreamer({
-    chunks, viewDistance: VIEW_DISTANCE, getPlayer: deps.getPlayer,
-    ...lifecycle, buildChunk, disposeMesh, resetChunkCache,
+    chunks,
+    viewDistance: VIEW_DISTANCE,
+    getPlayer: deps.getPlayer,
+    ...lifecycle,
+    buildChunk,
+    disposeMesh,
+    resetChunkCache,
   });
 
   return {
@@ -149,9 +297,20 @@ export function createWorldRuntime(deps: WorldRuntimeDependencies) {
     ...regions,
     ...landmarks,
     ...lifecycle,
-    chunks, savedChunks, dimensionChunks, hotbar, toolWear,
-    chunkAt, resetChunkCache, get, setBlock, inBounds,
-    heightAt, generateChunkData, streamChunks, stepFluids: fluids.tick,
+    chunks,
+    savedChunks,
+    dimensionChunks,
+    hotbar,
+    toolWear,
+    chunkAt,
+    resetChunkCache,
+    get,
+    setBlock,
+    inBounds,
+    heightAt,
+    generateChunkData,
+    streamChunks,
+    stepFluids: fluids.tick,
     STRUCTURE_REGION_SIZE,
   };
 }

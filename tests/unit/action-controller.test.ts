@@ -1,41 +1,90 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createActionController, type ActionInputState, type ActionDependencies } from '../../src/game/input/action-controller';
+import {
+  createActionController,
+  type ActionInputState,
+  type ActionDependencies,
+} from '../../src/game/input/action-controller';
 import type { SpawnMob } from '../../src/game/entities/mob-spawning';
 
 function fixture() {
   const state: ActionInputState = {
-    mineCd: 0, placeCd: 0, attackCd: 0,
-    mining: false, placing: false, pulseMine: false, pulsePlace: false,
-    mode: 'creative', drag: null, lookTouch: null,
+    mineCd: 0,
+    placeCd: 0,
+    attackCd: 0,
+    mining: false,
+    placing: false,
+    pulseMine: false,
+    pulsePlace: false,
+    mode: 'creative',
+    drag: null,
+    lookTouch: null,
   };
   const mine = { x: -1, y: -1, z: -1, t: 0 };
   const progress = { style: { width: '' } };
-  const miningBar = { style: { display: '' }, firstElementChild: progress } as unknown as HTMLElement;
+  const miningBar = {
+    style: { display: '' },
+    firstElementChild: progress,
+  } as unknown as HTMLElement;
   const target = { x: 2, y: 4, z: -1, nx: 0, ny: 1, nz: 0, t: 1 };
   let mob: SpawnMob | null = null;
   let block = 3;
   let hasTarget = true;
-  const doBreak = vi.fn(), attackMob = vi.fn(), openTrade = vi.fn(), swingHeldItem = vi.fn();
+  const doBreak = vi.fn(),
+    attackMob = vi.fn(),
+    openTrade = vi.fn(),
+    swingHeldItem = vi.fn();
   const healGolem = vi.fn(() => true);
-  const useBed = vi.fn(), openCraft = vi.fn();
+  const useBed = vi.fn(),
+    openCraft = vi.fn();
   const useSelected = vi.fn(() => 0.4);
   const deps: ActionDependencies = {
-    state, mine, miningBar,
-    keys: {}, getBlockHit: () => hasTarget ? target : null, getTarget: () => hasTarget ? target : null,
-    raycastMobs: () => mob ? { mob, t: 0.5 } : null,
-    getBlock: () => block, breakTimes: { 3: 2, 19: 1 },
+    state,
+    mine,
+    miningBar,
+    keys: {},
+    getBlockHit: () => (hasTarget ? target : null),
+    getTarget: () => (hasTarget ? target : null),
+    raycastMobs: () => (mob ? { mob, t: 0.5 } : null),
+    getBlock: () => block,
+    breakTimes: { 3: 2, 19: 1 },
     toolSpeed: () => 2,
-    doBreak, attackMob,
+    doBreak,
+    attackMob,
     canInteract: () => state.mode !== 'spectator' && state.mode !== 'adventure',
-    openTrade, healGolem, isBed: b => b === 19, useBed,
-    craftingTableId: 18, openCraft, useSelected, swingHeldItem,
+    openTrade,
+    healGolem,
+    isBed: (b) => b === 19,
+    useBed,
+    craftingTableId: 18,
+    openCraft,
+    useSelected,
+    swingHeldItem,
   };
   const actions = createActionController(deps);
-  return { state, mine, progress, miningBar, actions,
-    doBreak, attackMob, openTrade, healGolem, useBed, openCraft, useSelected, swingHeldItem,
-    setMob: (value: SpawnMob | null) => { mob = value; },
-    setBlock: (value: number) => { block = value; },
-    setTargetVisible: (visible: boolean) => { hasTarget = visible; } };
+  return {
+    state,
+    mine,
+    progress,
+    miningBar,
+    actions,
+    doBreak,
+    attackMob,
+    openTrade,
+    healGolem,
+    useBed,
+    openCraft,
+    useSelected,
+    swingHeldItem,
+    setMob: (value: SpawnMob | null) => {
+      mob = value;
+    },
+    setBlock: (value: number) => {
+      block = value;
+    },
+    setTargetVisible: (visible: boolean) => {
+      hasTarget = visible;
+    },
+  };
 }
 
 describe('input actions and cooldowns', () => {

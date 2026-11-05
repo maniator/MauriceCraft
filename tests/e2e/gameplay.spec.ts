@@ -22,9 +22,14 @@ async function runCommand(page: Page, command: string): Promise<void> {
 }
 
 async function loadedFeatureChunkCount(page: Page, filename: string): Promise<number> {
-  return page.evaluate(name => performance.getEntriesByType('resource')
-    .filter(resource => new URL(resource.name).pathname.includes('/assets/' + name + '-')).length,
-  filename);
+  return page.evaluate(
+    (name) =>
+      performance
+        .getEntriesByType('resource')
+        .filter((resource) => new URL(resource.name).pathname.includes('/assets/' + name + '-'))
+        .length,
+    filename,
+  );
 }
 
 async function playerPosition(page: Page): Promise<{ x: number; y: number; z: number }> {
@@ -34,9 +39,12 @@ async function playerPosition(page: Page): Promise<{ x: number; y: number; z: nu
   return { x: Number(match[1]), y: Number(match[2]), z: Number(match[3]) };
 }
 
-test('a loaded world simulates player movement on desktop and touch devices', async ({ page, isMobile }) => {
+test('a loaded world simulates player movement on desktop and touch devices', async ({
+  page,
+  isMobile,
+}) => {
   const browserErrors: string[] = [];
-  page.on('pageerror', error => browserErrors.push(error.message));
+  page.on('pageerror', (error) => browserErrors.push(error.message));
   await startWorld(page);
   const before = await playerPosition(page);
   if (isMobile) {
@@ -51,13 +59,15 @@ test('a loaded world simulates player movement on desktop and touch devices', as
         const event = new TouchEvent(type, {
           touches: type === 'touchend' ? [] : [touch],
           targetTouches: type === 'touchend' ? [] : [touch],
-          changedTouches: [touch], bubbles: true, cancelable: true,
+          changedTouches: [touch],
+          bubbles: true,
+          cancelable: true,
         });
         canvas!.dispatchEvent(event);
       }
       emit('touchstart', 48, 240);
       emit('touchmove', 48, 160);
-      await new Promise(resolve => setTimeout(resolve, 850));
+      await new Promise((resolve) => setTimeout(resolve, 850));
       emit('touchend', 48, 160);
     });
   } else {
@@ -65,16 +75,21 @@ test('a loaded world simulates player movement on desktop and touch devices', as
     await page.waitForTimeout(850);
     await page.keyboard.up('w');
   }
-  await expect.poll(async () => {
-    const after = await playerPosition(page);
-    return Math.hypot(after.x - before.x, after.z - before.z);
-  }, { timeout: 5_000 }).toBeGreaterThan(0.3);
+  await expect
+    .poll(
+      async () => {
+        const after = await playerPosition(page);
+        return Math.hypot(after.x - before.x, after.z - before.z);
+      },
+      { timeout: 5_000 },
+    )
+    .toBeGreaterThan(0.3);
   expect(browserErrors).toEqual([]);
 });
 
 test('placing a block in a game world persists through save and full reload', async ({ page }) => {
   const browserErrors: string[] = [];
-  page.on('pageerror', error => browserErrors.push(error.message));
+  page.on('pageerror', (error) => browserErrors.push(error.message));
   await startWorld(page);
   // Command implementations should not download until the command bar is opened.
   expect(await loadedFeatureChunkCount(page, 'core-game-commands')).toBe(0);
@@ -101,12 +116,14 @@ test('placing a block in a game world persists through save and full reload', as
         });
         if (worlds.length !== 1) throw new Error('Expected one isolated test world');
         const record = await new Promise<{ data: Uint8Array } | undefined>((resolve, reject) => {
-          const request = database.transaction('chunks', 'readonly')
-            .objectStore('chunks').get(worlds[0].id + ':0,0');
+          const request = database
+            .transaction('chunks', 'readonly')
+            .objectStore('chunks')
+            .get(worlds[0].id + ':0,0');
           request.onsuccess = () => resolve(request.result as { data: Uint8Array } | undefined);
           request.onerror = () => reject(request.error);
         });
-        return record?.data[(45 * 16) * 16] ?? null;
+        return record?.data[45 * 16 * 16] ?? null;
       } finally {
         database.close();
       }
@@ -123,7 +140,7 @@ test('placing a block in a game world persists through save and full reload', as
 
 test('switching dimensions preserves live gameplay and the saved world', async ({ page }) => {
   const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', (error) => errors.push(error.message));
   await startWorld(page);
   await runCommand(page, '/dimension nether');
   await expect(page.locator('#chatlog')).toContainText('Entered the nether');
@@ -136,7 +153,10 @@ test('switching dimensions preserves live gameplay and the saved world', async (
   expect(errors).toEqual([]);
 });
 
-test('mobile movement hint stays clear of survival status and touch controls', async ({ page, isMobile }) => {
+test('mobile movement hint stays clear of survival status and touch controls', async ({
+  page,
+  isMobile,
+}) => {
   test.skip(!isMobile, 'Mobile touch HUD only');
   await startWorld(page);
   await runCommand(page, '/gamemode survival');
@@ -144,31 +164,45 @@ test('mobile movement hint stays clear of survival status and touch controls', a
   await expect(page.locator('#hearts')).toBeVisible();
   await expect(page.locator('#food')).toBeVisible();
 
-  for (const [width, height] of [[360, 640], [412, 915], [640, 360]]) {
+  for (const [width, height] of [
+    [360, 640],
+    [412, 915],
+    [640, 360],
+  ]) {
     await page.setViewportSize({ width, height });
     const overlapping = await page.evaluate(() => {
       const hint = document.getElementById('stickHint')!.getBoundingClientRect();
       const ids = ['hearts', 'food', 'hotbar', 'btnJump', 'btnInv', 'btnCmd', 'btnFly', 'btnPlace'];
-      return ids.filter(id => {
+      return ids.filter((id) => {
         const element = document.getElementById(id)!;
         const style = window.getComputedStyle(element);
         if (style.display === 'none' || style.visibility === 'hidden') return false;
         const rect = element.getBoundingClientRect();
-        return hint.left < rect.right && hint.right > rect.left &&
-          hint.top < rect.bottom && hint.bottom > rect.top;
+        return (
+          hint.left < rect.right &&
+          hint.right > rect.left &&
+          hint.top < rect.bottom &&
+          hint.bottom > rect.top
+        );
       });
     });
     expect(overlapping, `HUD overlaps at ${width}x${height}`).toEqual([]);
   }
 });
 
-test('survival bag hides zero-count items and recipe book reveals partial recipes on desktop and mobile', async ({ page, isMobile }) => {
+test('survival bag hides zero-count items and recipe book reveals partial recipes on desktop and mobile', async ({
+  page,
+  isMobile,
+}) => {
   const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', (error) => errors.push(error.message));
   await startWorld(page);
   await runCommand(page, '/gamemode survival');
   await runCommand(page, '/give stick 1');
-  await expect(page.locator('#hotbar .slot').first()).toHaveAttribute('aria-label', 'Stick, slot 1');
+  await expect(page.locator('#hotbar .slot').first()).toHaveAttribute(
+    'aria-label',
+    'Stick, slot 1',
+  );
   await expect(page.locator('#hotbar .slot').first().locator('.cnt')).toHaveText('1');
   await expect(page.locator('#heldItem')).toBeVisible();
   await expect(page.locator('#heldItem')).toHaveAttribute('aria-label', 'Holding Stick');
@@ -188,9 +222,12 @@ test('survival bag hides zero-count items and recipe book reveals partial recipe
   expect(errors).toEqual([]);
 });
 
-test('first-person hand equips hotbar items and swings on desktop and mobile mining input', async ({ page, isMobile }) => {
+test('first-person hand equips hotbar items and swings on desktop and mobile mining input', async ({
+  page,
+  isMobile,
+}) => {
   const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', (error) => errors.push(error.message));
   await startWorld(page);
   const hand = page.locator('#heldHand');
   const heldItem = page.locator('#heldItem');
@@ -215,11 +252,20 @@ test('first-person hand equips hotbar items and swings on desktop and mobile min
       const canvas = document.querySelector<HTMLCanvasElement>('#view');
       if (!canvas) throw new Error('Missing game canvas');
       const touch = new Touch({
-        identifier: 42, target: canvas, clientX: innerWidth * 0.8, clientY: innerHeight * 0.4,
+        identifier: 42,
+        target: canvas,
+        clientX: innerWidth * 0.8,
+        clientY: innerHeight * 0.4,
       });
-      canvas.dispatchEvent(new TouchEvent('touchstart', {
-        touches: [touch], targetTouches: [touch], changedTouches: [touch], bubbles: true, cancelable: true,
-      }));
+      canvas.dispatchEvent(
+        new TouchEvent('touchstart', {
+          touches: [touch],
+          targetTouches: [touch],
+          changedTouches: [touch],
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
     });
   } else {
     await page.locator('#view').dispatchEvent('mousedown', { button: 0 });
@@ -230,13 +276,23 @@ test('first-person hand equips hotbar items and swings on desktop and mobile min
       const canvas = document.querySelector<HTMLCanvasElement>('#view');
       if (!canvas) throw new Error('Missing game canvas');
       const touch = new Touch({
-        identifier: 42, target: canvas, clientX: innerWidth * 0.8, clientY: innerHeight * 0.4,
+        identifier: 42,
+        target: canvas,
+        clientX: innerWidth * 0.8,
+        clientY: innerHeight * 0.4,
       });
-      canvas.dispatchEvent(new TouchEvent('touchend', {
-        touches: [], targetTouches: [], changedTouches: [touch], bubbles: true, cancelable: true,
-      }));
+      canvas.dispatchEvent(
+        new TouchEvent('touchend', {
+          touches: [],
+          targetTouches: [],
+          changedTouches: [touch],
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
     });
-  } else await page.evaluate(() => window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })));
+  } else
+    await page.evaluate(() => window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })));
 
   if (isMobile) await page.locator('#hotbar .slot').nth(2).tap();
   else await page.keyboard.press('3');
@@ -245,7 +301,10 @@ test('first-person hand equips hotbar items and swings on desktop and mobile min
   expect(errors).toEqual([]);
 });
 
-test('first-person viewmodel remains in the aiming area without obstructing the mobile reticle', async ({ page, isMobile }) => {
+test('first-person viewmodel remains in the aiming area without obstructing the mobile reticle', async ({
+  page,
+  isMobile,
+}) => {
   await startWorld(page);
   const hand = page.locator('#heldHand');
   const reticle = page.locator('#crosshair');
@@ -260,13 +319,23 @@ test('first-person viewmodel remains in the aiming area without obstructing the 
     const handX = hand.left + hand.width / 2;
     const handY = hand.top + hand.height / 2;
     const touchUi = document.getElementById('touchui')!;
-    const overlappingButtons = [...touchUi.querySelectorAll('button')].filter(button => {
+    const overlappingButtons = [...touchUi.querySelectorAll('button')].filter((button) => {
       const rect = button.getBoundingClientRect();
-      return getComputedStyle(button).display !== 'none' &&
-        rect.left <= centerX + 20 && rect.right >= centerX - 20 &&
-        rect.top <= centerY + 20 && rect.bottom >= centerY - 20;
+      return (
+        getComputedStyle(button).display !== 'none' &&
+        rect.left <= centerX + 20 &&
+        rect.right >= centerX - 20 &&
+        rect.top <= centerY + 20 &&
+        rect.bottom >= centerY - 20
+      );
     });
-    return { handX, handY, centerX, centerY, overlappingButtons: overlappingButtons.map(b => b.id) };
+    return {
+      handX,
+      handY,
+      centerX,
+      centerY,
+      overlappingButtons: overlappingButtons.map((b) => b.id),
+    };
   });
   // The old hand was bottom-right, practically attached to the hotbar.
   expect(Math.abs(layout.handX - layout.centerX)).toBeLessThan(190);
@@ -282,7 +351,10 @@ test('first-person viewmodel remains in the aiming area without obstructing the 
   if (isMobile) await expect(page.locator('#btnPlace')).toBeHidden();
 });
 
-test('mobile and desktop can return to menu and confirm a manual save', async ({ page, isMobile }) => {
+test('mobile and desktop can return to menu and confirm a manual save', async ({
+  page,
+  isMobile,
+}) => {
   await startWorld(page);
   const menu = page.getByRole('button', { name: 'Return to main menu' });
   await expect(menu).toBeVisible();
@@ -298,7 +370,10 @@ test('mobile and desktop can return to menu and confirm a manual save', async ({
   await expect(menu).toBeVisible();
 });
 
-test('binary world export/import preserves changes and never overwrites an existing world', async ({ page, isMobile }) => {
+test('binary world export/import preserves changes and never overwrites an existing world', async ({
+  page,
+  isMobile,
+}) => {
   await startWorld(page);
   // Normal play should not fetch the optional binary archive codec.
   expect(await loadedFeatureChunkCount(page, 'world-archive')).toBe(0);
@@ -328,27 +403,32 @@ test('binary world export/import preserves changes and never overwrites an exist
       request.onerror = () => reject(request.error);
     });
     try {
-      const worlds = await new Promise<Array<{ id: string; seed: number; name: string }>>((resolve, reject) => {
-        const request = db.transaction('worlds', 'readonly').objectStore('worlds').getAll();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
+      const worlds = await new Promise<Array<{ id: string; seed: number; name: string }>>(
+        (resolve, reject) => {
+          const request = db.transaction('worlds', 'readonly').objectStore('worlds').getAll();
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        },
+      );
       const blocks: number[] = [];
       for (const world of worlds) {
         const chunk = await new Promise<{ data: Uint8Array } | undefined>((resolve, reject) => {
-          const request = db.transaction('chunks', 'readonly').objectStore('chunks').get(world.id + ':0,0');
+          const request = db
+            .transaction('chunks', 'readonly')
+            .objectStore('chunks')
+            .get(world.id + ':0,0');
           request.onsuccess = () => resolve(request.result);
           request.onerror = () => reject(request.error);
         });
-        blocks.push(chunk?.data[(45 * 16) * 16] ?? -1);
+        blocks.push(chunk?.data[45 * 16 * 16] ?? -1);
       }
       return { worlds, blocks };
     } finally {
       db.close();
     }
   });
-  expect(new Set(results.worlds.map(w => w.id)).size).toBe(2);
-  expect(new Set(results.worlds.map(w => w.seed)).size).toBe(1);
+  expect(new Set(results.worlds.map((w) => w.id)).size).toBe(2);
+  expect(new Set(results.worlds.map((w) => w.seed)).size).toBe(1);
   expect(results.blocks).toEqual([3, 3]);
 
   // A second import must create a third independent ID, not replace either.

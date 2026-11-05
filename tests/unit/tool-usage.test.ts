@@ -15,7 +15,8 @@ function fixture() {
   const deps: ToolUsageDependencies = {
     getMode: () => mode,
     getSelectedItem: () => selectedItem,
-    inventory, wear,
+    inventory,
+    wear,
     tools: { 100: { kind: 'pickaxe', tier: 1 }, 101: { kind: 'sword', tier: 0 } },
     names: { 100: 'Stone Pickaxe', 101: 'Wooden Sword', 17: 'Torch' },
     maxWear: [40, 90],
@@ -23,12 +24,28 @@ function fixture() {
     toolSpeeds: [2.4, 4],
     toolDamages: { pickaxe: [4, 6], sword: [6, 8] },
     requiresPick: { 3: 0, 30: 2 },
-    updateHotbar, flashName, showHint, playSound, exert,
+    updateHotbar,
+    flashName,
+    showHint,
+    playSound,
+    exert,
   };
   const actions = createToolUsage(deps);
   return {
-    actions, inventory, wear, flashName, showHint, playSound, updateHotbar, exert,
-    select: (id: number) => { selectedItem = id; }, setMode: (next: string) => { mode = next; },
+    actions,
+    inventory,
+    wear,
+    flashName,
+    showHint,
+    playSound,
+    updateHotbar,
+    exert,
+    select: (id: number) => {
+      selectedItem = id;
+    },
+    setMode: (next: string) => {
+      mode = next;
+    },
   };
 }
 

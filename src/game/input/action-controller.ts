@@ -3,13 +3,23 @@ import type { SpawnMob } from '../entities/mob-spawning';
 import type { BlockRayHit } from '../world/raycast';
 
 export interface ActionInputState {
-  mineCd: number; placeCd: number; attackCd: number;
-  mining: boolean; placing: boolean; pulseMine: boolean; pulsePlace: boolean;
+  mineCd: number;
+  placeCd: number;
+  attackCd: number;
+  mining: boolean;
+  placing: boolean;
+  pulseMine: boolean;
+  pulsePlace: boolean;
   mode: string;
   drag: { t0: number; moved: number } | null;
   lookTouch: { t0: number; moved: number } | null;
 }
-interface MiningProgress { x: number; y: number; z: number; t: number }
+interface MiningProgress {
+  x: number;
+  y: number;
+  z: number;
+  t: number;
+}
 export interface ActionDependencies {
   state: ActionInputState;
   mine: MiningProgress;
@@ -51,19 +61,27 @@ export function createActionController(deps: ActionDependencies) {
   };
 
   function handleActions(dt: number, tNow: number): void {
-    state.mineCd -= dt; state.placeCd -= dt; state.attackCd -= dt;
+    state.mineCd -= dt;
+    state.placeCd -= dt;
+    state.attackCd -= dt;
     swingCooldown = Math.max(0, swingCooldown - dt);
-    const drag = state.drag, lookT = state.lookTouch;
+    const drag = state.drag,
+      lookT = state.lookTouch;
     const holdOK = !drag || (tNow - drag.t0 > 160 && drag.moved < 6);
     const touchHold = !!(lookT && lookT.moved < 10 && tNow - lookT.t0 >= 260);
     const heldMine = (state.mining && holdOK) || touchHold;
     const heldPlace = state.placing && holdOK;
     const wantMine = heldMine || state.pulseMine;
     const wantPlace = heldPlace || state.pulsePlace;
-    const pm = state.pulseMine, pp = state.pulsePlace;
-    state.pulseMine = false; state.pulsePlace = false;
+    const pm = state.pulseMine,
+      pp = state.pulsePlace;
+    state.pulseMine = false;
+    state.pulsePlace = false;
 
-    if (state.mode === 'spectator') { resetMine(); return; }
+    if (state.mode === 'spectator') {
+      resetMine();
+      return;
+    }
 
     const blockHit = deps.getBlockHit();
     const target = deps.getTarget();
@@ -71,46 +89,80 @@ export function createActionController(deps: ActionDependencies) {
     const shiftHeld = !!(keys.ShiftLeft || keys.ShiftRight);
     const mobInFront = !!mobHit && (!blockHit || mobHit.t < blockHit.t);
     const useVillager = mobInFront && mobHit?.mob.kind === 'villager';
-    const useBlock = !!target && !shiftHeld &&
+    const useBlock =
+      !!target &&
+      !shiftHeld &&
       (deps.isBed(get(target.x, target.y, target.z)) ||
         get(target.x, target.y, target.z) === deps.craftingTableId);
     // A brief desktop click uses interactable targets; holding still mines/attacks.
-    const contextClick = pm && !heldMine && !shiftHeld &&
-      (useVillager || (useBlock && !mobInFront));
+    const contextClick =
+      pm && !heldMine && !shiftHeld && (useVillager || (useBlock && !mobInFront));
     if (wantMine && !contextClick) {
       if (mobHit && (!blockHit || mobHit.t < blockHit.t + 0.01)) {
-        if (state.attackCd <= 0) { deps.attackMob(mobHit.mob); swing(); state.attackCd = 0.45; }
+        if (state.attackCd <= 0) {
+          deps.attackMob(mobHit.mob);
+          swing();
+          state.attackCd = 0.45;
+        }
         resetMine();
       } else if (state.mode === 'creative') {
         swing();
         if (target && target.y > 0 && (pm || state.mineCd <= 0)) {
-          deps.doBreak(target); state.mineCd = 0.2;
+          deps.doBreak(target);
+          state.mineCd = 0.2;
         }
       } else if (state.mode === 'survival') {
         if (heldMine || pm) swing();
         if (heldMine && target && target.y > 0) {
           if (mine.x === target.x && mine.y === target.y && mine.z === target.z) mine.t += dt;
-          else { mine.x = target.x; mine.y = target.y; mine.z = target.z; mine.t = dt; }
+          else {
+            mine.x = target.x;
+            mine.y = target.y;
+            mine.z = target.z;
+            mine.t = dt;
+          }
           const block = get(target.x, target.y, target.z);
           const total = (deps.breakTimes[block] || 1) / deps.toolSpeed(block);
           mineBar.style.display = 'block';
           const progressBar = mineBar.firstElementChild as HTMLElement | null;
-          if (progressBar) progressBar.style.width = Math.min(100, mine.t / total * 100) + '%';
-          if (mine.t >= total) { deps.doBreak(target); resetMine(); }
+          if (progressBar) progressBar.style.width = Math.min(100, (mine.t / total) * 100) + '%';
+          if (mine.t >= total) {
+            deps.doBreak(target);
+            resetMine();
+          }
         } else resetMine();
       }
     } else resetMine();
 
-    if ((wantPlace || contextClick) && deps.canInteract() && (pp || contextClick || state.placeCd <= 0)) {
+    if (
+      (wantPlace || contextClick) &&
+      deps.canInteract() &&
+      (pp || contextClick || state.placeCd <= 0)
+    ) {
       if (useVillager) {
-        deps.openTrade(mobHit.mob); state.placeCd = 0.4;
-      } else if (mobHit && mobHit.mob.golem && (!blockHit || mobHit.t < blockHit.t) && deps.healGolem(mobHit.mob)) {
+        deps.openTrade(mobHit.mob);
+        state.placeCd = 0.4;
+      } else if (
+        mobHit &&
+        mobHit.mob.golem &&
+        (!blockHit || mobHit.t < blockHit.t) &&
+        deps.healGolem(mobHit.mob)
+      ) {
         state.placeCd = 0.5;
       } else if (target && deps.isBed(get(target.x, target.y, target.z)) && !shiftHeld) {
-        deps.useBed(target); state.placeCd = 0.6;
-      } else if (target && get(target.x, target.y, target.z) === deps.craftingTableId && !shiftHeld) {
-        deps.openCraft(3); state.placeCd = 0.4;
-      } else { swing(); state.placeCd = deps.useSelected(); }
+        deps.useBed(target);
+        state.placeCd = 0.6;
+      } else if (
+        target &&
+        get(target.x, target.y, target.z) === deps.craftingTableId &&
+        !shiftHeld
+      ) {
+        deps.openCraft(3);
+        state.placeCd = 0.4;
+      } else {
+        swing();
+        state.placeCd = deps.useSelected();
+      }
     }
   }
 

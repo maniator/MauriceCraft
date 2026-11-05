@@ -14,7 +14,7 @@ Welcome! This is a game made by a young creator. **Explain changes kindly and in
 - **Protect existing worlds.** Keep the IndexedDB database name `blockcraft-worlds`, store keys, block IDs, and world format backwards-compatible. Never clear storage, delete saves, or reset schemas to make a bug go away.
 - **Keep the game playable on phones and computers.** Keyboard, mouse, touch, the pause menu, inventory, and saving must continue working.
 - **Fix the cause, not the symptom.** For any bug, first reproduce it and add a regression test that would catch it again. Add unit tests for pure gameplay rules; add browser tests when UI or controls change.
-- Run `npm run check` and applicable Playwright tests before calling work finished. If something could not be run, say what and why.
+- Run `npm run format` after editing TypeScript, CSS/SCSS, or Markdown, and `npm run check` (which verifies Prettier formatting), plus applicable Playwright tests before calling work finished. If something could not be run, say what and why.
 - **Write typed TypeScript.** New logic goes in focused typed modules, not the bootstrap composition layer. Keep production modules at or under **500 lines** unless there is a documented, temporary exception; test files are exempt.
 - Do not add `@ts-nocheck`, broad `any`, disabled tests, secrets, generated `dist/`, or unrelated changes.
 - Preserve the Vite/GitHub Pages base path `/MauriceCraft/`. Pages must pass its own TypeScript and production-build checks; the independent CI workflow tests gameplay without blocking deployment.

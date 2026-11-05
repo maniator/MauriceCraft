@@ -3,7 +3,11 @@ import { biomeAt, biomeHeightAt, biomeSurface } from '../../src/game/world/biome
 
 describe('seeded biome generation', () => {
   it('is deterministic across coordinates, including negative coordinates', () => {
-    for (const [x, z] of [[0, 0], [200, -300], [-1234, 987]] as const) {
+    for (const [x, z] of [
+      [0, 0],
+      [200, -300],
+      [-1234, 987],
+    ] as const) {
       expect(biomeAt(x, z, 456)).toBe(biomeAt(x, z, 456));
       expect(biomeHeightAt(x, z, 456, 48)).toBe(biomeHeightAt(x, z, 456, 48));
     }

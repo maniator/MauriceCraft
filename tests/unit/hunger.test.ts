@@ -17,12 +17,15 @@ describe('hunger exhaustion', () => {
     s.mode = 'creative';
     exertPlayer(s, 40);
     expect(s.exhaust).toBe(0);
-    s.mode = 'survival'; s.difficulty = 'peaceful';
+    s.mode = 'survival';
+    s.difficulty = 'peaceful';
     exertPlayer(s, 40);
     expect(s.hunger).toBe(20);
   });
   it('never lets hunger become negative on repeated exertion', () => {
-    const s = state(); s.sat = 0; s.hunger = 1;
+    const s = state();
+    s.sat = 0;
+    s.hunger = 1;
     exertPlayer(s, 40);
     expect(s.hunger).toBe(0);
     expect(s.exhaust).toBe(0);

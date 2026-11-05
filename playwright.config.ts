@@ -14,7 +14,12 @@ export default defineConfig({
     baseURL: url,
     trace: 'retain-on-failure',
     launchOptions: {
-      args: ['--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+      args: [
+        '--enable-webgl',
+        '--use-gl=angle',
+        '--use-angle=swiftshader',
+        '--enable-unsafe-swiftshader',
+      ],
     },
   },
   projects: [

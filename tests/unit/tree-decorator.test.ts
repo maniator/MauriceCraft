@@ -5,8 +5,13 @@ import type { Biome } from '../../src/game/world/biomes';
 function generate(cx: number, cz: number, biome: Biome = 'forest', seed = 15) {
   const blocks = new Map<string, number>();
   const decorate = createTreeDecorator({
-    getSeed: () => seed, getBiome: () => biome, groundHeight: () => 18,
-    canGrowAt: () => true, inStructureZone: () => false, seaLevel: 14, maxHeight: 48,
+    getSeed: () => seed,
+    getBiome: () => biome,
+    groundHeight: () => 18,
+    canGrowAt: () => true,
+    inStructureZone: () => false,
+    seaLevel: 14,
+    maxHeight: 48,
     blocks: { wood: 5, darkWood: 40, leaves: 6, pineLeaves: 38 },
   });
   decorate(cx, cz, (x, y, z, block, onlyAir) => {
@@ -35,7 +40,7 @@ describe('biome-aware tree generation', () => {
     expect(desert.size).toBe(0);
     const forest = [generate(0, 0), generate(1, 1), generate(2, 2)];
     const taiga = [generate(0, 0, 'taiga'), generate(1, 1, 'taiga'), generate(2, 2, 'taiga')];
-    expect(forest.some(chunk => chunk.size > 0)).toBe(true);
-    expect(taiga.some(chunk => [...chunk.values()].includes(38))).toBe(true);
+    expect(forest.some((chunk) => chunk.size > 0)).toBe(true);
+    expect(taiga.some((chunk) => [...chunk.values()].includes(38))).toBe(true);
   });
 });

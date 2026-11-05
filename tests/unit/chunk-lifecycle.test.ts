@@ -10,21 +10,45 @@ function fixture() {
   const access = createBlockAccess(chunks, 48);
   let dimension = 'overworld';
   let seed = 1;
-  const setSeed = vi.fn((value: number) => { seed = value; });
+  const setSeed = vi.fn((value: number) => {
+    seed = value;
+  });
   const clearStructures = vi.fn();
   const disposeMesh = vi.fn();
   const buildChunk = vi.fn();
   const generateChunkData = vi.fn(() => new Uint8Array(16 * 16 * 48));
   const lifecycle = createChunkLifecycle({
-    chunks, savedChunks, dimensionChunks, height: 48,
-    getDimension: () => dimension, setSeed, clearStructures,
-    chunkAt: access.chunkAt, resetChunkCache: access.resetChunkCache,
-    generateChunkData, buildChunk, disposeMesh,
-    solid: id => id !== 0, getBlock: access.getBlock,
+    chunks,
+    savedChunks,
+    dimensionChunks,
+    height: 48,
+    getDimension: () => dimension,
+    setSeed,
+    clearStructures,
+    chunkAt: access.chunkAt,
+    resetChunkCache: access.resetChunkCache,
+    generateChunkData,
+    buildChunk,
+    disposeMesh,
+    solid: (id) => id !== 0,
+    getBlock: access.getBlock,
   });
-  return { chunks, savedChunks, dimensionChunks, access, lifecycle, setSeed, clearStructures,
-    disposeMesh, buildChunk, generateChunkData,
-    getSeed: () => seed, setDimension: (value: string) => { dimension = value; } };
+  return {
+    chunks,
+    savedChunks,
+    dimensionChunks,
+    access,
+    lifecycle,
+    setSeed,
+    clearStructures,
+    disposeMesh,
+    buildChunk,
+    generateChunkData,
+    getSeed: () => seed,
+    setDimension: (value: string) => {
+      dimension = value;
+    },
+  };
 }
 
 describe('world chunk lifecycle', () => {
@@ -90,7 +114,7 @@ describe('world chunk lifecycle', () => {
   it('finds the highest solid block without creating new chunks', () => {
     const f = fixture();
     const data = new Uint8Array(16 * 16 * 48);
-    data[(8 * 16) * 16] = 3;
+    data[8 * 16 * 16] = 3;
     f.savedChunks.set(ckey(0, 0), data);
     f.lifecycle.genChunk(0, 0);
     expect(f.lifecycle.topY(0, 0)).toBe(8);

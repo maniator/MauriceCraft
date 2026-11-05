@@ -4,22 +4,22 @@ MauriceCraft is a plain TypeScript, Three.js and Vite game. You do **not** need 
 
 ## Where do I make a change?
 
-| Goal | Start here |
-| --- | --- |
-| New blocks, items, mining properties | `src/game/world/block-catalog.ts` |
-| Terrain, villages, structures, chunks | `src/game/world/world-runtime.ts`, `chunk-generator.ts`, `chunk-lifecycle.ts`, `chunk-streamer.ts` and `structure-regions.ts` |
-| Creature definitions, combat, spawning, raids and projectiles | `src/game/entities/mob-catalog.ts`, `mob-runtime.ts`, `mob-spawning.ts`, `mob-simulation.ts`, `mob-world-cycle.ts`, `arrow-system.ts` |
-| Portal lighting and Nether travel | `src/game/portals/` |
-| Inventory, crafting, trading, health | `src/game/ui/game-ui-composition.ts`, `src/game/crafting/`, `src/game/items/tool-usage.ts`, `src/game/interactions/block-interactions.ts` |
-| Keyboard, mouse, phone controls and cooldowns | `src/game/input/game-controls.ts` and `action-controller.ts` |
-| Chat, autocomplete and commands | `src/game/commands/` |
-| Weather, sky, meshes, active simulation and frame scheduling | `src/game/rendering/`, `src/game/runtime/game-tick.ts`, `frame-loop.ts`, `game-session-controls.ts` |
-| Sounds and music | `src/game/audio/` |
-| World saving, restoration, storage and autosaves | `src/game/session/gameplay-world-session.ts`, `world-restore.ts`, `world-persistence.ts`, `world-session.ts`; `src/game/storage/world-storage.ts` |
-| Binary world export/import | `src/game/storage/world-archive.ts`, `src/game/session/world-transfer.ts` |
-| Main-menu navigation | `src/game/runtime/game-session-controls.ts`, `index.html` |
-| Webpage and phone layout | `index.html`, `src/styles/global.css` |
-| Offline installation and safe updates | `src/pwa/register.ts`, `src/pwa/update-policy.ts`, `vite.config.ts` (Workbox) |
+| Goal                                                          | Start here                                                                                                                                        |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New blocks, items, mining properties                          | `src/game/world/block-catalog.ts`                                                                                                                 |
+| Terrain, villages, structures, chunks                         | `src/game/world/world-runtime.ts`, `chunk-generator.ts`, `chunk-lifecycle.ts`, `chunk-streamer.ts` and `structure-regions.ts`                     |
+| Creature definitions, combat, spawning, raids and projectiles | `src/game/entities/mob-catalog.ts`, `mob-runtime.ts`, `mob-spawning.ts`, `mob-simulation.ts`, `mob-world-cycle.ts`, `arrow-system.ts`             |
+| Portal lighting and Nether travel                             | `src/game/portals/`                                                                                                                               |
+| Inventory, crafting, trading, health                          | `src/game/ui/game-ui-composition.ts`, `src/game/crafting/`, `src/game/items/tool-usage.ts`, `src/game/interactions/block-interactions.ts`         |
+| Keyboard, mouse, phone controls and cooldowns                 | `src/game/input/game-controls.ts` and `action-controller.ts`                                                                                      |
+| Chat, autocomplete and commands                               | `src/game/commands/`                                                                                                                              |
+| Weather, sky, meshes, active simulation and frame scheduling  | `src/game/rendering/`, `src/game/runtime/game-tick.ts`, `frame-loop.ts`, `game-session-controls.ts`                                               |
+| Sounds and music                                              | `src/game/audio/`                                                                                                                                 |
+| World saving, restoration, storage and autosaves              | `src/game/session/gameplay-world-session.ts`, `world-restore.ts`, `world-persistence.ts`, `world-session.ts`; `src/game/storage/world-storage.ts` |
+| Binary world export/import                                    | `src/game/storage/world-archive.ts`, `src/game/session/world-transfer.ts`                                                                         |
+| Main-menu navigation                                          | `src/game/runtime/game-session-controls.ts`, `index.html`                                                                                         |
+| Webpage and phone layout                                      | `index.html`, `src/styles/global.css`                                                                                                             |
+| Offline installation and safe updates                         | `src/pwa/register.ts`, `src/pwa/update-policy.ts`, `vite.config.ts` (Workbox)                                                                     |
 
 `src/main.ts` imports the CSS, installs startup error monitoring, and installs PWA update-safety listeners **before** dynamically importing `src/game/bootstrap.ts`; gameplay starts only after `startGameApplication()` is called. The PWA listeners must be installed before gameplay starts so a slow chunk download cannot cause an unsafe reload during a pause save. Importing the game no longer starts an IIFE or starts the animation loop by itself. `bootstrap.ts` is the integration/composition boundary, **not** the owner of new gameplay rules. Its state facade is shared with typed subsystems rather than copied into each component.
 
@@ -94,6 +94,5 @@ The `blockcraft-worlds` IndexedDB database is **stored in the player's browser**
 The per-frame code runs roughly 60 times per second. Keep its work bounded. Chunk streaming uses a fixed generation/meshing budget; mob spatial buckets avoid repeated full-crowd scans; target raycasts avoid per-actor temporary arrays. Avoid quadratic loops (`O(n²)`) and unnecessary allocations in game loops. Use representative unit tests and browser profiling before claiming a performance problem has been eliminated.
 
 See [Testing](TESTING.md) and [Start here](START_HERE.md) for the workflow.
-
 
 Nether versioning: **v5 is the previously released lossless 64-bit seed generator**, and keeps its original Nether chunks/structures. **v6** introduces seeded Nether biome materials, lava seas, structures and native Nether fauna; new worlds get v6, while loaded and imported v1–v5 worlds keep their saved generator version and original terrain algorithms. Do not retarget v5 to new terrain in a future refactor.

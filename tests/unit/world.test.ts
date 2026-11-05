@@ -20,9 +20,7 @@ describe('world generation determinism', () => {
   it('preserves the seeded random sequence', () => {
     const random = mulberry32(123);
     expect([random(), random(), random()]).toEqual([
-      0.7872516233474016,
-      0.1785435655619949,
-      0.49531551403924823,
+      0.7872516233474016, 0.1785435655619949, 0.49531551403924823,
     ]);
     expect(mulberry32(123)()).toBe(0.7872516233474016);
   });
@@ -46,9 +44,14 @@ describe('world generation determinism', () => {
 });
 
 describe('mining tools', () => {
-  it.each([[3, 'pickaxe'], [30, 'pickaxe'], [5, 'axe'], [18, 'axe'], [1, 'shovel'], [12, 'shovel']] as const)(
-    'classifies block %i as %s', (id, expected) => expect(blockKind(id)).toBe(expected),
-  );
+  it.each([
+    [3, 'pickaxe'],
+    [30, 'pickaxe'],
+    [5, 'axe'],
+    [18, 'axe'],
+    [1, 'shovel'],
+    [12, 'shovel'],
+  ] as const)('classifies block %i as %s', (id, expected) => expect(blockKind(id)).toBe(expected));
   it('allows hand-mining of unspecified blocks', () => {
     expect(blockKind(0)).toBeNull();
     expect(blockKind(17)).toBeNull();

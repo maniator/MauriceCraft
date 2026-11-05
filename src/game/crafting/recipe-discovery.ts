@@ -3,14 +3,23 @@ import type { Recipe } from './recipes';
 /** Stable across sessions, unlike the position of a recipe in the catalog. */
 export function recipeFingerprint(recipe: Recipe): string {
   if (recipe.shapeless) {
-    return JSON.stringify([recipe.out, recipe.n, 'shapeless', [...recipe.shapeless].sort((a, b) => a - b)]);
+    return JSON.stringify([
+      recipe.out,
+      recipe.n,
+      'shapeless',
+      [...recipe.shapeless].sort((a, b) => a - b),
+    ]);
   }
-  const pattern = (recipe.shape ?? []).map(row => row.split('').map(ch =>
-    ch === '.' ? 0 : (recipe.key?.[ch] ?? 0)));
+  const pattern = (recipe.shape ?? []).map((row) =>
+    row.split('').map((ch) => (ch === '.' ? 0 : (recipe.key?.[ch] ?? 0))),
+  );
   return JSON.stringify([recipe.out, recipe.n, 'shaped', pattern]);
 }
 
-export interface MissingIngredient { itemId: number; count: number }
+export interface MissingIngredient {
+  itemId: number;
+  count: number;
+}
 export interface RecipeDiscovery {
   visible: boolean;
   canCraft: boolean;
@@ -31,9 +40,11 @@ export function describeRecipe(
   gridSize: number,
 ): RecipeDiscovery {
   const required = new Map<number, number>();
-  const ingredients = recipe.shapeless ??
-    (recipe.shape ?? []).flatMap(row => row.split('').map(ch =>
-      ch === '.' ? 0 : (recipe.key?.[ch] ?? 0)));
+  const ingredients =
+    recipe.shapeless ??
+    (recipe.shape ?? []).flatMap((row) =>
+      row.split('').map((ch) => (ch === '.' ? 0 : (recipe.key?.[ch] ?? 0))),
+    );
   for (const itemId of ingredients) {
     if (itemId) required.set(itemId, (required.get(itemId) ?? 0) + 1);
   }
@@ -46,7 +57,8 @@ export function describeRecipe(
   }
   const needsCraftingTable = recipe.shapeless
     ? recipe.shapeless.length > gridSize * gridSize
-    : (recipe.shape ?? []).length > gridSize || (recipe.shape ?? []).some(row => row.length > gridSize);
+    : (recipe.shape ?? []).length > gridSize ||
+      (recipe.shape ?? []).some((row) => row.length > gridSize);
   const previouslyCrafted = craftedRecipes.has(recipeFingerprint(recipe));
   return {
     visible: hasIngredient || previouslyCrafted,

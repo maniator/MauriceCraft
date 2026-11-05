@@ -14,27 +14,51 @@ describe('mobile world interactions', () => {
     } as unknown as HTMLCanvasElement;
     const button = { addEventListener: () => undefined };
     Object.defineProperty(globalThis, 'document', {
-      configurable: true, value: { getElementById: () => button },
+      configurable: true,
+      value: { getElementById: () => button },
     });
     Object.defineProperty(globalThis, 'window', {
-      configurable: true, value: { innerWidth: 800,
-        addEventListener: (name: string, listener: (event: unknown) => void) => windowListeners.set(name, listener) },
+      configurable: true,
+      value: {
+        innerWidth: 800,
+        addEventListener: (name: string, listener: (event: unknown) => void) =>
+          windowListeners.set(name, listener),
+      },
     });
 
     const state: InputControlState = {
-      playing: true, locked: false, fallback: false, selected: 0, specSpeed: 1,
-      mining: false, placing: false, pulseMine: false, pulsePlace: false,
-      mineCd: 0, placeCd: 0, drag: null, stick: null, lookT: null, touchJump: false,
+      playing: true,
+      locked: false,
+      fallback: false,
+      selected: 0,
+      specSpeed: 1,
+      mining: false,
+      placing: false,
+      pulseMine: false,
+      pulsePlace: false,
+      mineCd: 0,
+      placeCd: 0,
+      drag: null,
+      stick: null,
+      lookT: null,
+      touchJump: false,
     };
     const touch = { identifier: 3, clientX: 600, clientY: 180 };
     const event = { changedTouches: [touch], preventDefault: () => undefined };
     try {
       createInputControls({
-        canvas, keys: {}, touchMove: { x: 0, z: 0 },
+        canvas,
+        keys: {},
+        touchMove: { x: 0, z: 0 },
         player: { yaw: 0, pitch: 0, fly: false, vy: 0 },
-        state, isTouch: true, getMode: () => 'survival', canInteract: () => true,
-        updateHotbar: () => undefined, showHint: () => undefined,
-        openInventory: () => undefined, openCommand: () => undefined,
+        state,
+        isTouch: true,
+        getMode: () => 'survival',
+        canInteract: () => true,
+        updateHotbar: () => undefined,
+        showHint: () => undefined,
+        openInventory: () => undefined,
+        openCommand: () => undefined,
         pause: () => undefined,
       });
       const start = canvasListeners.get('touchstart');

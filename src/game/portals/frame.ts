@@ -8,7 +8,11 @@
  */
 export type PortalAxis = 'x' | 'z';
 export type PortalDimension = 'overworld' | 'nether';
-export interface BlockPos { x: number; y: number; z: number }
+export interface BlockPos {
+  x: number;
+  y: number;
+  z: number;
+}
 export interface PortalFrame extends BlockPos {
   dimension: PortalDimension;
   axis: PortalAxis;
@@ -45,7 +49,7 @@ export function findPortalFrame(
                 // A valid ten-obsidian frame does not need four corner blocks.
                 if (side && topOrBottom) continue;
                 const actual = get(x, bottom + v, z);
-                if ((side || topOrBottom) ? actual !== obsidian : actual !== 0) {
+                if (side || topOrBottom ? actual !== obsidian : actual !== 0) {
                   valid = false;
                   break;
                 }
@@ -79,10 +83,18 @@ export function portalContains(
   position: BlockPos,
 ): boolean {
   if (portal.dimension !== dimension) return false;
-  const along = portal.axis === 'x' ? Math.abs(position.x - (portal.x + 0.5)) : Math.abs(position.z - (portal.z + 0.5));
-  const across = portal.axis === 'x' ? Math.abs(position.z - (portal.z + 0.5)) : Math.abs(position.x - (portal.x + 0.5));
-  return along <= portal.width / 2 + 0.1 &&
+  const along =
+    portal.axis === 'x'
+      ? Math.abs(position.x - (portal.x + 0.5))
+      : Math.abs(position.z - (portal.z + 0.5));
+  const across =
+    portal.axis === 'x'
+      ? Math.abs(position.z - (portal.z + 0.5))
+      : Math.abs(position.x - (portal.x + 0.5));
+  return (
+    along <= portal.width / 2 + 0.1 &&
     across <= 0.95 &&
     position.y >= portal.y + 0.1 &&
-    position.y <= portal.y + portal.height + 1;
+    position.y <= portal.y + portal.height + 1
+  );
 }

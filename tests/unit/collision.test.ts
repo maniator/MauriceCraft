@@ -5,7 +5,7 @@ const blocks = new Map<string, number>();
 const key = (x: number, y: number, z: number): string => `${x},${y},${z}`;
 const engine = createCollisionEngine({
   getBlock: (x, y, z) => blocks.get(key(x, y, z)) ?? 0,
-  solid: b => b !== 0,
+  solid: (b) => b !== 0,
   defaultRadius: 0.3,
   defaultHeight: 1.8,
   bedHeight: 0.5625,
@@ -94,5 +94,4 @@ describe('player and mob collision rules', () => {
     expect(player.y).toBeCloseTo(2.001);
     expect(player.z).toBeLessThan(0.71);
   });
-
 });

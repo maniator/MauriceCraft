@@ -1,9 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import type { PortalFrame } from '../../src/game/portals/frame';
-import { conflictsWithPortalSite, findLinkedPortal, PORTAL_SEARCH_RADIUS } from '../../src/game/portals/linking';
+import {
+  conflictsWithPortalSite,
+  findLinkedPortal,
+  PORTAL_SEARCH_RADIUS,
+} from '../../src/game/portals/linking';
 
-const frame = (dimension: PortalFrame['dimension'], x: number, z: number, y = 13): PortalFrame =>
-  ({ dimension, x, y, z, axis: 'x', width: 2, height: 3 });
+const frame = (dimension: PortalFrame['dimension'], x: number, z: number, y = 13): PortalFrame => ({
+  dimension,
+  x,
+  y,
+  z,
+  axis: 'x',
+  width: 2,
+  height: 3,
+});
 
 describe('Nether portal linking', () => {
   it('uses 1:8 travel radii and chooses the nearest frame, not insertion order', () => {

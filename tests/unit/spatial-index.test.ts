@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { SpatialIndex } from '../../src/game/entities/spatial-index';
 
-interface Actor { id: number; x: number; z: number }
+interface Actor {
+  id: number;
+  x: number;
+  z: number;
+}
 
 describe('spatial index', () => {
   it('finds nearby actors on both sides of negative coordinate boundaries', () => {
@@ -11,10 +15,10 @@ describe('spatial index', () => {
       { id: 3, x: 160, z: 160 },
     ];
     const index = new SpatialIndex<Actor>(16);
-    actors.forEach(actor => index.upsert(actor));
-    expect(new Set([...index.near(-16, 0, 2)].map(actor => actor.id))).toEqual(new Set([1, 2]));
+    actors.forEach((actor) => index.upsert(actor));
+    expect(new Set([...index.near(-16, 0, 2)].map((actor) => actor.id))).toEqual(new Set([1, 2]));
     expect([...index.near(0, 0, 1)]).toEqual([]);
-    expect([...index.near(-15.9, 0.5, 0.2)].map(actor => actor.id)).toEqual([2]);
+    expect([...index.near(-15.9, 0.5, 0.2)].map((actor) => actor.id)).toEqual([2]);
     expect(index.size).toBe(3);
   });
 
@@ -41,7 +45,7 @@ describe('spatial index', () => {
     }
     const candidates = [...index.near(64, 0, 16)];
     expect(candidates.length).toBeLessThanOrEqual(2);
-    expect(candidates.map(actor => actor.id)).toContain(2);
+    expect(candidates.map((actor) => actor.id)).toContain(2);
     expect(index.size).toBe(4000);
   });
 

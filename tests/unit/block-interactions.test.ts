@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { describe, expect, it, vi } from 'vitest';
-import { createBlockInteractions, type BlockInteractionDependencies, type BlockTarget } from '../../src/game/interactions/block-interactions';
+import {
+  createBlockInteractions,
+  type BlockInteractionDependencies,
+  type BlockTarget,
+} from '../../src/game/interactions/block-interactions';
 import type { SpawnMob } from '../../src/game/entities/mob-spawning';
 
 function fixture() {
@@ -9,13 +13,16 @@ function fixture() {
   const cells = new Map<string, number>();
   const key = (x: number, y: number, z: number) => [x, y, z].join(',');
   const getBlock = (x: number, y: number, z: number) => cells.get(key(x, y, z)) ?? 0;
-  const setBlock = vi.fn((x: number, y: number, z: number, id: number) => { cells.set(key(x, y, z), id); });
+  const setBlock = vi.fn((x: number, y: number, z: number, id: number) => {
+    cells.set(key(x, y, z), id);
+  });
   const hotbar = [17];
   const mobs: SpawnMob[] = [];
   const inventory: Record<number, number> = { 17: 2, 19: 1, 31: 4, 13: 1 };
   let mode = 'survival';
   let target: BlockTarget | null = null;
-  let hunger = 9, satiety = 2;
+  let hunger = 9,
+    satiety = 2;
   const flashName = vi.fn();
   const showHint = vi.fn();
   const playSound = vi.fn();
@@ -23,42 +30,133 @@ function fixture() {
   const spawnDrop = vi.fn();
   const refreshAround = vi.fn();
   const spawnTnt = vi.fn();
-  const addMob = vi.fn((kind: string, x: number, y: number, z: number): SpawnMob =>
-    ({ kind, x, y, z, hp: 20, persist: false, hx: 0, hz: 0 } as SpawnMob));
+  const addMob = vi.fn(
+    (kind: string, x: number, y: number, z: number): SpawnMob =>
+      ({ kind, x, y, z, hp: 20, persist: false, hx: 0, hz: 0 }) as SpawnMob,
+  );
   const deps: BlockInteractionDependencies = {
-    camera, player, mobs, portals: [], hotbar, inventory,
+    camera,
+    player,
+    mobs,
+    portals: [],
+    hotbar,
+    inventory,
     names: { 3: 'Stone', 13: 'Hay Bale', 17: 'Torch', 19: 'Bed', 31: 'Iron Block', 60: 'Beef' },
-    tools: {}, kinds: { villager: { r: 0.3, h: 1.95, hp: 20 }, irongolem: { r: 0.45, h: 2.7, hp: 100 },
-      zombie: { r: 0.3, h: 1.8, hp: 20, hostile: true } },
-    jobs: ['farmer'], food: { 60: 5 }, drops: {}, requiresPick: {},
-    eggKinds: { 150: 'zombie' }, bedDirections: [[1, 0], [0, 1], [-1, 0], [0, -1]],
-    worldHeight: 48, playerRadius: 0.3, playerHeight: 1.8, bedHeight: 0.57,
-    blockIds: { BED: 19, GRAVEL: 12, GUNPOWDER: 80, TORCH: 17, TNT: 16,
-      FLINT: 79, DYNAMITE: 78, OBSIDIAN: 36, HAY: 13,
-      IRON_INGOT: 81, COPPER_INGOT: 82, DIAMOND: 83 },
-    getSelected: () => 0, getTarget: () => target, getMode: () => mode,
-    getDimension: () => 'overworld', getDifficultyCap: () => 8,
-    getHunger: () => hunger, setHunger: value => { hunger = value; },
-    getSatiety: () => satiety, setSatiety: value => { satiety = value; },
-    isNight: () => false, getWeather: () => 'clear', hasHealth: () => true,
-    setSpawnPoint: vi.fn(), startSleeping: vi.fn(),
-    getBlock, setBlock, inBounds: (x, y, z) => Number.isFinite(x) && y >= 0 && y < 48 && Number.isFinite(z),
-    hasChunk: () => true, solid: id => id !== 0, isBed: id => id >= 19 && id <= 26,
-    collides: () => false, heldTool: () => null, canCollect: () => true,
-    wearTool: vi.fn(), spendItem: id => { if (!(inventory[id] > 0)) return false; inventory[id]--; return true; },
-    exert: vi.fn(), giveItem: vi.fn(), spawnDrop, updateHotbar, renderFood: vi.fn(),
-    showHint, flashName, playSound, playSoundAt: vi.fn(), refreshAround,
-    queueRebuild: vi.fn(), flushRebuilds: vi.fn(), rebuildRegion: vi.fn(),
-    ensureAround: vi.fn(), showPortalVisual: vi.fn(), saveWorld: vi.fn(),
-    spawnTnt, addDynamite: vi.fn(), addMob,
+    tools: {},
+    kinds: {
+      villager: { r: 0.3, h: 1.95, hp: 20 },
+      irongolem: { r: 0.45, h: 2.7, hp: 100 },
+      zombie: { r: 0.3, h: 1.8, hp: 20, hostile: true },
+    },
+    jobs: ['farmer'],
+    food: { 60: 5 },
+    drops: {},
+    requiresPick: {},
+    eggKinds: { 150: 'zombie' },
+    bedDirections: [
+      [1, 0],
+      [0, 1],
+      [-1, 0],
+      [0, -1],
+    ],
+    worldHeight: 48,
+    playerRadius: 0.3,
+    playerHeight: 1.8,
+    bedHeight: 0.57,
+    blockIds: {
+      BED: 19,
+      GRAVEL: 12,
+      GUNPOWDER: 80,
+      TORCH: 17,
+      TNT: 16,
+      FLINT: 79,
+      DYNAMITE: 78,
+      OBSIDIAN: 36,
+      HAY: 13,
+      IRON_INGOT: 81,
+      COPPER_INGOT: 82,
+      DIAMOND: 83,
+    },
+    getSelected: () => 0,
+    getTarget: () => target,
+    getMode: () => mode,
+    getDimension: () => 'overworld',
+    getDifficultyCap: () => 8,
+    getHunger: () => hunger,
+    setHunger: (value) => {
+      hunger = value;
+    },
+    getSatiety: () => satiety,
+    setSatiety: (value) => {
+      satiety = value;
+    },
+    isNight: () => false,
+    getWeather: () => 'clear',
+    hasHealth: () => true,
+    setSpawnPoint: vi.fn(),
+    startSleeping: vi.fn(),
+    getBlock,
+    setBlock,
+    inBounds: (x, y, z) => Number.isFinite(x) && y >= 0 && y < 48 && Number.isFinite(z),
+    hasChunk: () => true,
+    solid: (id) => id !== 0,
+    isBed: (id) => id >= 19 && id <= 26,
+    collides: () => false,
+    heldTool: () => null,
+    canCollect: () => true,
+    wearTool: vi.fn(),
+    spendItem: (id) => {
+      if (!(inventory[id] > 0)) return false;
+      inventory[id]--;
+      return true;
+    },
+    exert: vi.fn(),
+    giveItem: vi.fn(),
+    spawnDrop,
+    updateHotbar,
+    renderFood: vi.fn(),
+    showHint,
+    flashName,
+    playSound,
+    playSoundAt: vi.fn(),
+    refreshAround,
+    queueRebuild: vi.fn(),
+    flushRebuilds: vi.fn(),
+    rebuildRegion: vi.fn(),
+    ensureAround: vi.fn(),
+    showPortalVisual: vi.fn(),
+    saveWorld: vi.fn(),
+    spawnTnt,
+    addDynamite: vi.fn(),
+    addMob,
   };
   const interactions = createBlockInteractions(deps);
-  return { interactions, cells, getBlock, setBlock, mobs, hotbar, inventory, flashName, showHint, refreshAround,
-    playSound, spawnTnt, addMob, spawnDrop,
-    setCell: (x: number, y: number, z: number, id: number) => { cells.set(key(x, y, z), id); },
-    setTarget: (value: BlockTarget | null) => { target = value; },
-    setMode: (value: string) => { mode = value; },
-    getHunger: () => hunger };
+  return {
+    interactions,
+    cells,
+    getBlock,
+    setBlock,
+    mobs,
+    hotbar,
+    inventory,
+    flashName,
+    showHint,
+    refreshAround,
+    playSound,
+    spawnTnt,
+    addMob,
+    spawnDrop,
+    setCell: (x: number, y: number, z: number, id: number) => {
+      cells.set(key(x, y, z), id);
+    },
+    setTarget: (value: BlockTarget | null) => {
+      target = value;
+    },
+    setMode: (value: string) => {
+      mode = value;
+    },
+    getHunger: () => hunger,
+  };
 }
 
 describe('block and item interactions', () => {
@@ -80,7 +178,8 @@ describe('block and item interactions', () => {
     [-1, 0, 0, 57],
     [0, 0, 1, 60],
     [0, 0, -1, 59],
-  ])('places a torch on wall face (%i,%i,%i) with a persistent directional ID',
+  ])(
+    'places a torch on wall face (%i,%i,%i) with a persistent directional ID',
     (nx, ny, nz, expectedId) => {
       const f = fixture();
       f.setCell(5, 10, 5, 3);
@@ -89,7 +188,8 @@ describe('block and item interactions', () => {
       expect(f.getBlock(5 + nx, 10, 5 + nz)).toBe(expectedId);
       expect(f.inventory[17]).toBe(1);
       expect(f.refreshAround).toHaveBeenCalledWith(5 + nx, 5 + nz, true);
-    });
+    },
+  );
 
   it('rejects placing a torch on a ceiling or non-solid support', () => {
     const f = fixture();
@@ -144,7 +244,7 @@ describe('block and item interactions', () => {
     expect(f.inventory[3]).toBeUndefined();
   });
 
-  it.each(['survival', 'creative'])('rejects a solid block intersecting a mob in %s', mode => {
+  it.each(['survival', 'creative'])('rejects a solid block intersecting a mob in %s', (mode) => {
     const f = fixture();
     f.setMode(mode);
     f.hotbar[0] = 3;

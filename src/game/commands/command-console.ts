@@ -63,7 +63,11 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     choices?: (argumentIndex: number, args: string[]) => string[],
   ): void {
     const definition: CommandDefinition = {
-      name: names[0], usage, desc: description, fn: handler, choices,
+      name: names[0],
+      usage,
+      desc: description,
+      fn: handler,
+      choices,
     };
     for (const alias of names) commands[alias] = definition;
   }
@@ -71,13 +75,19 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
   function execute(line: string): void {
     const trimmedLine = line.trim();
     if (!trimmedLine) return;
-    if (!trimmedLine.startsWith('/')) { chat('[You] ' + trimmedLine); return; }
+    if (!trimmedLine.startsWith('/')) {
+      chat('[You] ' + trimmedLine);
+      return;
+    }
     chat(trimmedLine, 'echo');
     const parts = trimmedLine.slice(1).trim().split(/\s+/);
     const name = (parts.shift() ?? '').toLowerCase();
     if (!name) return;
     const command = commands[name];
-    if (!command) { chat('Unknown command "' + name + '". Type /help for the list.', 'bad'); return; }
+    if (!command) {
+      chat('Unknown command "' + name + '". Type /help for the list.', 'bad');
+      return;
+    }
     try {
       const output = command.fn(parts);
       if (output) chat(output);
@@ -100,26 +110,31 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     // Do not accept a command while its implementation is still downloading.
     commandInput.disabled = true;
     commandInput.placeholder = 'Loading commands…';
-    void deps.loadCommands().then(() => {
-      if (opened !== lastOpen) return;
-      commandInput.disabled = false;
-      commandInput.placeholder = inputPlaceholder;
-      if (deps.isCommandOpen()) commandInput.focus();
-    }).catch(error => {
-      if (opened !== lastOpen) return;
-      commandInput.disabled = false;
-      commandInput.placeholder = inputPlaceholder;
-      console.warn('Could not load game commands:', error);
-      if (!deps.isCommandOpen()) return;
-      chat('Commands failed to load. Open the command bar to try again.', 'bad');
-      deps.onClose(false);
-    });
+    void deps
+      .loadCommands()
+      .then(() => {
+        if (opened !== lastOpen) return;
+        commandInput.disabled = false;
+        commandInput.placeholder = inputPlaceholder;
+        if (deps.isCommandOpen()) commandInput.focus();
+      })
+      .catch((error) => {
+        if (opened !== lastOpen) return;
+        commandInput.disabled = false;
+        commandInput.placeholder = inputPlaceholder;
+        console.warn('Could not load game commands:', error);
+        if (!deps.isCommandOpen()) return;
+        chat('Commands failed to load. Open the command bar to try again.', 'bad');
+        deps.onClose(false);
+      });
   }
 
   function completeCmd(): void {
     const parts = commandInput.value.replace(/^\//, '').split(/\s+/);
     if (parts.length === 1) {
-      const matches = Object.keys(commands).filter(name => name.startsWith(parts[0].toLowerCase()));
+      const matches = Object.keys(commands).filter((name) =>
+        name.startsWith(parts[0].toLowerCase()),
+      );
       if (matches.length === 1) commandInput.value = '/' + matches[0] + ' ';
       else if (matches.length > 1) chat(matches.join('  '), 'echo');
       return;
@@ -127,8 +142,9 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     const command = commands[parts[0].toLowerCase()];
     if (!command?.choices) return;
     const currentValue = (parts[parts.length - 1] ?? '').toLowerCase();
-    const matches = command.choices(parts.length - 1, parts)
-      .filter(value => String(value).startsWith(currentValue));
+    const matches = command
+      .choices(parts.length - 1, parts)
+      .filter((value) => String(value).startsWith(currentValue));
     if (matches.length === 1) {
       parts[parts.length - 1] = matches[0];
       commandInput.value = '/' + parts.join(' ') + ' ';
@@ -137,7 +153,7 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     }
   }
 
-  commandInput.addEventListener('keydown', event => {
+  commandInput.addEventListener('keydown', (event) => {
     event.stopPropagation();
     if (event.key === 'Enter') {
       const line = commandInput.value;
@@ -159,20 +175,27 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     } else if (event.key === 'ArrowDown') {
       event.preventDefault();
       if (historyIndex < history.length - 1) commandInput.value = history[++historyIndex];
-      else { historyIndex = history.length; commandInput.value = ''; }
+      else {
+        historyIndex = history.length;
+        commandInput.value = '';
+      }
     }
   });
-  commandInput.addEventListener('keyup', event => event.stopPropagation());
+  commandInput.addEventListener('keyup', (event) => event.stopPropagation());
 
-  window.addEventListener('keydown', event => {
+  window.addEventListener('keydown', (event) => {
     if (deps.isCommandOpen() || !deps.canOpen() || event.repeat) return;
-    if (event.code === 'KeyT') { event.preventDefault(); openCmd(); }
-    else if (event.key === '/') { event.preventDefault(); openCmd('/'); }
+    if (event.code === 'KeyT') {
+      event.preventDefault();
+      openCmd();
+    } else if (event.key === '/') {
+      event.preventDefault();
+      openCmd('/');
+    }
   });
   commandButton.addEventListener('click', () => {
     if (!deps.isTouch && deps.canOpen()) openCmd('/');
   });
 
-  return { commands, commandBar, commandInput, chat, defCmd, execute,
-    openCmd, completeCmd };
+  return { commands, commandBar, commandInput, chat, defCmd, execute, openCmd, completeCmd };
 }

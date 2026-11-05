@@ -33,8 +33,11 @@ export function createFrameLoop(deps: FrameLoopDependencies, startTime: number):
     last = now;
     if (deps.isReady()) {
       deps.streamChunks();
-      if (deps.isPlaying()) { deps.update(dt, now); deps.updateFluids?.(dt); deps.updateDrops?.(dt); }
-      else deps.updateIdleCamera();
+      if (deps.isPlaying()) {
+        deps.update(dt, now);
+        deps.updateFluids?.(dt);
+        deps.updateDrops?.(dt);
+      } else deps.updateIdleCamera();
       deps.daylight(dt);
       deps.updateWeather(dt);
       deps.updateRain(dt);

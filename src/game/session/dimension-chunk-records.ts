@@ -26,16 +26,19 @@ export function hydrateDimensionChunks(
   other.clear();
   for (const record of records) {
     const dimension = chunkDimension(record);
-    const target = dimension === 'overworld' ? overworld :
-      getDimensionCache(other, dimension);
+    const target = dimension === 'overworld' ? overworld : getDimensionCache(other, dimension);
     target.set(ckey(record.cx, record.cz), record.data.slice());
   }
 }
 
 export function getDimensionCache(
-  other: Map<string, Map<number, Uint8Array>>, dimension: string,
+  other: Map<string, Map<number, Uint8Array>>,
+  dimension: string,
 ): Map<number, Uint8Array> {
   let cache = other.get(dimension);
-  if (!cache) { cache = new Map(); other.set(dimension, cache); }
+  if (!cache) {
+    cache = new Map();
+    other.set(dimension, cache);
+  }
   return cache;
 }

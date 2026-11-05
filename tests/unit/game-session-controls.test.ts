@@ -1,26 +1,53 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createGameSessionControls, type GameSessionState, type GameSessionDependencies } from '../../src/game/runtime/game-session-controls';
+import {
+  createGameSessionControls,
+  type GameSessionState,
+  type GameSessionDependencies,
+} from '../../src/game/runtime/game-session-controls';
 
 function fixture(isTouch = true) {
   const state: GameSessionState = {
-    mode: 'creative', difficulty: 'normal',
-    mining: true, placing: true, pulseMine: true, pulsePlace: true,
-    dead: false, hp: 5, sinceHurt: 0, regenT: 2, hunger: 6, sat: 1,
-    exhaust: 3, starveT: 1, locked: false, fallback: false, playing: false,
-    drag: { started: true }, ready: true, invOpen: false,
+    mode: 'creative',
+    difficulty: 'normal',
+    mining: true,
+    placing: true,
+    pulseMine: true,
+    pulsePlace: true,
+    dead: false,
+    hp: 5,
+    sinceHurt: 0,
+    regenT: 2,
+    hunger: 6,
+    sat: 1,
+    exhaust: 3,
+    starveT: 1,
+    locked: false,
+    fallback: false,
+    playing: false,
+    drag: { started: true },
+    ready: true,
+    invOpen: false,
   };
   const player = { x: 1, y: 5, z: 1, vy: 4, fly: false, fallStart: 5 as number | null };
   const overlay = { classList: { add: vi.fn(), remove: vi.fn() } };
-  const playButton = { textContent: '' }, subtitle = { textContent: '' };
+  const playButton = { textContent: '' },
+    subtitle = { textContent: '' };
   const keys = { KeyW: true, Space: true };
   const mobs: Array<{ hostile: boolean }> = [{ hostile: true }, { hostile: false }];
-  const removeMobAt = vi.fn((index: number) => { mobs.splice(index, 1); });
+  const removeMobAt = vi.fn((index: number) => {
+    mobs.splice(index, 1);
+  });
   const clearMobs = vi.fn();
   const respawn = vi.fn();
   const saveWorld = vi.fn(async () => undefined);
   const refreshWorlds = vi.fn(async () => undefined);
-  const showHint = vi.fn(), playSound = vi.fn(), updateModeUI = vi.fn(), updateDiffUI = vi.fn();
-  const audioInit = vi.fn(), updateHearts = vi.fn(), renderFood = vi.fn();
+  const showHint = vi.fn(),
+    playSound = vi.fn(),
+    updateModeUI = vi.fn(),
+    updateDiffUI = vi.fn();
+  const audioInit = vi.fn(),
+    updateHearts = vi.fn(),
+    renderFood = vi.fn();
   const listeners = new Map<string, EventListenerOrEventListenerObject>();
   const documentStub = {
     pointerLockElement: null as Element | null,
@@ -29,23 +56,70 @@ function fixture(isTouch = true) {
       listeners.set(event, handler);
     },
   } as unknown as GameSessionDependencies['document'];
-  const canvas = { requestPointerLock: vi.fn(async () => undefined) } as unknown as HTMLCanvasElement;
+  const canvas = {
+    requestPointerLock: vi.fn(async () => undefined),
+  } as unknown as HTMLCanvasElement;
   const dependencies: GameSessionDependencies = {
-    state, player, overlay, playButton, subtitle, keys, mobs, canvas,
-    document: documentStub, labels: { creative: 'Creative', survival: 'Survival',
-      adventure: 'Adventure', spectator: 'Spectator' },
+    state,
+    player,
+    overlay,
+    playButton,
+    subtitle,
+    keys,
+    mobs,
+    canvas,
+    document: documentStub,
+    labels: {
+      creative: 'Creative',
+      survival: 'Survival',
+      adventure: 'Adventure',
+      spectator: 'Spectator',
+    },
     difficulties: { peaceful: { cap: 0 }, easy: { cap: 4 }, normal: { cap: 8 }, hard: { cap: 12 } },
-    maximumHealth: 20, isTouch, hasHealth: () => state.mode !== 'creative' && state.mode !== 'spectator',
-    clearMobs, removeMobAt, respawn, collides: () => false, topY: () => 10,
-    updateModeUI, updateDiffUI, updateHearts, renderFood,
-    saveWorld, refreshWorlds, audioInit, playSound, showHint,
+    maximumHealth: 20,
+    isTouch,
+    hasHealth: () => state.mode !== 'creative' && state.mode !== 'spectator',
+    clearMobs,
+    removeMobAt,
+    respawn,
+    collides: () => false,
+    topY: () => 10,
+    updateModeUI,
+    updateDiffUI,
+    updateHearts,
+    renderFood,
+    saveWorld,
+    refreshWorlds,
+    audioInit,
+    playSound,
+    showHint,
     schedule: () => undefined,
   };
   const actions = createGameSessionControls(dependencies);
-  return { actions, state, player, overlay, playButton, subtitle, keys,
-    mobs, removeMobAt, clearMobs, respawn, saveWorld, refreshWorlds,
-    showHint, playSound, updateModeUI, updateDiffUI, audioInit, updateHearts, renderFood,
-    listeners, canvas };
+  return {
+    actions,
+    state,
+    player,
+    overlay,
+    playButton,
+    subtitle,
+    keys,
+    mobs,
+    removeMobAt,
+    clearMobs,
+    respawn,
+    saveWorld,
+    refreshWorlds,
+    showHint,
+    playSound,
+    updateModeUI,
+    updateDiffUI,
+    audioInit,
+    updateHearts,
+    renderFood,
+    listeners,
+    canvas,
+  };
 }
 
 describe('game lifecycle controls', () => {
@@ -118,7 +192,10 @@ describe('game lifecycle controls', () => {
     f.actions.enterFallback();
     expect(f.state.fallback).toBe(true);
     expect(f.state.playing).toBe(true);
-    expect(f.showHint).toHaveBeenCalledWith(expect.stringContaining('Mouse capture is blocked'), 6000);
+    expect(f.showHint).toHaveBeenCalledWith(
+      expect.stringContaining('Mouse capture is blocked'),
+      6000,
+    );
     f.actions.enterFallback();
     expect(f.showHint).toHaveBeenCalledOnce();
   });

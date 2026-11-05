@@ -6,10 +6,14 @@ import type { WeatherMode } from '../rendering/weather-system';
 export type GameMode = 'creative' | 'survival' | 'adventure' | 'spectator';
 export type Difficulty = 'peaceful' | 'easy' | 'normal' | 'hard';
 export const MODE_LABELS: Record<GameMode, string> = {
-  creative: 'Creative', survival: 'Survival', adventure: 'Adventure', spectator: 'Spectator',
+  creative: 'Creative',
+  survival: 'Survival',
+  adventure: 'Adventure',
+  spectator: 'Spectator',
 };
 export const DIFFICULTY_DESCRIPTIONS: Record<Difficulty, string> = {
-  peaceful: 'No monsters, no hunger, and health comes back quickly. Falls and explosions still hurt.',
+  peaceful:
+    'No monsters, no hunger, and health comes back quickly. Falls and explosions still hurt.',
   easy: 'Fewer, slower monsters that hit softly, with slow-firing skeletons and longer creeper fuses.',
   normal: 'The standard challenge.',
   hard: 'Lots of fast monsters that spot you from far away and hit hard. Skeletons shoot quickly, creepers blow sooner, and health returns slowly.',
@@ -17,9 +21,14 @@ export const DIFFICULTY_DESCRIPTIONS: Record<Difficulty, string> = {
 export function describeMode(mode: GameMode, relicCount: number): string {
   const descriptions: Record<GameMode, string> = {
     creative: 'Unlimited blocks, instant building and flying. Nothing can hurt you.',
-    survival: 'Mine blocks to collect them, then build with what you gather. Stone needs a pickaxe, and better tools mine faster. Keep an eye on your hunger and eat meat. Dig for coal, copper, iron and diamonds. Zombies, skeletons, creepers and spiders come out at night, and falls hurt. Torches light up the dark and keep them from spawning nearby. Craft a table from planks for bigger recipes.',
-    adventure: 'The world is protected, so you can’t break or place blocks. Find all ' + relicCount + ' glowing relics and stay alive.',
-    spectator: 'Fly through anything and look around. You can’t touch the world. Scroll to change speed.',
+    survival:
+      'Mine blocks to collect them, then build with what you gather. Stone needs a pickaxe, and better tools mine faster. Keep an eye on your hunger and eat meat. Dig for coal, copper, iron and diamonds. Zombies, skeletons, creepers and spiders come out at night, and falls hurt. Torches light up the dark and keep them from spawning nearby. Craft a table from planks for bigger recipes.',
+    adventure:
+      'The world is protected, so you can’t break or place blocks. Find all ' +
+      relicCount +
+      ' glowing relics and stay alive.',
+    spectator:
+      'Fly through anything and look around. You can’t touch the world. Scroll to change speed.',
   };
   return descriptions[mode];
 }
@@ -95,7 +104,8 @@ export function createGameMenu(deps: GameMenuDependencies) {
       button.classList.toggle('on', active);
       button.setAttribute('aria-pressed', String(active));
     }
-    difficultyDescription.textContent = DIFFICULTY_DESCRIPTIONS[difficulty] +
+    difficultyDescription.textContent =
+      DIFFICULTY_DESCRIPTIONS[difficulty] +
       (deps.hasHealth() ? '' : ' (Applies in Survival and Adventure.)');
   }
 
@@ -163,20 +173,27 @@ export function createGameMenu(deps: GameMenuDependencies) {
   soundButton.addEventListener('click', () => {
     deps.initializeAudio();
     deps.sound.sfx = !deps.sound.sfx;
-    deps.applySound(); deps.saveSound(); syncSoundButtons(); deps.playClick();
+    deps.applySound();
+    deps.saveSound();
+    syncSoundButtons();
+    deps.playClick();
   });
   musicButton.addEventListener('click', () => {
     deps.initializeAudio();
     deps.sound.music = !deps.sound.music;
-    deps.applySound(); deps.saveSound(); syncSoundButtons();
+    deps.applySound();
+    deps.saveSound();
+    syncSoundButtons();
     if (deps.sound.music) deps.sound.nextMusic = 0.2;
   });
-  window.addEventListener('keydown', event => {
+  window.addEventListener('keydown', (event) => {
     if (event.code !== 'KeyM' || event.repeat) return;
     deps.initializeAudio();
     const enabled = !(deps.sound.sfx || deps.sound.music);
     deps.sound.sfx = deps.sound.music = enabled;
-    deps.applySound(); deps.saveSound(); syncSoundButtons();
+    deps.applySound();
+    deps.saveSound();
+    syncSoundButtons();
     if (deps.isPlaying()) showHint('Sound ' + (enabled ? 'on' : 'off'), 1200);
   });
   syncSoundButtons();
@@ -198,7 +215,7 @@ export function createGameMenu(deps: GameMenuDependencies) {
   requireElement('btnMenu').addEventListener('click', () => {
     if (deps.isPlaying()) deps.onPause();
   });
-  window.addEventListener('keydown', event => {
+  window.addEventListener('keydown', (event) => {
     if (event.code === 'Escape' && deps.isPlaying()) deps.onPause();
   });
 
@@ -207,9 +224,21 @@ export function createGameMenu(deps: GameMenuDependencies) {
     hintEl.textContent = message;
     hintEl.style.display = 'block';
     clearTimeout(hintTimer);
-    hintTimer = setTimeout(() => { hintEl.style.display = 'none'; }, milliseconds);
+    hintTimer = setTimeout(() => {
+      hintEl.style.display = 'none';
+    }, milliseconds);
   }
-  return { overlay, playBtn, newBtn, subEl, infoEl, objEl,
-    updateModeUI, updateDiffUI: updateDifficultyUI, updateWeatherUI,
-    showHint, syncSoundBtns: syncSoundButtons };
+  return {
+    overlay,
+    playBtn,
+    newBtn,
+    subEl,
+    infoEl,
+    objEl,
+    updateModeUI,
+    updateDiffUI: updateDifficultyUI,
+    updateWeatherUI,
+    showHint,
+    syncSoundBtns: syncSoundButtons,
+  };
 }

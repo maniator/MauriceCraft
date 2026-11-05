@@ -4,7 +4,10 @@
  * instead of scanning every mob for every golem, villager or raider.
  * Each coordinate uses Math.floor so negative world positions work correctly.
  */
-export interface SpatialPosition { x: number; z: number }
+export interface SpatialPosition {
+  x: number;
+  z: number;
+}
 
 export class SpatialIndex<Actor extends SpatialPosition & object> {
   private readonly rows = new Map<number, Map<number, Set<Actor>>>();

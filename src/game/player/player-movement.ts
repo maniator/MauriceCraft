@@ -1,10 +1,16 @@
 import type { GameMode } from '../ui/game-menu';
 
 export interface PlayerMovementBody {
-  x: number; y: number; z: number;
-  vx: number; vy: number; vz: number;
-  yaw: number; pitch: number;
-  onGround: boolean; fly: boolean;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  yaw: number;
+  pitch: number;
+  onGround: boolean;
+  fly: boolean;
   fallStart: number | null;
 }
 
@@ -63,8 +69,10 @@ export function createPlayerMovement(deps: PlayerMovementDependencies) {
       const cosPitch = Math.cos(player.pitch);
       const sinPitch = Math.sin(player.pitch);
       const targetVelocityX = (horizontalInput * cosYaw + forwardInput * sinYaw * cosPitch) * speed;
-      const targetVelocityZ = (-horizontalInput * sinYaw + forwardInput * cosYaw * cosPitch) * speed;
-      const targetVelocityY = (-forwardInput * sinPitch + Number(jumpPressed) - Number(shiftPressed)) * speed;
+      const targetVelocityZ =
+        (-horizontalInput * sinYaw + forwardInput * cosYaw * cosPitch) * speed;
+      const targetVelocityY =
+        (-forwardInput * sinPitch + Number(jumpPressed) - Number(shiftPressed)) * speed;
       const smoothFactor = Math.min(1, 10 * seconds);
       player.vx += (targetVelocityX - player.vx) * smoothFactor;
       player.vy += (targetVelocityY - player.vy) * smoothFactor;
@@ -79,8 +87,9 @@ export function createPlayerMovement(deps: PlayerMovementDependencies) {
 
     const flying = player.fly && mode === 'creative';
     const moving = horizontalInput !== 0 || forwardInput !== 0;
-    const sprinting = shiftPressed && !flying && moving && !(mode === 'survival' && deps.getHunger() <= 6);
-    const speed = flying ? (keys.ControlLeft ? 18 : 10) : (sprinting ? 6.6 : 4.4);
+    const sprinting =
+      shiftPressed && !flying && moving && !(mode === 'survival' && deps.getHunger() <= 6);
+    const speed = flying ? (keys.ControlLeft ? 18 : 10) : sprinting ? 6.6 : 4.4;
     const targetVelocityX = (horizontalInput * cosYaw + forwardInput * sinYaw) * speed;
     const targetVelocityZ = (-horizontalInput * sinYaw + forwardInput * cosYaw) * speed;
     const acceleration = player.onGround || flying ? 14 : 3.5;
@@ -99,8 +108,7 @@ export function createPlayerMovement(deps: PlayerMovementDependencies) {
     }
     // One-block ledges are walkable, but only from the ground, never while
     // flying, falling, or jumping. Share one height ceiling for both axes.
-    const maxStepY = !flying && player.onGround && player.vy <= 0
-      ? player.y + 1.001 : undefined;
+    const maxStepY = !flying && player.onGround && player.vy <= 0 ? player.y + 1.001 : undefined;
     player.onGround = false;
     deps.moveEntity(0, player.vx * seconds, maxStepY);
     deps.moveEntity(2, player.vz * seconds, maxStepY);
@@ -109,15 +117,22 @@ export function createPlayerMovement(deps: PlayerMovementDependencies) {
     if (player.y < -30) deps.respawn();
 
     const horizontalSpeed = Math.hypot(player.vx, player.vz);
-    deps.exert(seconds * (0.015 + (horizontalSpeed > 1.2 && player.onGround ? (sprinting ? 0.13 : 0.03) : 0)));
+    deps.exert(
+      seconds *
+        (0.015 + (horizontalSpeed > 1.2 && player.onGround ? (sprinting ? 0.13 : 0.03) : 0)),
+    );
     deps.refreshHunger();
     if (!flying && player.onGround && horizontalSpeed > 1.2) {
       distanceSinceStep += horizontalSpeed * seconds;
       if (distanceSinceStep > 2.2) {
         distanceSinceStep = 0;
-        deps.playStep(deps.getSurfaceBlock(
-          Math.floor(player.x), Math.floor(player.y - 0.2), Math.floor(player.z),
-        ));
+        deps.playStep(
+          deps.getSurfaceBlock(
+            Math.floor(player.x),
+            Math.floor(player.y - 0.2),
+            Math.floor(player.z),
+          ),
+        );
       }
     }
 
@@ -131,8 +146,8 @@ export function createPlayerMovement(deps: PlayerMovementDependencies) {
         player.fallStart = null;
       }
     } else if (player.vy < 0) {
-      player.fallStart = player.fallStart === null
-        ? player.y : Math.max(player.fallStart, player.y);
+      player.fallStart =
+        player.fallStart === null ? player.y : Math.max(player.fallStart, player.y);
     } else {
       player.fallStart = null;
     }

@@ -35,7 +35,9 @@ describe('automatic hotbar pickup', () => {
   it('keeps a full occupied hotbar unchanged and still saves the item in the backpack', () => {
     const inventory: Record<number, number> = {};
     const hotbar = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-    hotbar.forEach(id => { inventory[id] = 1; });
+    hotbar.forEach((id) => {
+      inventory[id] = 1;
+    });
     grantInventoryItem(inventory, hotbar, 60, 4);
     expect(inventory[60]).toBe(4);
     expect(hotbar).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);

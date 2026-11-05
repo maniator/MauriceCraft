@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { createItemResolver } from '../../src/game/commands/item-resolver';
 
 const names: Record<number, string> = {
-  3: 'Stone', 19: 'Bed', 29: 'Iron Ore', 31: 'Iron Block',
-  111: 'Flint & Steel', 151: 'Iron Ingot', 152: 'Diamond',
+  3: 'Stone',
+  19: 'Bed',
+  29: 'Iron Ore',
+  31: 'Iron Block',
+  111: 'Flint & Steel',
+  151: 'Iron Ingot',
+  152: 'Diamond',
 };
 
 describe('item command resolution', () => {

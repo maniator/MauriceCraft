@@ -12,7 +12,7 @@ export function setupPwa(): void {
 
   const installButton = document.getElementById('installApp') as HTMLButtonElement | null;
   let installPrompt: InstallPromptEvent | null = null;
-  window.addEventListener('beforeinstallprompt', event => {
+  window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     installPrompt = event as InstallPromptEvent;
     if (installButton) installButton.hidden = false;
@@ -22,7 +22,10 @@ export function setupPwa(): void {
     const pending = installPrompt;
     installPrompt = null;
     installButton.hidden = true;
-    void pending.prompt().then(() => pending.userChoice).catch(() => {});
+    void pending
+      .prompt()
+      .then(() => pending.userChoice)
+      .catch(() => {});
   });
   window.addEventListener('appinstalled', () => {
     installPrompt = null;
@@ -40,13 +43,14 @@ export function setupPwa(): void {
   let applying = false;
   // A different tab can activate a waiting worker while this tab is playing.
   // The controlling event must not reload until this tab has saved its own edits.
-  const safeToApply = (): boolean => canApplyUpdate(
-    !!overlay && !overlay.classList.contains('hidden'),
-    playButton?.disabled === false,
-    played,
-    savedAfterPlaying,
-    menuEdited,
-  );
+  const safeToApply = (): boolean =>
+    canApplyUpdate(
+      !!overlay && !overlay.classList.contains('hidden'),
+      playButton?.disabled === false,
+      played,
+      savedAfterPlaying,
+      menuEdited,
+    );
   const deferredReload = createDeferredReload(safeToApply, () => window.location.reload());
   function activateIfSafe(): void {
     if (deferredReload.tryReload() || !safeToApply()) return;
@@ -61,7 +65,7 @@ export function setupPwa(): void {
     savedAfterPlaying = false;
     currentPauseToken = null;
   });
-  window.addEventListener('mauricecraft:menu-paused', event => {
+  window.addEventListener('mauricecraft:menu-paused', (event) => {
     currentPauseToken = (event as CustomEvent<number>).detail;
     savedAfterPlaying = false;
   });
@@ -72,8 +76,9 @@ export function setupPwa(): void {
     // write that actually includes the newest revision before reloading.
     savedAfterPlaying = false;
   });
-  window.addEventListener('mauricecraft:world-persisted', event => {
-    const persisted = (event as CustomEvent<{ revision: number; pauseToken: number | null }>).detail;
+  window.addEventListener('mauricecraft:world-persisted', (event) => {
+    const persisted = (event as CustomEvent<{ revision: number; pauseToken: number | null }>)
+      .detail;
     if (!matchesCurrentSavedRevision(persisted, currentPauseToken, worldRevision, !played)) return;
     menuEdited = false;
     savedAfterPlaying = true;
@@ -92,7 +97,8 @@ export function setupPwa(): void {
   }
   if (playButton) {
     new MutationObserver(activateIfSafe).observe(playButton, {
-      attributes: true, attributeFilter: ['disabled'],
+      attributes: true,
+      attributeFilter: ['disabled'],
     });
   }
 

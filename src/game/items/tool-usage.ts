@@ -42,8 +42,9 @@ export function createToolUsage(deps: ToolUsageDependencies) {
   function canCollect(block: number): boolean {
     if (!(block in deps.requiresPick)) return true;
     const tool = heldTool();
-    return !!tool && tool.kind === 'pickaxe' &&
-      deps.toolLevels[tool.tier] >= deps.requiresPick[block];
+    return (
+      !!tool && tool.kind === 'pickaxe' && deps.toolLevels[tool.tier] >= deps.requiresPick[block]
+    );
   }
 
   function wearTool(id: number, amount: number): void {
