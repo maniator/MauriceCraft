@@ -28,6 +28,6 @@ You don't have to know how every file works before you start. Copy a prompt, rep
 
 ## Handy agent skill files
 
-Use `.github/skills/fix-a-bug/SKILL.md` for bug fixes, `.github/skills/add-a-feature/SKILL.md` for features, and `.github/skills/test-a-change/SKILL.md` for tests.
+Use `.agents/skills/fix-a-bug/SKILL.md` for bug fixes, `.agents/skills/add-a-feature/SKILL.md` for features, and `.agents/skills/test-a-change/SKILL.md` for tests.
 
 **Tip:** Ask the agent “Show me how to test this in the actual game” after it finishes.
