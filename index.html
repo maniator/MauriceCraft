@@ -28,6 +28,14 @@
 <div id="blockname"></div>
 <div id="chatlog" aria-live="polite"></div>
 <div id="cmdbar" class="hidden"><input id="cmdinput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type a command, e.g. /help" aria-label="Command line"></div>
+<dialog id="clearConfirm" aria-labelledby="clearConfirmTitle" aria-describedby="clearConfirmMessage">
+  <h2 id="clearConfirmTitle">Clear backpack?</h2>
+  <p id="clearConfirmMessage"></p>
+  <div class="row">
+    <button class="btn ghost" id="clearCancel" type="button">Cancel</button>
+    <button class="btn" id="clearAccept" type="button">Delete items</button>
+  </div>
+</dialog>
 <div id="hearts"></div>
 <div id="food"></div>
 <div id="hotbar"></div>

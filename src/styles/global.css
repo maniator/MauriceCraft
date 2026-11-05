@@ -567,6 +567,33 @@ canvas#view {
   border-color: var(--panel-edge);
   box-shadow: none;
 }
+#clearConfirm {
+  box-sizing: border-box;
+  width: min(440px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding: 18px;
+  color: var(--text);
+  background: var(--panel);
+  border: 3px solid var(--panel-edge);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.45);
+}
+#clearConfirm::backdrop {
+  background: rgba(8, 12, 17, 0.78);
+}
+#clearConfirm h2 {
+  margin: 0 0 12px;
+  font-size: 28px;
+}
+#clearConfirm p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+#clearConfirm .row {
+  justify-content: flex-end;
+}
+
 #inv,
 #trade,
 #craftui {

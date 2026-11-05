@@ -1,8 +1,11 @@
+import { createClearConfirmation } from '../ui/clear-confirmation';
+import type { ClearConfirmationRequest, CommandResult } from './command-result';
+
 interface CommandDefinition {
   name: string;
   usage: string;
   desc: string;
-  fn: (args: string[]) => string | void;
+  fn: (args: string[]) => CommandResult;
   choices?: (argumentIndex: number, args: string[]) => string[];
 }
 export interface CommandConsoleDependencies {
@@ -38,6 +41,8 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
   const commands: Record<string, CommandDefinition> = {};
   const inputPlaceholder = commandInput.placeholder;
   let lastOpen = 0;
+  let pendingClear: ClearConfirmationRequest | null = null;
+  let confirmation: ReturnType<typeof createClearConfirmation> | null = null;
 
   function chat(message: string, kind = ''): void {
     const line = document.createElement('div');
@@ -61,7 +66,7 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     names: string[],
     usage: string,
     description: string,
-    handler: (args: string[]) => string | void,
+    handler: (args: string[]) => CommandResult,
     choices?: (argumentIndex: number, args: string[]) => string[],
   ): void {
     const definition: CommandDefinition = {
@@ -92,7 +97,11 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     }
     try {
       const output = command.fn(parts);
-      if (output) chat(output);
+      if (typeof output === 'string' && output) chat(output);
+      else if (typeof output === 'object' && output.kind === 'confirm-clear') {
+        pendingClear = output;
+        chat('Confirm deletion of ' + output.count + ' items in the dialog');
+      }
     } catch (error) {
       chat(error instanceof Error ? error.message : String(error), 'bad');
     }
@@ -175,6 +184,20 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
       }
       execute(line);
       closeCmd(!deps.isDead());
+      const pending = pendingClear;
+      pendingClear = null;
+      if (pending) {
+        confirmation ??= createClearConfirmation({
+          onOpen: () => {
+            deps.onOpen();
+            deps.releasePointerLockForUi();
+          },
+          onClose: () => deps.onClose(!deps.isDead()),
+        });
+        confirmation.open(pending.count, () => {
+          chat(pending.confirm());
+        });
+      }
     } else if (event.key === 'Escape') {
       event.preventDefault();
       closeCmd(false);

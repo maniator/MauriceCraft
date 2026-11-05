@@ -1,11 +1,12 @@
 import { coord } from './coordinates';
+import type { CommandResult } from './command-result';
 import type { GeneratedStructure } from '../world/structure-regions';
 
 export type RegisterCommand = (
   names: string[],
   usage: string,
   description: string,
-  handler: (arguments_: string[]) => string | void,
+  handler: (arguments_: string[]) => CommandResult,
   choices?: (argumentIndex: number, arguments_: string[]) => string[],
 ) => void;
 
