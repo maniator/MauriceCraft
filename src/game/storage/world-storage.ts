@@ -78,6 +78,15 @@ export class WorldStorage extends Dexie {
     this.rememberWorld(world);
   }
 
+  /** Insert a newly imported world atomically. Never replace an existing ID. */
+  async importWorld(world: WorldRecord, chunks: readonly ChunkRecord[]): Promise<void> {
+    await this.transaction('rw', this.worlds, this.chunks, async () => {
+      await this.worlds.add(world); // add, not put: an ID collision aborts everything
+      if (chunks.length) await this.chunks.bulkAdd([...chunks]);
+    });
+    this.rememberWorld(world);
+  }
+
   async deleteWorld(id: string): Promise<void> {
     await this.transaction('rw', this.worlds, this.chunks, async () => {
       await this.worlds.delete(id);

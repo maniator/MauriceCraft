@@ -1,4 +1,6 @@
 import type { ChunkRecord, WorldRecord, WorldStorage } from '../storage/world-storage';
+import { decodeWorldArchive, encodeWorldArchive, WORLD_FILE_MAX_BYTES } from '../storage/world-archive';
+import { prepareImportedWorld, worldArchiveFilename } from './world-transfer';
 import { deriveWorldSeed32, nextWorldSeed64, parseWorldSeedInput64, type WorldSeedWords } from '../world/seed64';
 
 export interface SaveBatch {
@@ -96,6 +98,9 @@ export function createWorldSession(deps: WorldSessionDependencies) {
   const subtitle = requireElement<HTMLElement>('sub');
   const playButton = requireElement<HTMLButtonElement>('play');
   const newWorldButton = requireElement<HTMLButtonElement>('newworld');
+  const saveButton = requireElement<HTMLButtonElement>('saveWorld');
+  const importButton = requireElement<HTMLButtonElement>('importWorld');
+  const importFileInput = requireElement<HTMLInputElement>('importWorldFile');
   const worldSeedInput = requireElement<HTMLInputElement>('worldSeed');
   worldSeedInput.addEventListener('input', () => worldSeedInput.setCustomValidity(''));
   let database: WorldStorage | null = null;
@@ -117,18 +122,30 @@ export function createWorldSession(deps: WorldSessionDependencies) {
     }
   }
 
-  function saveWorld(): Promise<void> {
-    pendingSave = pendingSave.then(persistSnapshot).catch(error => {
+  /** Explicit save/export callers must see failures, not a swallowed rejection. */
+  function saveWorldVerified(): Promise<void> {
+    if (!storageAvailable || !database || !currentWorld || !deps.isWorldReady()) {
+      return Promise.reject(new Error('This world is not ready for saving.'));
+    }
+    const attempt = pendingSave.then(persistSnapshot);
+    pendingSave = attempt.catch(error => {
       console.error('MauriceCraft save failed:', error);
       deps.showHint('Saving failed. Your changes are still in memory; keep this tab open and try again.', 6500);
     });
-    return pendingSave;
+    return attempt;
+  }
+
+  function saveWorld(): Promise<void> {
+    if (!storageAvailable || !database || !currentWorld || !deps.isWorldReady()) return pendingSave;
+    return saveWorldVerified().catch(() => {});
   }
 
   function setBusy(isBusy: boolean, status?: string): void {
     busy = isBusy;
     playButton.disabled = isBusy;
     newWorldButton.disabled = isBusy;
+    saveButton.disabled = isBusy || !storageAvailable;
+    importButton.disabled = isBusy || !storageAvailable;
     worldSeedInput.disabled = isBusy;
     worldsElement.classList.toggle('busy', isBusy);
     if (isBusy) {
@@ -182,10 +199,91 @@ export function createWorldSession(deps: WorldSessionDependencies) {
           void deleteWorld(world.id);
         }
       });
-      row.append(openButton, deleteButton);
+      const exportButton = document.createElement('button');
+      exportButton.type = 'button';
+      exportButton.className = 'wexport';
+      exportButton.textContent = 'Export';
+      exportButton.setAttribute('aria-label', 'Export ' + world.name);
+      exportButton.disabled = !storageAvailable;
+      exportButton.addEventListener('click', () => {
+        if (!busy) void runTransfer('Exporting world…', () => exportWorld(world.id));
+      });
+      row.append(openButton, exportButton, deleteButton);
       worldsElement.appendChild(row);
     }
   }
+
+  async function runTransfer(status: string, operation: () => Promise<string>): Promise<void> {
+    if (busy) return;
+    const oldPlayLabel = playButton.textContent;
+    setBusy(true, status);
+    try {
+      const message = await operation();
+      subtitle.textContent = message;
+      deps.showHint(message, 3500);
+    } catch (error) {
+      console.error('MauriceCraft world transfer failed:', error);
+      const reason = error instanceof Error ? error.message : 'Unknown error';
+      subtitle.textContent = 'World operation failed: ' + reason;
+      deps.showHint('World operation failed. Existing saves are unchanged. ' + reason, 6500);
+    } finally {
+      setBusy(false);
+      playButton.textContent = oldPlayLabel;
+      await refreshWorlds();
+    }
+  }
+
+  async function exportWorld(id: string): Promise<string> {
+    if (!database) throw new Error('Browser storage is unavailable.');
+    // Ensure that an actively selected world includes every latest edit.
+    if (currentWorld?.id === id) await saveWorldVerified();
+    const world = await database.getWorld(id);
+    if (!world) throw new Error('World not found.');
+    const chunks = await database.getChunks(id);
+    const bytes = encodeWorldArchive(world, chunks);
+    const blob = new Blob([new Uint8Array(bytes)], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = worldArchiveFilename(world.name);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    return 'Exported ' + world.name + ' as a .mcraft file.';
+  }
+
+  async function importWorld(file: File): Promise<string> {
+    if (!database) throw new Error('Browser storage is unavailable.');
+    if (file.size < 24 || file.size > WORLD_FILE_MAX_BYTES) {
+      throw new Error('Choose a valid .mcraft world file up to 256 MB.');
+    }
+    const archive = decodeWorldArchive(new Uint8Array(await file.arrayBuffer()));
+    if ((archive.world.generatorVersion ?? 1) > CURRENT_WORLD_GENERATOR_VERSION) {
+      throw new Error('This world needs a newer MauriceCraft terrain version.');
+    }
+    if (currentWorld && deps.isWorldReady()) await saveWorldVerified();
+    // Fresh UUID prevents collisions with saves from other browsers and devices.
+    const id = 'w' + crypto.randomUUID().replace(/-/g, '');
+    const imported = prepareImportedWorld(archive, await database.listWorlds(), id);
+    await database.importWorld(imported.world, imported.chunks);
+    return 'Imported ' + imported.world.name + '. Select it under Worlds to play.';
+  }
+
+  saveButton.addEventListener('click', () => {
+    if (!busy) void runTransfer('Saving world…', async () => {
+      await saveWorldVerified();
+      return 'World saved successfully.';
+    });
+  });
+  importButton.addEventListener('click', () => {
+    if (!busy && storageAvailable) importFileInput.click();
+  });
+  importFileInput.addEventListener('change', () => {
+    const file = importFileInput.files?.[0];
+    importFileInput.value = '';
+    if (file && !busy) void runTransfer('Importing world…', () => importWorld(file));
+  });
 
   async function refreshWorlds(): Promise<void> {
     if (storageAvailable && database) {
@@ -333,6 +431,6 @@ export function createWorldSession(deps: WorldSessionDependencies) {
   window.addEventListener('pagehide', () => { void saveWorld(); });
 
   return { initialize, saveWorld, refreshWorlds,
-    getSeedLabel: () => currentWorld?.seed64 ?? String(currentWorld?.seed ?? 0),
+    getSeedLabel: () => currentWorld?.seedText ?? currentWorld?.seed64 ?? String(currentWorld?.seed ?? 0),
     isStorageAvailable: () => storageAvailable };
 }
