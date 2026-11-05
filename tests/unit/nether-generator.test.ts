@@ -22,12 +22,13 @@ const block = (data: Uint8Array, x: number, y: number, z: number) =>
   data[(y * 16 + z) * 16 + x];
 
 describe('versioned Nether terrain', () => {
-  it('leaves pre-v5 Nether layouts completely unchanged', () => {
-    const old = createChunkGenerator(deps(677, 4))(0, 0);
+  it('leaves pre-v6 Nether layouts completely unchanged', () => {
+    const old = createChunkGenerator(deps(677, 5))(0, 0);
     const unversioned = createChunkGenerator({
-      ...deps(677, 4), getGeneratorVersion: undefined,
+      ...deps(677, 5), getGeneratorVersion: undefined,
     })(0, 0);
     expect(old).toEqual(unversioned);
+    expect(createChunkGenerator(deps(677, 6))(0, 0)).not.toEqual(old);
   });
   it('generates a habitable lava-free arrival island and enclosed Nether ceiling', () => {
     const data = createNetherGenerator(deps(677))(0, 0);

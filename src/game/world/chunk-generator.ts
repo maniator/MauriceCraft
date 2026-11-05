@@ -42,7 +42,7 @@ export function createChunkGenerator(deps: ChunkGeneratorDependencies) {
     const x0 = cx * 16, z0 = cz * 16;
     if (dimension === 'overworld' && (deps.getGeneratorVersion?.() ?? 1) >= 2 && modern)
       return modern(cx, cz);
-    if (dimension === 'nether' && (deps.getGeneratorVersion?.() ?? 1) >= 5)
+    if (dimension === 'nether' && (deps.getGeneratorVersion?.() ?? 1) >= 6)
       return modernNether(cx, cz);
     // Separate Nether and End terrain generators. They reuse the game's block atlas,
     // but create distinct landscapes and keep the normal Overworld generator unchanged.
