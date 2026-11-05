@@ -13,7 +13,8 @@
     "skipLibCheck": true,
     "noEmit": true,
     "types": [
-      "vite/client"
+      "vite/client",
+      "vite-plugin-pwa/client"
     ]
   },
   "include": [

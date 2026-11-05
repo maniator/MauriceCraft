@@ -109,13 +109,26 @@ export function createWorldSession(deps: WorldSessionDependencies) {
   let worlds: WorldRecord[] = [];
   let pendingSave: Promise<void> = Promise.resolve();
   let busy = false;
+  let worldRevision = 0;
+  let currentPauseToken: number | null = null;
+  window.addEventListener('mauricecraft:world-mutated', () => { worldRevision++; });
+  window.addEventListener('mauricecraft:menu-paused', event => {
+    currentPauseToken = (event as CustomEvent<number>).detail;
+  });
 
   async function persistSnapshot(): Promise<void> {
     if (!storageAvailable || !database || !currentWorld || !deps.isWorldReady()) return;
+    const revision = worldRevision;
+    const pauseToken = currentPauseToken;
     const metadata = deps.snapshotWorld(currentWorld);
     const batch = deps.collectSaveBatch(metadata);
     try {
       await database.saveWorld(metadata, batch.records);
+      // The persisted snapshot, not the request time or an older menu save,
+      // establishes which paused settings can safely survive a worker reload.
+      window.dispatchEvent(new CustomEvent('mauricecraft:world-persisted', {
+        detail: { revision, pauseToken },
+      }));
     } catch (error) {
       batch.restoreDirty();
       throw error;
@@ -135,9 +148,15 @@ export function createWorldSession(deps: WorldSessionDependencies) {
     return attempt;
   }
 
-  function saveWorld(): Promise<void> {
+  function saveWorld(reason?: 'menu', pauseToken?: number): Promise<void> {
     if (!storageAvailable || !database || !currentWorld || !deps.isWorldReady()) return pendingSave;
-    return saveWorldVerified().catch(() => {});
+    const attempt = saveWorldVerified();
+    if (reason === 'menu' && pauseToken !== undefined) {
+      void attempt.then(() => {
+        window.dispatchEvent(new CustomEvent<number>('mauricecraft:menu-saved', { detail: pauseToken }));
+      }).catch(() => {});
+    }
+    return attempt.catch(() => {});
   }
 
   function setBusy(isBusy: boolean, status?: string): void {

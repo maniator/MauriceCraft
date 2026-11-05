@@ -72,6 +72,7 @@ describe('game lifecycle controls', () => {
     expect(f.removeMobAt).toHaveBeenCalledWith(0);
     expect(f.playSound).toHaveBeenCalledWith('click');
     expect(f.saveWorld).toHaveBeenCalledOnce();
+    expect(f.saveWorld).toHaveBeenCalledWith('menu', 1);
   });
 
   it('starts only after loading and pauses with cleared input plus an autosave', () => {

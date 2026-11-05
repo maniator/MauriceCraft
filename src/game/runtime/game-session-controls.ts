@@ -34,7 +34,7 @@ export interface GameSessionDependencies {
   updateDiffUI: () => void;
   updateHearts: () => void;
   renderFood: () => void;
-  saveWorld: () => Promise<unknown>;
+  saveWorld: (reason?: 'menu', pauseToken?: number) => Promise<unknown>;
   refreshWorlds: () => Promise<unknown>;
   audioInit: () => void;
   playSound: (event: string) => void;
@@ -46,6 +46,7 @@ export interface GameSessionDependencies {
 export function createGameSessionControls(deps: GameSessionDependencies) {
   const { state, player, overlay, playButton, subtitle, canvas } = deps;
   const schedule = deps.schedule ?? setTimeout;
+  let pauseSequence = 0;
 
   function setMode(mode: GameMode): void {
     state.mode = mode;
@@ -152,7 +153,12 @@ export function createGameSessionControls(deps: GameSessionDependencies) {
     playButton.textContent = 'Resume';
     overlay.classList.remove('hidden');
     if (deps.document.pointerLockElement) deps.document.exitPointerLock();
-    void deps.saveWorld().then(() => deps.refreshWorlds());
+    // Bind an update permission to this specific pause and its verified save.
+    const token = ++pauseSequence;
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent<number>('mauricecraft:menu-paused', { detail: token }));
+    }
+    void deps.saveWorld('menu', token).then(() => deps.refreshWorlds());
   }
 
   function die(): void {

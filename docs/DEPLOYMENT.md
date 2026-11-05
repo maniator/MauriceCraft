@@ -19,6 +19,10 @@ The site must remain at the same origin/path for existing browser saves to be re
 
 A failed or cancelled CI run does **not** publish a new version. The prior Pages deployment remains available. During a series of small commits, GitHub may cancel obsolete CI runs to save minutes; the latest successful run is the one that gets deployed. Pull-request test runs never publish a site.
 
+## Offline PWA deployment
+
+The production Vite build generates the scoped `sw.js` service worker and web app manifest, precaching HTML, hashed JS/CSS and icon assets. Workbox downloads updates in the background, and each client tab waits for a verified saved-world state before reloading, including edits made while the initial world menu is visible. Saved worlds remain in IndexedDB and are never deleted during service-worker cache cleanup. See [PWA](PWA.md) for offline testing and device installation.
+
 ## Moving to a custom domain
 
 An origin change creates a separate IndexedDB database. Before changing domains, export each world to a `.mcraft` file from the old site and import it on the new one. See [world transfer](WORLD_FILES.md).

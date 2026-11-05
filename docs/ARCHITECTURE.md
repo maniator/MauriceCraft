@@ -19,6 +19,7 @@ MauriceCraft is a plain TypeScript, Three.js and Vite game. You do **not** need 
 | Binary world export/import | `src/game/storage/world-archive.ts`, `src/game/session/world-transfer.ts` |
 | Main-menu navigation | `src/game/runtime/game-session-controls.ts`, `index.html` |
 | Webpage and phone layout | `index.html`, `src/styles/global.css` |
+| Offline installation and safe updates | `src/pwa/register.ts`, `src/pwa/update-policy.ts`, `vite.config.ts` (Workbox) |
 
 `src/main.ts` imports the CSS, installs startup error monitoring, dynamically imports `src/game/bootstrap.ts`, and explicitly calls `startGameApplication()`. Importing the game no longer starts an IIFE or starts the animation loop by itself. `bootstrap.ts` is the integration/composition boundary, **not** the owner of new gameplay rules. Its state facade is shared with typed subsystems rather than copied into each component.
 
@@ -71,6 +72,10 @@ Worlds made before the biome upgrade lack `generatorVersion` and use v1. Earlier
 ## Exported world files
 
 The `.mcraft` format is a versioned, little-endian binary container with UTF-8 world metadata, raw Uint8Array chunk data for Overworld/Nether/End and a CRC32 checksum. Import validates and atomically inserts a remapped world ID and chunk keys, preserving the original generatorVersion without replacing existing saves. See [world transfer](WORLD_FILES.md).
+
+## Progressive Web App lifecycle
+
+`vite.config.ts` uses `vite-plugin-pwa` and Workbox to precache the production build under `/MauriceCraft/`. `src/pwa/register.ts` checks for updates at launch, when the app becomes visible, on reconnect, and hourly. To avoid losing unsaved changes, every tab defers a controlling-worker reload until its current pause/world revision has committed to IndexedDB. A newly opened menu can update immediately only while it has no unsaved settings changes. The `mauricecraft:world-mutated` and `mauricecraft:world-persisted` events carry that boundary. Cache cleanup must never reset world data. See [PWA](PWA.md).
 
 ## Never break world saves
 

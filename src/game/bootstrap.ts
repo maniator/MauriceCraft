@@ -487,7 +487,7 @@ registerCoreGameCommands({
 
 /* ---------- World persistence and restoration ---------- */
 // Declarations let earlier gameplay systems save without retaining the manager.
-function saveWorld(): Promise<void> { return worldSession.saveWorld(); }
+function saveWorld(reason?: 'menu', pauseToken?: number): Promise<void> { return worldSession.saveWorld(reason, pauseToken); }
 function refreshWorlds(): Promise<void> { return worldSession.refreshWorlds(); }
 
 const worldSession = createGameplayWorldSession({
