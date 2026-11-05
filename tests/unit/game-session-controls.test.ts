@@ -45,7 +45,7 @@ function fixture(isTouch = true) {
   return { actions, state, player, overlay, playButton, subtitle, keys,
     mobs, removeMobAt, clearMobs, respawn, saveWorld, refreshWorlds,
     showHint, playSound, updateModeUI, updateDiffUI, audioInit, updateHearts, renderFood,
-    listeners, canvas };
+    listeners, canvas, documentStub };
 }
 
 describe('game lifecycle controls', () => {
@@ -111,6 +111,34 @@ describe('game lifecycle controls', () => {
     expect(f.respawn).toHaveBeenCalledOnce();
     expect(f.updateHearts).toHaveBeenCalledOnce();
     expect(f.renderFood).toHaveBeenCalledOnce();
+  });
+
+  it('does not pause after an intentional pointer unlock arrives late', () => {
+    const f = fixture(false);
+    f.state.playing = true;
+    f.state.locked = true;
+    Object.defineProperty(f.documentStub, 'pointerLockElement', {
+      configurable: true, writable: true, value: f.canvas,
+    });
+    f.actions.releasePointerLockForUi();
+    expect(f.documentStub.exitPointerLock).toHaveBeenCalledOnce();
+
+    // A command bar can open and close before pointerlockchange is delivered.
+    f.state.invOpen = false;
+    f.state.playing = true;
+    Object.defineProperty(f.documentStub, 'pointerLockElement', { value: null });
+    const pointerChange = f.listeners.get('pointerlockchange') as EventListener;
+    pointerChange({} as Event);
+    expect(f.state.playing).toBe(true);
+    expect(f.saveWorld).not.toHaveBeenCalled();
+
+    // An unrelated Escape / external unlock must still pause normally.
+    Object.defineProperty(f.documentStub, 'pointerLockElement', { value: f.canvas });
+    pointerChange({} as Event);
+    Object.defineProperty(f.documentStub, 'pointerLockElement', { value: null });
+    pointerChange({} as Event);
+    expect(f.state.playing).toBe(false);
+    expect(f.saveWorld).toHaveBeenCalledWith('menu', 1);
   });
 
   it('uses mouse-capture fallback when pointer-lock is unavailable', () => {

@@ -9,6 +9,8 @@ export interface CommandConsoleDependencies {
   /** Called after opening the text field, to pause and clear movement. */
   onOpen: () => void;
   onClose: (resumeGame: boolean) => void;
+  /** Release mouse capture without interpreting the delayed unlock as a pause. */
+  releasePointerLockForUi?: () => void;
   /** Optional feature loader: input stays disabled until commands are ready. */
   loadCommands?: () => Promise<void>;
   isDead: () => boolean;
@@ -91,7 +93,8 @@ export function createCommandConsole(deps: CommandConsoleDependencies) {
     commandBar.classList.remove('hidden');
     commandInput.value = prefill;
     historyIndex = history.length;
-    if (document.pointerLockElement) document.exitPointerLock();
+    if (deps.releasePointerLockForUi) deps.releasePointerLockForUi();
+    else if (document.pointerLockElement) document.exitPointerLock();
     const opened = ++lastOpen;
     if (!deps.loadCommands) {
       setTimeout(() => commandInput.focus(), 0);

@@ -38,6 +38,7 @@ export interface InventoryUiDependencies {
   playSound: (event: string) => void;
   playSoundAt: (event: string, x: number, y: number, z: number) => void;
   requestPointerLock: () => void;
+  releasePointerLockForUi: () => void;
   pauseGame: () => void;
   getCommandBar: () => HTMLElement;
 }
@@ -224,7 +225,7 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     craftMsg.textContent = '';
     renderCraft();
     craftUi.classList.remove('hidden');
-    if (document.pointerLockElement) document.exitPointerLock();
+    deps.releasePointerLockForUi();
     sfx('click');
   }
   craftBtn.addEventListener('click', doCraft);
@@ -291,7 +292,7 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     invMsg.textContent = '';
     renderInventory();
     invEl.classList.remove('hidden');
-    if (document.pointerLockElement) document.exitPointerLock();
+    deps.releasePointerLockForUi();
   }
   function closeInventory(resume: boolean): void {
     state.invOpen = false; invEl.classList.add('hidden'); tradeEl.classList.add('hidden'); state.tradeOpen = false; craftUi.classList.add('hidden'); state.craftOpen = false; getCommandBar().classList.add('hidden'); state.cmdOpen = false;
@@ -348,7 +349,7 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     tradeMsg.textContent = '';
     renderTrade();
     tradeEl.classList.remove('hidden');
-    if (document.pointerLockElement) document.exitPointerLock();
+    deps.releasePointerLockForUi();
     sfxAt('villager', m.x, m.y + 1, m.z);
   }
   element('tradeClose').addEventListener('click', function () { closeInventory(true); });

@@ -252,7 +252,8 @@ const {
   showHint: (message, milliseconds) => showHint(message, milliseconds),
   playSound: event => sfx(event),
   playSoundAt: (event, x, y, z) => sfxAt(event, x, y, z),
-  requestPointerLock: () => requestLock(), pauseGame: () => pause(),
+  requestPointerLock: () => requestLock(),
+  releasePointerLockForUi: () => releasePointerLockForUi(), pauseGame: () => pause(),
   getCommandBar: () => cmdBar,
   openCommand: command => openCmd(command),
 });
@@ -433,6 +434,7 @@ const sessionControls = createGameSessionControls({
 function setMode(m: GameMode): void { sessionControls.setMode(m); }
 function setDifficulty(d: Difficulty): void { sessionControls.setDifficulty(d); }
 function requestLock(): void { sessionControls.requestLock(); }
+function releasePointerLockForUi(): void { sessionControls.releasePointerLockForUi(); }
 function startGame(): void { sessionControls.startGame(); }
 function pause(): void { sessionControls.pause(); }
 function die(): void { sessionControls.die(); }
@@ -446,6 +448,7 @@ const { commands: CMDS, commandBar: cmdBar, defCmd, openCmd } =
       touchMove.x = 0; touchMove.z = 0; touchJump = false; stick = null; lookT = null;
     },
     onClose: resume => closeInventory(resume),
+    releasePointerLockForUi,
     loadCommands: () => ensureCommandsRegistered(),
     isDead: () => dead,
     canOpen: () => playing && !invOpen,

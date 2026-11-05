@@ -38,6 +38,7 @@ export interface GameUiCompositionDependencies {
   playSound: (event: string) => void;
   playSoundAt: (event: string, x: number, y: number, z: number) => void;
   requestPointerLock: () => void;
+  releasePointerLockForUi: () => void;
   pauseGame: () => void;
   getCommandBar: () => HTMLElement;
   openCommand: (command: string) => void;
@@ -69,7 +70,8 @@ export function createGameUiComposition(deps: GameUiCompositionDependencies) {
     maxHealth: deps.maxHealth, updateHearts: hud.updateHearts,
     updateHotbar: hud.updateHotbar, showHint: deps.showHint,
     playSound: deps.playSound, playSoundAt: deps.playSoundAt,
-    requestPointerLock: deps.requestPointerLock, pauseGame: deps.pauseGame,
+    requestPointerLock: deps.requestPointerLock,
+    releasePointerLockForUi: deps.releasePointerLockForUi, pauseGame: deps.pauseGame,
     getCommandBar: deps.getCommandBar,
   });
   const controls = createInputControls({

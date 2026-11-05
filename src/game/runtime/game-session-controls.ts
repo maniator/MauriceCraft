@@ -47,6 +47,14 @@ export function createGameSessionControls(deps: GameSessionDependencies) {
   const { state, player, overlay, playButton, subtitle, canvas } = deps;
   const schedule = deps.schedule ?? setTimeout;
   let pauseSequence = 0;
+  let intentionalPointerUnlock = false;
+
+  // The UI may release pointer lock and then close before the browser dispatches
+  // pointerlockchange. That delayed event must not pause a resumed game.
+  function releasePointerLockForUi(): void {
+    if (deps.document.pointerLockElement === canvas || state.locked) intentionalPointerUnlock = true;
+    if (deps.document.pointerLockElement) deps.document.exitPointerLock();
+  }
 
   function setMode(mode: GameMode): void {
     state.mode = mode;
@@ -111,11 +119,15 @@ export function createGameSessionControls(deps: GameSessionDependencies) {
 
   deps.document.addEventListener('pointerlockerror', enterFallback);
   deps.document.addEventListener('pointerlockchange', () => {
-    if (deps.document.pointerLockElement === canvas) state.locked = true;
-    else if (state.locked) {
+    if (deps.document.pointerLockElement === canvas) {
+      state.locked = true;
+      intentionalPointerUnlock = false;
+    } else if (state.locked) {
       state.locked = false;
       state.mining = state.placing = false;
-      if (state.playing && !state.fallback && !state.invOpen) pause();
+      const wasIntentional = intentionalPointerUnlock;
+      intentionalPointerUnlock = false;
+      if (!wasIntentional && state.playing && !state.fallback && !state.invOpen) pause();
     }
   });
 
@@ -168,5 +180,5 @@ export function createGameSessionControls(deps: GameSessionDependencies) {
     playButton.textContent = 'Respawn';
   }
 
-  return { setMode, setDifficulty, startGame, pause, die, requestLock, enterFallback };
+  return { setMode, setDifficulty, startGame, pause, die, requestLock, enterFallback, releasePointerLockForUi };
 }
