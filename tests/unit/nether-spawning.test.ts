@@ -49,4 +49,19 @@ describe('Nether inhabitants and spawn safety', () => {
     if (addMob.mock.calls.length) expect(names).toContain(addMob.mock.calls[0][0]);
     // The generator may choose a flying mob, which is also expected to remain inside air.
   });
+  it('spawns only harmless lava-walking striders when Peaceful is requested', () => {
+    const addMob = vi.fn();
+    const spawner = createNetherSpawner({
+      player: { x: 40, z: 40 }, getSeed: () => 677,
+      getChunk: () => ({}),
+      getBlock: (_x, y) => y === 12 ? 35 : 0,
+      collides: () => false, solid: () => false,
+      kinds: { strider: { r: 0.4, h: 1.8 } }, addMob,
+      worldHeight: 48, lavaBlock: 35, random: () => 0.28,
+    });
+    spawner.trySpawnNetherMob(true);
+    expect(addMob).toHaveBeenCalledOnce();
+    expect(addMob.mock.calls[0][0]).toBe('strider');
+  });
+
 });

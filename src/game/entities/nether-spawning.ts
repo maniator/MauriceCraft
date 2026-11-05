@@ -46,7 +46,7 @@ export function createNetherSpawner(deps: NetherSpawnerDeps) {
     }
     return -1;
   }
-  function trySpawnNetherMob(): void {
+  function trySpawnNetherMob(passiveOnly = false): void {
     const p = deps.player;
     for (let attempt = 0; attempt < 14; attempt++) {
       const theta = random() * Math.PI * 2, distance = 14 + random() * 19;
@@ -54,7 +54,8 @@ export function createNetherSpawner(deps: NetherSpawnerDeps) {
       const z = Math.floor(p.z + Math.sin(theta) * distance);
       if (!deps.getChunk(x >> 4, z >> 4)) continue;
       const biome = netherBiomeAt(x, z, deps.getSeed());
-      const kind = chooseNetherMob(biome, nearestStructure(x, z), random());
+      // Peaceful keeps benign lava-walking striders, but never creates monsters.
+      const kind = passiveOnly ? 'strider' : chooseNetherMob(biome, nearestStructure(x, z), random());
       const rule = deps.kinds[kind];
       if (!rule) continue;
       let y: number;

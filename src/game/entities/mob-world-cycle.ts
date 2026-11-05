@@ -24,7 +24,7 @@ export interface MobWorldCycleDeps<T extends MobActor> {
   getWeather: () => string;
   addMob: (kind: string, x: number, y: number, z: number, opts?: { boss?: boolean } | null) => T;
   trySpawnMob: () => void;
-  trySpawnNetherMob?: () => void;
+  trySpawnNetherMob?: (passiveOnly?: boolean) => void;
   trySpawnAnimals: () => void;
   manageVillagers: () => void;
   trySpawnPatrol: () => void;
@@ -63,15 +63,20 @@ function updateMobs(dt: number): void {
     spawnT = Math.max(spawnT, 2); animalT = Math.max(animalT, 2); villT = Math.max(villT, 2);
   }
   spawnT -= dt; animalT -= dt; villT -= dt;
-  if (deps.getDimension() !== 'end' && deps.hasHealth() && spawnT <= 0) {
-    spawnT = D.every;
+  const nether = deps.getDimension() === 'nether';
+  // Creative players should still see Nether inhabitants. Peaceful still
+  // forbids monsters but lets harmless striders appear near lava.
+  if (deps.getDimension() !== 'end' && (deps.hasHealth() || nether) && spawnT <= 0) {
+    spawnT = nether && D.cap === 0 ? 8 : D.every;
     // Nether spawns include neutral striders and zombified piglins. Count
     // them with monsters or repeated spawns can grow the actor list forever.
-    const nether = deps.getDimension() === 'nether';
     const population = mobs.filter(m =>
       (m.hostile && !KINDS[m.kind]?.illager) ||
       (nether && (m.kind === 'strider' || m.kind === 'zombified_piglin'))).length;
-    if (D.cap > 0 && population < D.cap) {
+    if (nether && D.cap === 0) {
+      if (mobs.filter(m => m.kind === 'strider').length < 4)
+        deps.trySpawnNetherMob?.(true);
+    } else if (D.cap > 0 && population < D.cap) {
       if (deps.getDimension() === 'overworld') trySpawnMob();
       else if (nether) deps.trySpawnNetherMob?.();
     }
