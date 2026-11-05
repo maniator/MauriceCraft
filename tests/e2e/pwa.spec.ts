@@ -52,6 +52,16 @@ test('a fully cached production app starts without internet and keeps local worl
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.locator('#play')).toBeEnabled({ timeout: 20_000 });
     await expect(page.locator('.world')).toHaveCount(before);
+    // The deferred command chunk must still be available from Workbox offline.
+    await page.locator('#play').click();
+    await expect(page.locator('#overlay')).toBeHidden();
+    if (await page.locator('#btnCmd').isVisible()) await page.locator('#btnCmd').tap();
+    else await page.keyboard.press('t');
+    const input = page.locator('#cmdinput');
+    await expect(input).toBeVisible();
+    await input.fill('/help');
+    await input.press('Enter');
+    await expect(page.locator('#chatlog')).toContainText('Commands:');
   } finally {
     await context.setOffline(false);
   }

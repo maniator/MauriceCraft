@@ -21,6 +21,12 @@ async function runCommand(page: Page, command: string): Promise<void> {
   await expect(input).toBeHidden();
 }
 
+async function loadedFeatureChunkCount(page: Page, filename: string): Promise<number> {
+  return page.evaluate(name => performance.getEntriesByType('resource')
+    .filter(resource => new URL(resource.name).pathname.includes('/assets/' + name + '-')).length,
+  filename);
+}
+
 async function playerPosition(page: Page): Promise<{ x: number; y: number; z: number }> {
   const status = await page.locator('#info').innerText();
   const match = /X (-?\d+\.\d+)\s+Y (-?\d+\.\d+)\s+Z (-?\d+\.\d+)/.exec(status);
@@ -70,11 +76,14 @@ test('placing a block in a game world persists through save and full reload', as
   const browserErrors: string[] = [];
   page.on('pageerror', error => browserErrors.push(error.message));
   await startWorld(page);
+  // Command implementations should not download until the command bar is opened.
+  expect(await loadedFeatureChunkCount(page, 'core-game-commands')).toBe(0);
 
   // Use the actual game command to mutate the loaded chunk. Block 3 (Stone)
   // is an established saved-world ID, never an arbitrary test-only value.
   await runCommand(page, '/setblock 0 45 0 stone');
   await expect(page.locator('#chatlog')).toContainText('Set 0 45 0 to Stone');
+  await expect.poll(() => loadedFeatureChunkCount(page, 'core-game-commands')).toBeGreaterThan(0);
   await runCommand(page, '/save');
 
   async function persistedBlock(): Promise<number | null> {
@@ -228,6 +237,8 @@ test('mobile and desktop can return to menu and confirm a manual save', async ({
 
 test('binary world export/import preserves changes and never overwrites an existing world', async ({ page, isMobile }) => {
   await startWorld(page);
+  // Normal play should not fetch the optional binary archive codec.
+  expect(await loadedFeatureChunkCount(page, 'world-archive')).toBe(0);
   await runCommand(page, '/setblock 0 45 0 stone');
   await expect(page.locator('#chatlog')).toContainText('Set 0 45 0 to Stone');
   if (isMobile) await page.locator('#btnMenu').click();
@@ -239,6 +250,7 @@ test('binary world export/import preserves changes and never overwrites an exist
   const downloadPromise = page.waitForEvent('download');
   await page.locator('.world.on .wexport').click();
   const download = await downloadPromise;
+  await expect.poll(() => loadedFeatureChunkCount(page, 'world-archive')).toBeGreaterThan(0);
   expect(download.suggestedFilename()).toMatch(/\.mcraft$/);
   const filePath = await download.path();
   if (!filePath) throw new Error('Missing downloaded world file');

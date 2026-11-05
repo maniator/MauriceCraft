@@ -22,6 +22,8 @@ npm run test:e2e
 | Type and style | `npm run typecheck`, `npm run lint` | Invalid interfaces, unsafe JavaScript, unnecessarily large TypeScript files |
 | Production build | `npm run build` | Broken imports, Pages base path, TypeScript/build errors |
 
+Browser tests also assert the optional command and world-archive JavaScript chunks are absent during normal gameplay and load on first use, alongside existing command and import/export round-trip coverage.
+
 Browser tests run the **compiled production game**, not just isolated functions. They should cover real actions and the resulting world state whenever practical. The initial **Loading…** button must become Play or a visible recoverable error. Test both desktop and a touch/mobile browser. A fake phone-sized viewport is useful but does not prove every physical phone works, so manual device checks are also valuable.
 
 ## GitHub Actions
