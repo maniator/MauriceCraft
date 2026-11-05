@@ -12,6 +12,7 @@ import { createWeatherSystem } from './rendering/weather-system';
 import { JOBS, JOB_NAMES } from './entities/mob-models';
 import { createMobRuntime } from './entities/mob-runtime';
 import { createWorldRuntime } from './world/world-runtime';
+import { deriveWorldSeed32 } from './world/seed64';
 import { raycastBlocks } from './world/raycast';
 import { createCollisionEngine } from './world/collision';
 import { createToolUsage } from './items/tool-usage';
@@ -42,12 +43,13 @@ function requireGameElement(id: string): HTMLElement {
 
 /* ---------- World services (typed terrain + renderer + chunk stores) ---------- */
 const WORLD_HEIGHT = 48, CHUNK_SIZE = 16, SEA_LEVEL = 14, VIEW_DISTANCE = 5;
-let seed = 1, generatorVersion = 1;
+let seed = 1, generatorVersion = 1, featureSeed: number | null = null;
 let dimension: WorldDimension = 'overworld';
 const portals: PortalFrame[] = []; // Persistent portal pairs, stored with each world.
 const worldServices = createWorldRuntime({
   height: WORLD_HEIGHT, chunkSize: CHUNK_SIZE, seaLevel: SEA_LEVEL,
-  viewDistance: VIEW_DISTANCE, getSeed: () => seed, setSeed: newSeed => { seed = newSeed; },
+  viewDistance: VIEW_DISTANCE, getSeed: () => seed, getFeatureSeed: () => featureSeed ?? seed,
+  setSeed: newSeed => { seed = newSeed; },
   getGeneratorVersion: () => generatorVersion, setGeneratorVersion: version => { generatorVersion = version; },
   getDimension: () => dimension, getPlayer: () => player,
 });
@@ -116,7 +118,7 @@ const {
   mobDropIds: { GUNPOWDER, BONE, STRING, EMERALD, IRON_INGOT, COPPER_INGOT,
     DIAMOND, BEEF, LEATHER, PORK, MUTTON, WOOL, CHICKEN, FEATHER },
   diamondItem: DIAMOND, names: NAMES,
-  getSeed: () => seed, getDimension: () => dimension,
+  getSeed: () => seed, getSeedLabel: () => worldSession.getSeedLabel(), getDimension: () => dimension,
   isDragonDefeated: () => enderDragonDefeated,
   setDragonDefeated: value => { enderDragonDefeated = value; },
   getDifficulty: () => DIFF[difficulty],
@@ -502,7 +504,8 @@ const worldSession = createGameplayWorldSession({
   savedChunks, dimensionChunks, chunks, getDimension: () => dimension,
   validDifficulties: DIFF, weatherLabels: WEATHER_LABEL,
   kinds: KINDS, mobs, relics, maximumHealth: MAX_HEALTH,
-  resetWorld, clearPortalVisuals, showPortalVisual, clearMobs, clearRelics,
+  resetWorld, setWorldSeed64: value => { featureSeed = value ? deriveWorldSeed32(value, 'features') : null; },
+  clearPortalVisuals, showPortalVisual, clearMobs, clearRelics,
   restoreItemDrops: itemDrops.restore, clearItemDrops: itemDrops.clear,
   addRelic, createRelics,
   setMode: value => setMode(value in MODE_LABELS ? value as GameMode : 'creative'),

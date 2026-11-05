@@ -7,7 +7,10 @@ const MAX_CACHED_WORLDS = 16;
 export interface WorldRecord {
   id: string;
   name: string;
+  /** Derived 32-bit terrain stream (original seed for v1-v4). */
   seed: number;
+  /** Lossless unsigned decimal uint64 identity for v5+ saves. */
+  seed64?: string;
   /** Optional original phrase used to derive the numeric seed. */
   seedText?: string;
   /** Missing on pre-biome worlds, which retain generator v1 forever. */

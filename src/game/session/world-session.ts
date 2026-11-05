@@ -1,4 +1,5 @@
 import type { ChunkRecord, WorldRecord, WorldStorage } from '../storage/world-storage';
+import { deriveWorldSeed32, nextWorldSeed64, parseWorldSeedInput64, type WorldSeedWords } from '../world/seed64';
 
 export interface SaveBatch {
   records: ChunkRecord[];
@@ -28,7 +29,7 @@ export function timeAgo(timestamp: number, now = Date.now()): string {
 }
 
 /** World names are human-readable; IDs must not depend on name or order. */
-export const CURRENT_WORLD_GENERATOR_VERSION = 4;
+export const CURRENT_WORLD_GENERATOR_VERSION = 5;
 
 /** Full 32-bit seeds; avoid reuse among locally saved worlds where possible. */
 export function nextWorldSeed(worlds: readonly WorldRecord[], random: () => number = Math.random): number {
@@ -62,6 +63,12 @@ export function parseWorldSeedInput(raw: string): number | null {
     hash = (Math.imul(hash, 31) + value.charCodeAt(index)) | 0;
   }
   return hash >>> 0;
+}
+
+/** New v5 world seed IDs stay distinct from locally stored worlds. */
+export function nextSavedWorldSeed64(worlds: readonly WorldRecord[], randomWords?: () => WorldSeedWords): string {
+  const occupied = new Set(worlds.map(world => world.seed64 ?? String(world.seed)));
+  return nextWorldSeed64(occupied, randomWords);
 }
 
 export function nextWorldName(worlds: readonly WorldRecord[]): string {
@@ -146,7 +153,7 @@ export function createWorldSession(deps: WorldSessionDependencies) {
       const details = document.createElement('small');
       details.textContent = deps.modeLabel(world.mode) + ' · played ' +
         timeAgo(world.lastPlayed || world.created || Date.now()) +
-        ' · Seed ' + (world.seedText ?? world.seed) + ' · Terrain v' + (world.generatorVersion ?? 1);
+        ' · Seed ' + (world.seedText ?? world.seed64 ?? world.seed) + ' · Terrain v' + (world.generatorVersion ?? 1);
       openButton.appendChild(details);
       openButton.addEventListener('click', () => {
         if (busy) return;
@@ -225,15 +232,16 @@ export function createWorldSession(deps: WorldSessionDependencies) {
     }
   }
 
-  async function newWorld(seedOverride: number | null = null, seedText?: string): Promise<void> {
+  async function newWorld(seedOverride: string | null = null, seedText?: string): Promise<void> {
     setBusy(true, 'Building your world…');
     await saveWorld();
     deps.setWorldReady(false);
     await new Promise(resolve => setTimeout(resolve, 20));
     const now = Date.now();
+    const seed64 = seedOverride ?? nextSavedWorldSeed64(worlds);
     const world: WorldRecord = {
       id: 'w' + now.toString(36) + Math.floor(Math.random() * 1296).toString(36),
-      name: nextWorldName(worlds), seed: seedOverride ?? nextWorldSeed(worlds),
+      name: nextWorldName(worlds), seed: deriveWorldSeed32(seed64, 'terrain'), seed64,
       generatorVersion: CURRENT_WORLD_GENERATOR_VERSION,
       ...(seedText ? { seedText } : {}),
       created: now, lastPlayed: now,
@@ -298,9 +306,9 @@ export function createWorldSession(deps: WorldSessionDependencies) {
 
   newWorldButton.addEventListener('click', () => {
     if (busy) return;
-    let seed: number | null;
+    let seed: string | null;
     try {
-      seed = parseWorldSeedInput(worldSeedInput.value);
+      seed = parseWorldSeedInput64(worldSeedInput.value);
     } catch (error) {
       worldSeedInput.setCustomValidity(error instanceof Error ? error.message : 'Invalid seed');
       worldSeedInput.reportValidity();
@@ -325,5 +333,6 @@ export function createWorldSession(deps: WorldSessionDependencies) {
   window.addEventListener('pagehide', () => { void saveWorld(); });
 
   return { initialize, saveWorld, refreshWorlds,
+    getSeedLabel: () => currentWorld?.seed64 ?? String(currentWorld?.seed ?? 0),
     isStorageAvailable: () => storageAvailable };
 }

@@ -64,6 +64,7 @@ export interface PlayerCommandDependencies {
   topBlockY: (x: number, z: number) => number;
   collides: (x: number, y: number, z: number) => boolean;
   getSeed: () => number;
+  getSeedLabel?: () => string;
 }
 
 export function registerPlayerCommands(deps: PlayerCommandDependencies): void {
@@ -196,5 +197,6 @@ export function registerPlayerCommands(deps: PlayerCommandDependencies): void {
 
   register(['pos'], '/pos', 'Show where you are', () =>
     'You are at ' + player.x.toFixed(1) + ' ' + player.y.toFixed(1) + ' ' + player.z.toFixed(1));
-  register(['seed'], '/seed', 'Show the world seed', () => 'Seed: ' + deps.getSeed());
+  register(['seed'], '/seed', 'Show the world seed', () =>
+    'Seed: ' + (deps.getSeedLabel?.() ?? deps.getSeed()));
 }

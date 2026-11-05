@@ -19,7 +19,7 @@ test('production build loads the game menu without startup exceptions', async ({
   expect(pageErrors).toEqual([]);
 });
 
-test('new worlds use versioned biomes and weather settings persist across reloads', async ({ page }) => {
+test('new v5 worlds retain their full 64-bit seeds and weather across reloads', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('./');
@@ -37,9 +37,9 @@ test('new worlds use versioned biomes and weather settings persist across reload
       request.onerror = () => reject(request.error);
     });
     try {
-      return await new Promise<Array<{ seed: number; generatorVersion?: number; weather?: { w: string } }>>((resolve, reject) => {
+      return await new Promise<Array<{ id: string; seed: number; seed64?: string; generatorVersion?: number; weather?: { w: string } }>>((resolve, reject) => {
         const request = database.transaction('worlds', 'readonly').objectStore('worlds').getAll();
-        request.onsuccess = () => resolve(request.result as Array<{ seed: number; generatorVersion?: number; weather?: { w: string } }>);
+        request.onsuccess = () => resolve(request.result as Array<{ id: string; seed: number; seed64?: string; generatorVersion?: number; weather?: { w: string } }>);
         request.onerror = () => reject(request.error);
       });
     } finally { database.close(); }
@@ -50,13 +50,17 @@ test('new worlds use versioned biomes and weather settings persist across reload
   const before = await readWorlds();
   expect(before).toHaveLength(2);
   for (const world of before) {
-    expect(world.generatorVersion).toBe(4);
+    expect(world.generatorVersion).toBe(5);
+    expect(world.seed64).toMatch(/^(0|[1-9][0-9]*)$/);
+    expect(BigInt(world.seed64!)).toBeLessThanOrEqual((1n << 64n) - 1n);
     expect(world.seed).toBeGreaterThanOrEqual(0);
     expect(world.seed).toBeLessThan(0x100000000);
   }
+  expect(new Set(before.map(world => world.seed64)).size).toBe(2);
   await page.reload();
   await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
-  expect(await readWorlds()).toHaveLength(2);
+  expect((await readWorlds()).map(world => [world.id, world.seed64]).sort())
+    .toEqual(before.map(world => [world.id, world.seed64]).sort());
   expect(errors).toEqual([]);
 });
 
@@ -73,8 +77,14 @@ test('new worlds accept a specified seed and preserve it across reloads', async 
   await expect(page.locator('.world').first()).toContainText('Seed 123456789');
   await page.locator('#worldSeed').fill('4294967296');
   await page.locator('#newworld').click();
-  await expect(page.locator('.world')).toHaveCount(2);
-  await expect(page.locator('#worldSeed')).toHaveJSProperty('validationMessage', 'Numeric seeds must be between -2147483648 and 4294967295.');
+  await expect(page.locator('.world')).toHaveCount(3);
+  await expect(page.locator('.world').first()).toContainText('Seed 4294967296');
+  await page.reload();
+  await expect(page.locator('.world').first()).toContainText('Seed 4294967296');
+  await page.locator('#worldSeed').fill('18446744073709551616');
+  await page.locator('#newworld').click();
+  await expect(page.locator('.world')).toHaveCount(3);
+  await expect(page.locator('#worldSeed')).toHaveJSProperty('validationMessage', 'Numeric seeds must fit in unsigned or signed 64-bit range.');
 });
 
 test('phrase seeds are stored and displayed after reload', async ({ page }) => {
