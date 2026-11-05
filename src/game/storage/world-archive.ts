@@ -1,6 +1,8 @@
 import type { ChunkRecord, WorldRecord } from '../storage/world-storage';
 import { chunkDimension } from '../session/dimension-chunk-records';
 import { deriveWorldSeed32, parseWorldSeed64 } from '../world/seed64';
+import { WORLD_FILE_MAX_BYTES } from './world-archive-limits';
+export { WORLD_FILE_MAX_BYTES } from './world-archive-limits';
 
 // Versioned binary container (not an opaque JSON download).
 // 8-byte magic, u16 version, u16 reserved, u32 metadata length, u32 chunk count,
@@ -10,14 +12,13 @@ const MAGIC = new TextEncoder().encode('MCWORLD1');
 const VERSION = 1;
 const HEADER_SIZE = 20;
 const CHUNK_HEADER_SIZE = 13;
-const MAX_FILE_BYTES = 256 * 1024 * 1024;
+const MAX_FILE_BYTES = WORLD_FILE_MAX_BYTES;
 const MAX_METADATA_BYTES = 2 * 1024 * 1024;
 // Runtime chunk layout is fixed at 16 × 16 blocks and 48 vertical blocks.
 const CHUNK_BYTES = 16 * 16 * 48;
 const MAX_CHUNKS = 25000;
 const dimensions = ['overworld', 'nether', 'end'] as const;
 export const WORLD_FILE_EXTENSION = '.mcraft';
-export const WORLD_FILE_MAX_BYTES = MAX_FILE_BYTES;
 
 export interface WorldArchive {
   world: WorldRecord;
