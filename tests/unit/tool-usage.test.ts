@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createToolUsage, type ToolUsageDependencies } from '../../src/game/items/tool-usage';
+import { blockKind } from '../../src/game/world/block-kind';
 
 function fixture() {
   let mode = 'survival';
@@ -50,10 +51,20 @@ describe('selected tool and inventory rules', () => {
   it('keeps the same block mining speed and sword leaf shortcut', () => {
     const f = fixture();
     expect(f.actions.toolSpeed(3)).toBe(4);
+    for (const block of [50, 51, 53, 54, 55, 56]) {
+      expect(f.actions.toolSpeed(block)).toBe(4);
+    }
+    expect(f.actions.toolSpeed(52)).toBe(1); // Soul soil requires a shovel.
     f.select(101);
     f.inventory[101] = 1;
     expect(f.actions.toolSpeed(6)).toBe(2);
     expect(f.actions.toolSpeed(3)).toBe(1);
+  });
+
+  it('classifies Nether building materials using the established mining tool rules', () => {
+    for (const id of [50, 51, 53, 54, 55, 56]) expect(blockKind(id)).toBe('pickaxe');
+    expect(blockKind(52)).toBe('shovel');
+    expect(blockKind(5)).toBe('axe');
   });
 
   it('damages and breaks a worn tool without deleting unrelated inventory', () => {
