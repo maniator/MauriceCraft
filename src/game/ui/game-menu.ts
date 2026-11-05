@@ -127,6 +127,11 @@ export function createGameMenu(deps: GameMenuDependencies) {
     deps.updateFood();
   }
 
+  // Any persisted menu setting change revokes authorization for an older save.
+  function markWorldMutated(): void {
+    window.dispatchEvent(new Event('mauricecraft:world-mutated'));
+  }
+
   function updateWeatherUI(): void {
     for (const button of weatherButtons) {
       const active = button.dataset.weather === deps.getWeather();
@@ -137,6 +142,7 @@ export function createGameMenu(deps: GameMenuDependencies) {
   for (const button of weatherButtons) {
     button.addEventListener('click', () => {
       const weather = button.dataset.weather as WeatherMode;
+      markWorldMutated();
       deps.setWeather(weather);
       deps.playClick();
       deps.saveAndRefreshWorlds();
@@ -175,10 +181,14 @@ export function createGameMenu(deps: GameMenuDependencies) {
   syncSoundButtons();
 
   for (const button of difficultyButtons) {
-    button.addEventListener('click', () => deps.setDifficulty(button.dataset.diff as Difficulty));
+    button.addEventListener('click', () => {
+      markWorldMutated();
+      deps.setDifficulty(button.dataset.diff as Difficulty);
+    });
   }
   for (const button of modeButtons) {
     button.addEventListener('click', () => {
+      markWorldMutated();
       deps.setMode(button.dataset.mode as GameMode);
       deps.saveAndRefreshWorlds();
     });

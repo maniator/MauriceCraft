@@ -89,6 +89,7 @@ describe('game lifecycle controls', () => {
     expect(f.state.drag).toBeNull();
     expect(f.playButton.textContent).toBe('Resume');
     expect(f.saveWorld).toHaveBeenCalledOnce();
+    expect(f.saveWorld).toHaveBeenCalledWith('menu', 1);
   });
 
   it('marks death, pauses the game and prepares the respawn button', () => {

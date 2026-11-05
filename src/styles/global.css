@@ -246,3 +246,6 @@
 .wexport:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .wexport:disabled { opacity: .5; }
 @media (max-width: 600px) { .wexport, .wdel { font-size: 12px; padding-inline: 6px; } }
+
+/* Hide PWA install action when browser installation is unavailable. */
+#installApp[hidden] { display: none; }

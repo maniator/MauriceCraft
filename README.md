@@ -29,6 +29,10 @@ New worlds use generator v3: 11 climate-driven biomes (plains, forest, flower me
 
 Worlds autosave every **15 seconds**, when you pause, and when the app is hidden or closed. The menu now has a **Save World** button for a confirmed manual save. During gameplay tap/click **Menu** to return safely to the world menu on desktop or mobile. Every saved world has an **Export** button for a versioned binary `.mcraft` file; **Import World** accepts those files on any device. Imported worlds always receive unique IDs and cannot overwrite your existing saves. See the [world file format and transfer guide](docs/WORLD_FILES.md).
 
+## Install for offline play
+
+MauriceCraft can be installed on phones, Chromebooks and desktop browsers as a Progressive Web App. The game assets work offline after an initial online visit. New versions download automatically, but no tab reloads until the current world's latest saved changes are safe, including settings edited on the menu. See the [PWA guide](docs/PWA.md).
+
 ## Saved worlds
 
 Saves live **only in your current browser** in IndexedDB. They are not stored in this GitHub repository or synchronized across devices. Clearing site storage, switching browser profiles/devices, or changing the website origin can make saves inaccessible. The database name and saved data format are intentionally unchanged in this refactor.
