@@ -280,38 +280,44 @@ test('game canvas remains sized to the viewport after resizing', async ({ page }
   expect(errors).toEqual([]);
 });
 
-test('a device without WebGL shows a safe retry rather than Loading forever', { tag: expectedWebglFailureTag }, async ({ page }) => {
-  // A real mobile browser can fail WebGL setup even when desktop Chromium passes.
-  // Simulate that missing browser capability before the game module initializes.
-  await page.addInitScript(() => {
-    Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
-      configurable: true,
-      value: () => null,
+test(
+  'a device without WebGL shows a safe retry rather than Loading forever',
+  { tag: expectedWebglFailureTag },
+  async ({ page }) => {
+    // A real mobile browser can fail WebGL setup even when desktop Chromium passes.
+    // Simulate that missing browser capability before the game module initializes.
+    await page.addInitScript(() => {
+      Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+        configurable: true,
+        value: () => null,
+      });
     });
-  });
-  await page.goto('./');
-  const retry = page.getByRole('button', { name: 'Retry loading' });
-  await expect(retry).toBeEnabled({ timeout: 15_000 });
-  await expect(page.locator('#sub')).toContainText('saved worlds have not been deleted');
-  await expect(page.locator('#newworld')).toBeDisabled();
-  await expect(page.locator('#overlay')).toBeVisible();
-});
+    await page.goto('./');
+    const retry = page.getByRole('button', { name: 'Retry loading' });
+    await expect(retry).toBeEnabled({ timeout: 15_000 });
+    await expect(page.locator('#sub')).toContainText('saved worlds have not been deleted');
+    await expect(page.locator('#newworld')).toBeDisabled();
+    await expect(page.locator('#overlay')).toBeVisible();
+  },
+);
 
-test('unavailable WebGL reveals safe startup recovery instead of infinite Loading', { tag: expectedWebglFailureTag }, async ({
-  page,
-}) => {
-  await page.addInitScript(() => {
-    const original = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = function (type: string, ...rest: unknown[]) {
-      if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') return null;
-      return Reflect.apply(original, this, [type, ...rest]) as ReturnType<typeof original>;
-    } as typeof original;
-  });
-  await page.goto('./');
-  await expect(page.locator('#play')).toHaveText('Retry loading', { timeout: 15_000 });
-  await expect(page.locator('#play')).toBeEnabled();
-  await expect(page.locator('#sub')).toContainText('saved worlds');
-});
+test(
+  'unavailable WebGL reveals safe startup recovery instead of infinite Loading',
+  { tag: expectedWebglFailureTag },
+  async ({ page }) => {
+    await page.addInitScript(() => {
+      const original = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (type: string, ...rest: unknown[]) {
+        if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') return null;
+        return Reflect.apply(original, this, [type, ...rest]) as ReturnType<typeof original>;
+      } as typeof original;
+    });
+    await page.goto('./');
+    await expect(page.locator('#play')).toHaveText('Retry loading', { timeout: 15_000 });
+    await expect(page.locator('#play')).toBeEnabled();
+    await expect(page.locator('#sub')).toContainText('saved worlds');
+  },
+);
 
 test('the desktop and touch menu controls pause and preserve the active world', async ({
   page,

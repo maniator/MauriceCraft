@@ -78,6 +78,7 @@ export interface InventoryUiDependencies {
   playSound: (event: string) => void;
   playSoundAt: (event: string, x: number, y: number, z: number) => void;
   requestPointerLock: () => void;
+  releasePointerLockForUi: () => void;
   pauseGame: () => void;
   getCommandBar: () => HTMLElement;
 }
@@ -127,7 +128,6 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     DIAMOND,
   } = deps.itemIds;
   const JOB_NAMES = deps.jobNames;
-  const MAXHP = deps.maxHealth;
   const getMode = deps.getMode,
     getModeLabel = deps.getModeLabel;
   const getFallback = deps.getFallback,
@@ -412,7 +412,7 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     craftMsg.textContent = '';
     renderCraft();
     craftUi.classList.remove('hidden');
-    if (document.pointerLockElement) document.exitPointerLock();
+    deps.releasePointerLockForUi();
     sfx('click');
   }
   craftBtn.addEventListener('click', doCraft);
@@ -537,7 +537,7 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     invMsg.textContent = '';
     renderInventory();
     invEl.classList.remove('hidden');
-    if (document.pointerLockElement) document.exitPointerLock();
+    deps.releasePointerLockForUi();
   }
   function closeInventory(resume: boolean): void {
     state.invOpen = false;
@@ -654,12 +654,12 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
       return;
     }
     if (t.heal) {
-      if (getHealth() >= MAXHP) {
+      if (getHealth() >= deps.maxHealth) {
         tradeMsg.textContent = 'You are already at full health.';
         sfx('no');
         return;
       }
-      setHealth(MAXHP);
+      setHealth(deps.maxHealth);
       updateHearts();
     }
     inv[t.give[0]] -= t.give[1];
@@ -690,7 +690,7 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     tradeMsg.textContent = '';
     renderTrade();
     tradeEl.classList.remove('hidden');
-    if (document.pointerLockElement) document.exitPointerLock();
+    deps.releasePointerLockForUi();
     sfxAt('villager', m.x, m.y + 1, m.z);
   }
   element('tradeClose').addEventListener('click', function () {
