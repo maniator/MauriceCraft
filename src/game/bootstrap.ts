@@ -16,6 +16,7 @@ import { deriveWorldSeed32 } from './world/seed64';
 import { raycastBlocks } from './world/raycast';
 import { createCollisionEngine } from './world/collision';
 import { createToolUsage } from './items/tool-usage';
+import { grantInventoryItem } from './items/inventory-grants';
 import { createBlockInteractions } from './interactions/block-interactions';
 import { createItemDropSystem } from './entities/item-drops';
 import { createActionController } from './input/action-controller';
@@ -147,7 +148,7 @@ const {
   increaseShake: amount => { shake = Math.max(shake, amount); },
   setShake: amount => { shake = amount; },
 });
-function giveItem(id: number, n: number): void { inv[id] = (inv[id] || 0) + n; updateHotbar(false); }
+function giveItem(id: number, n: number): void { grantInventoryItem(inv, hotbar, id, n); updateHotbar(false); }
 
 /* ---------- Input state ---------- */
 const keys: Record<string, boolean> = {};

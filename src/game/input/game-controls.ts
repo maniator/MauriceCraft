@@ -57,6 +57,11 @@ export function spectatorScrollSpeed(speed: number, down: boolean): number {
   return Math.max(0.25, Math.min(6, speed * (down ? 0.8 : 1.25)));
 }
 
+/** Short taps use/place; a long press keeps mining instead. */
+export function touchTapUsesItem(elapsedMilliseconds: number, distanceMoved: number): boolean {
+  return elapsedMilliseconds < 260 && distanceMoved < 10;
+}
+
 export function rotateLook(yaw: number, pitch: number, deltaX: number, deltaY: number, sensitivity: number) {
   return {
     yaw: yaw - deltaX * sensitivity,
@@ -134,10 +139,10 @@ export function createInputControls(deps: InputControlDependencies) {
   window.addEventListener('contextmenu', event => event.preventDefault());
 
   canvas.addEventListener('mousedown', event => {
-    if (!state.playing) return;
+    if (!state.playing || (event.button !== 0 && event.button !== 2)) return;
     const place = event.button === 2 ||
       (event.button === 0 && (event.ctrlKey || event.metaKey || event.altKey));
-    if (!state.locked) state.drag = { place, moved: 0, t0: performance.now() };
+    state.drag = { place, moved: 0, t0: performance.now() };
     if (place) {
       state.placing = true;
       state.placeCd = 0;
@@ -200,7 +205,7 @@ export function createInputControls(deps: InputControlDependencies) {
         touchMove.x = 0;
         touchMove.z = 0;
       } else if (state.lookT && touch.identifier === state.lookT.id) {
-        if (performance.now() - state.lookT.t0 < 260 && state.lookT.moved < 10) state.pulseMine = true;
+        if (touchTapUsesItem(performance.now() - state.lookT.t0, state.lookT.moved)) state.pulsePlace = true;
         state.lookT = null;
       }
     }

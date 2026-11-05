@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rotateLook, scrollHotbar, spectatorScrollSpeed } from '../../src/game/input/game-controls';
+import { rotateLook, scrollHotbar, spectatorScrollSpeed, touchTapUsesItem } from '../../src/game/input/game-controls';
 
 describe('input control helpers', () => {
   it('wraps the hotbar in both directions without out-of-range slots', () => {
@@ -11,6 +11,12 @@ describe('input control helpers', () => {
     expect(spectatorScrollSpeed(0.25, true)).toBe(0.25);
     expect(spectatorScrollSpeed(6, false)).toBe(6);
     expect(spectatorScrollSpeed(1, true)).toBe(0.8);
+  });
+  it('uses items on a quick tap, while a hold or drag does not place anything', () => {
+    expect(touchTapUsesItem(120, 0)).toBe(true);
+    expect(touchTapUsesItem(259, 9)).toBe(true);
+    expect(touchTapUsesItem(260, 0)).toBe(false);
+    expect(touchTapUsesItem(150, 10)).toBe(false);
   });
   it('clamps vertical look angle while preserving yaw wrapping', () => {
     expect(rotateLook(0, 1.5, 10, -100, 0.1)).toEqual({ yaw: -1, pitch: 1.55 });
