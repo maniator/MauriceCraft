@@ -519,18 +519,13 @@ const worldSession = createGameplayWorldSession({
 function init(): Promise<void> { return worldSession.initialize(); }
 
 const frame = createFrameLoop({
-  isReady: () => ready,
-  isPlaying: () => playing,
-  streamChunks,
-  update,
+  isReady: () => ready, isPlaying: () => playing,
+  streamChunks, update,
   updateFluids: worldServices.stepFluids, updateDrops: itemDrops.update,
   updateIdleCamera: () => {
     camera.position.set(player.x, player.y + EYE_HEIGHT, player.z); camera.rotation.set(player.pitch, player.yaw, 0);
   },
-  daylight,
-  updateWeather,
-  updateRain,
-  updateRainSound,
+  daylight, updateWeather, updateRain, updateRainSound,
   updateRelics,
   updateInfo: fps => {
     const landmark = worldServices.nearestLandmark();
