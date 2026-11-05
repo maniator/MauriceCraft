@@ -1,4 +1,5 @@
 import { createRecipeMatcher, type Recipe } from '../crafting/recipes';
+import { describeRecipe, recipeFingerprint } from '../crafting/recipe-discovery';
 
 export type Trade = { give: [number, number]; heal: true; get?: never } |
   { give: [number, number]; get: [number, number]; heal?: false };
@@ -18,6 +19,7 @@ export interface InventoryUiDependencies {
   allBlocks: readonly number[];
   names: Readonly<Record<number, string>>;
   recipes: readonly Recipe[];
+  craftedRecipes: Set<string>;
   itemIds: Record<'HAY' | 'WOOL' | 'BONE' | 'EMERALD' | 'COOKED' | 'BED' | 'BEEF' | 'PORK' | 'CHICKEN' | 'LEATHER' | 'COBBLE' | 'STONEBRICK' | 'SANDSTONE' | 'BRICK' | 'COPPER_INGOT' | 'GUNPOWDER' | 'TORCH' | 'FLINT' | 'DYNAMITE' | 'TNT' | 'IRON_INGOT' | 'COAL' | 'GOLD' | 'DIAMOND', number>;
   jobNames: Readonly<Record<string, string>>;
   keys: Record<string, boolean>;
@@ -98,6 +100,7 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     if (!hasAll(counts)) { craftMsg.textContent = 'You are missing some of those items.'; sfx('no'); return; }
     for (const k in counts) inv[k] -= counts[k];
     inv[m.out] = (inv[m.out] || 0) + m.n;
+    deps.craftedRecipes.add(recipeFingerprint(m));
     craftMsg.textContent = 'Crafted ' + m.n + ' ' + NAMES[m.out].toLowerCase() + '.';
     sfx('pop'); updateHotbar(false); renderCraft();
   }
@@ -125,7 +128,7 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
   function renderCraft(): void {
     const size = craftState.size, g = craftState.grid;
     craftTitle.textContent = size === 3 ? 'Crafting Table' : 'Crafting';
-    craftHelp.textContent = 'Pick a square, then click an item below to put it there. Click a filled square again to empty it, or press Fill on a recipe.';
+    craftHelp.textContent = 'Recipes appear when you collect any ingredient or craft them once. Missing materials are listed for planning.';
     cgrid.style.gridTemplateColumns = 'repeat(' + size + ', 58px)';
     cgrid.innerHTML = '';
     for (let i = 0; i < size * size; i++) {
@@ -161,16 +164,53 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     });
     if (!nItems) { const e = document.createElement('p'); e.textContent = 'Your backpack is empty. Mine blocks and collect items first.'; craftItems.appendChild(e); }
     craftBook.innerHTML = '';
+    let discoveredCount = 0;
     RECIPES.forEach(function (r) {
-      const counts = recipeCounts(r), have = hasAll(counts);
-      const row = document.createElement('div'); row.className = 'recipe'; if (!have) row.style.opacity = '0.6';
-      const left = document.createElement('span'); left.style.display = 'inline-flex'; left.style.alignItems = 'center'; left.style.gap = '6px'; left.style.flexWrap = 'wrap';
-      const ic = iconCanvas(r.out, 24); ic.style.width = '24px'; ic.style.height = '24px'; ic.style.imageRendering = 'pixelated'; left.appendChild(ic);
-      left.appendChild(document.createTextNode(r.n + ' \u00d7 ' + NAMES[r.out] + ' \u2190 ' + Object.keys(counts).map(function (k) { return counts[Number(k)] + ' ' + NAMES[Number(k)].toLowerCase(); }).join(', ')));
-      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn small'; btn.textContent = 'Fill';
+      const status = describeRecipe(r, inv, deps.craftedRecipes, size);
+      if (!status.visible) return;
+      discoveredCount++;
+      const counts = recipeCounts(r);
+      const row = document.createElement('div');
+      row.className = 'recipe';
+      if (!status.canCraft) row.style.opacity = '0.75';
+      const left = document.createElement('span');
+      left.style.display = 'inline-flex';
+      left.style.alignItems = 'center';
+      left.style.gap = '6px';
+      left.style.minWidth = '0';
+      const ic = iconCanvas(r.out, 24);
+      ic.style.width = '24px'; ic.style.height = '24px'; ic.style.imageRendering = 'pixelated';
+      const detail = document.createElement('span');
+      detail.className = 'recipe-details';
+      detail.appendChild(document.createTextNode(
+        r.n + ' × ' + NAMES[r.out] + ' ← ' +
+        Object.keys(counts).map(k => counts[Number(k)] + ' ' + NAMES[Number(k)].toLowerCase()).join(', '),
+      ));
+      const note = document.createElement('small');
+      note.className = 'recipe-missing';
+      const needed = status.missing.map(({ itemId, count }) =>
+        count + ' ' + NAMES[itemId].toLowerCase());
+      note.textContent = [
+        status.needsCraftingTable ? 'Requires a crafting table (3×3)' : '',
+        needed.length ? 'Still need: ' + needed.join(', ') : 'Materials ready',
+      ].filter(Boolean).join(' · ');
+      detail.appendChild(note);
+      left.append(ic, detail);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn small';
+      btn.textContent = status.needsCraftingTable ? 'Table needed' :
+        status.canCraft ? 'Fill' : 'Preview';
+      btn.disabled = status.needsCraftingTable;
       btn.addEventListener('click', function () { fillRecipe(r); });
-      row.appendChild(left); row.appendChild(btn); craftBook.appendChild(row);
+      row.append(left, btn);
+      craftBook.appendChild(row);
     });
+    if (!discoveredCount) {
+      const hint = document.createElement('p');
+      hint.textContent = 'Find an ingredient to discover recipes. Recipes you crafted before will stay here.';
+      craftBook.appendChild(hint);
+    }
   }
   function openCraft(size: number): void {
     if (getMode() !== 'survival') { showHint('Creative mode already has every item. Open the inventory with I.', 2400); return; }
@@ -207,8 +247,9 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
     invHelp.textContent = (surv ? 'Everything you have collected.' : 'Every block and item, free to use.') + ' Choose a hotbar slot below (or press 1\u20139), then click a block to put it there.';
     invGrid.innerHTML = '';
     ALL_BLOCKS.forEach(function (b) {
+      if (surv && !(inv[b] > 0)) return;
       const t = document.createElement('button'); t.type = 'button';
-      t.className = 'itile' + (surv && !(inv[b] > 0) ? ' empty' : '') + (hotbar[state.selected] === b ? ' cur' : '');
+      t.className = 'itile' + (hotbar[state.selected] === b ? ' cur' : '');
       t.setAttribute('aria-label', NAMES[b] + (surv ? ', ' + (inv[b] || 0) + ' owned' : ''));
       t.appendChild(iconCanvas(b, 40));
       const l = document.createElement('span'); l.className = 'iname'; l.textContent = NAMES[b]; t.appendChild(l);
@@ -216,6 +257,11 @@ export function createInventoryUi(deps: InventoryUiDependencies) {
       t.addEventListener('click', function () { assignSlot(b); });
       invGrid.appendChild(t);
     });
+    if (surv && invGrid.childElementCount === 0) {
+      const empty = document.createElement('p');
+      empty.textContent = 'Your backpack is empty. Mine blocks or collect items to fill it.';
+      invGrid.appendChild(empty);
+    }
     craftEl.innerHTML = '';
     if (surv) {
       const h = document.createElement('div'); h.className = 'invsub'; h.textContent = 'Crafting'; craftEl.appendChild(h);

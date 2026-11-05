@@ -222,7 +222,7 @@ const gameState = {
 };
 
 const {
-  hotbarEl, heartsEl, foodEl, flashEl, mineBar, updateHotbar,
+  hotbarEl, heartsEl, foodEl, flashEl, mineBar, updateHotbar, craftedRecipes,
   flashName, updateFood, updateHearts, openCraft, closeInventory, openTrade,
   touchUI, jumpButton: bJump, placeButton: bPlace, flyButton: bFly, inventoryButton: bInv, toggleFly,
 } = createGameUiComposition({
@@ -493,12 +493,12 @@ const worldSession = createGameplayWorldSession({
     dimension, enderDragonDefeated, portals: snapshotPortals(portals),
     mode, difficulty, spawn: spawnPoint, omen, hunger, satiety: sat,
     weather: { w: weather, t: weatherT, r: rainLevel },
-    timeOfDay: tod, health: dead ? MAX_HEALTH : hp, selected, hotbar, inventory: inv,
+    timeOfDay: tod, health: dead ? MAX_HEALTH : hp, selected, hotbar, inventory: inv, craftedRecipes: [...craftedRecipes],
     player: { x: player.x, y: player.y, z: player.z, yaw: player.yaw,
       pitch: player.pitch, fly: !!player.fly },
     relics, toolWear, itemDrops: itemDrops.snapshot(), golems: mobs,
   }),
-  player, portals, inventory: inv, toolWear, hotbar, allBlocks: ALL_BLOCKS,
+  player, portals, inventory: inv, craftedRecipes, toolWear, hotbar, allBlocks: ALL_BLOCKS,
   savedChunks, dimensionChunks, chunks, getDimension: () => dimension,
   validDifficulties: DIFF, weatherLabels: WEATHER_LABEL,
   kinds: KINDS, mobs, relics, maximumHealth: MAX_HEALTH,

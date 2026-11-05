@@ -15,6 +15,7 @@ function fixture() {
   const portals: WorldRestoreDependencies['portals'] = [];
   const inventory: Record<string, number> = { 5: 10 };
   const toolWear: Record<string, number> = { 100: 7 };
+  const craftedRecipes = new Set<string>(['stale:from:prior:world']);
   const hotbar = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const relics: unknown[] = [];
   const resetWorld = vi.fn(), clearMobs = vi.fn(), clearRelics = vi.fn();
@@ -23,7 +24,7 @@ function fixture() {
   const addMob = vi.fn((kind: string, x: number, y: number, z: number): SpawnMob =>
     ({ kind, x, y, z, hp: 20, persist: false } as SpawnMob));
   const deps: WorldRestoreDependencies = {
-    state, player, portals, inventory, toolWear, hotbar,
+    state, player, portals, inventory, toolWear, craftedRecipes, hotbar,
     allBlocks: [2, 3, 4, 5, 6, 7, 8, 9, 10],
     savedChunks: new Map(), validDifficulties: { normal: {}, hard: {} },
     weatherLabels: { clear: 'Clear', cloudy: 'Cloudy', rain: 'Rain', storm: 'Storm' },
@@ -36,7 +37,7 @@ function fixture() {
     addMob, hasChunk: () => true, respawn: vi.fn(), random: () => 0.5,
   };
   return { restore: createWorldRestore(deps), deps, state, player, portals,
-    inventory, toolWear, hotbar, resetWorld, clearMobs, clearRelics,
+    inventory, toolWear, craftedRecipes, hotbar, resetWorld, clearMobs, clearRelics,
     updateHearts, renderFood, updateWeatherUI, addMob, restoreItemDrops, clearItemDrops };
 }
 
@@ -63,6 +64,7 @@ describe('saved-world restoration', () => {
     expect(f.inventory).toEqual({ 3: 10 });
     expect(f.restoreItemDrops).toHaveBeenCalledWith([]);
     expect(f.toolWear).toEqual({ 101: 12 });
+    expect(f.craftedRecipes.size).toBe(0);
     expect(f.portals).toHaveLength(1);
     expect(f.portals[0].axis).toBe('x');
     expect(f.state.ready).toBe(true);
@@ -78,6 +80,19 @@ describe('saved-world restoration', () => {
     expect(f.resetWorld).toHaveBeenCalledWith(311, 0, 0, 2);
     expect(f.state.weather).toBe('cloudy');
     expect(f.state.rainTarget).toBe(0.16);
+  });
+
+  it('loads learned recipes per world, ignoring invalid entries from older data', () => {
+    const f = fixture();
+    f.restore.applyWorld({
+      id: 'known', name: 'Known recipes', seed: 10, created: 1, lastPlayed: 1,
+      craftedRecipes: ['shaped:1', 'shapeless:2', null, 42, 'a'.repeat(300)],
+    });
+    expect([...f.craftedRecipes]).toEqual(['shaped:1', 'shapeless:2']);
+    f.restore.applyWorld({
+      id: 'another', name: 'New saved world', seed: 11, created: 1, lastPlayed: 1,
+    });
+    expect(f.craftedRecipes.size).toBe(0);
   });
 
   it('restores saved golems without duplicating ordinary creatures', () => {
@@ -102,6 +117,7 @@ describe('saved-world restoration', () => {
     f.deps.savedChunks.set(99, new Uint8Array([1]));
     f.restore.prepareNewWorld({ id: 'new', name: 'World 2', seed: 700, created: 1, lastPlayed: 1 });
     expect(f.deps.savedChunks.size).toBe(0);
+    expect(f.craftedRecipes.size).toBe(0);
     expect(f.resetWorld).toHaveBeenCalledWith(700, 0, 0, 1);
     expect(f.state.spawnPoint).toBeNull();
     expect(f.state.omen).toBe(false);

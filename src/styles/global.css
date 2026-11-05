@@ -157,6 +157,8 @@
   .recipes { display: grid; gap: 6px; margin-bottom: 14px; }
   .recipe { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 8px; background: rgba(255,255,255,.06); border: 2px solid var(--panel-edge); font-size: 15px; }
   .recipe .btn { flex: 0 0 auto; }
+  .recipe-details { display: grid; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+  .recipe-missing { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
   .invhot { display: flex; gap: 4px; flex-wrap: wrap; }
   .worlds { display: grid; gap: 6px; max-height: 168px; overflow: auto; margin-bottom: 6px; }
   .worlds.busy { opacity: .5; pointer-events: none; }
