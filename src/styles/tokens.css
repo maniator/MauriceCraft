@@ -1,0 +1,22 @@
+:root {
+  --bg: #0e1319;
+  --panel: rgba(18, 24, 31, 0.86);
+  --panel-edge: rgba(255, 255, 255, 0.22);
+  --text: #f3f1ea;
+  --muted: #aab4bf;
+  --accent: #f2c94c;
+  --font: 'Pixelify Sans', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0b1016;
+    --panel: rgba(14, 19, 25, 0.88);
+  }
+}
+:root[data-theme='dark'] {
+  --bg: #0b1016;
+  --panel: rgba(14, 19, 25, 0.88);
+}

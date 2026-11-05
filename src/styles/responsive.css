@@ -1,0 +1,93 @@
+/* Phone layout: keep the game menu and inventory usable in portrait. */
+@media (max-width: 600px) {
+  #overlay,
+  #inv,
+  #trade,
+  #craftui {
+    padding: 10px;
+  }
+  .card,
+  .invcard {
+    box-sizing: border-box;
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+    padding: 14px;
+  }
+  .card h1 {
+    font-size: clamp(26px, 9vw, 40px);
+  }
+  .controls {
+    grid-template-columns: minmax(72px, auto) minmax(0, 1fr);
+    gap: 4px 9px;
+  }
+  #info {
+    max-width: 49vw;
+    overflow: hidden;
+    font-size: 12px;
+    white-space: pre-wrap;
+  }
+  #objective {
+    max-width: 40vw;
+    font-size: 12px;
+    white-space: pre-wrap;
+  }
+  #hint {
+    max-width: 88vw;
+  }
+  .ccell {
+    width: 48px;
+    height: 48px;
+  }
+}
+@media (max-width: 370px) {
+  .slot {
+    width: 31px;
+    height: 39px;
+  }
+  #btnJump {
+    width: 52px;
+    height: 52px;
+  }
+  #btnFly {
+    right: 72px;
+  }
+}
+
+/* World save/import/export actions. Menu placement remains raid-safe. */
+.world-actions {
+  margin: 5px 0 10px;
+}
+#importWorldFile[hidden] {
+  display: none;
+}
+.wexport {
+  flex: 0 0 auto;
+  font: 14px var(--font);
+  padding: 0 8px;
+  cursor: pointer;
+  color: var(--text);
+  background: transparent;
+  border: 2px solid var(--panel-edge);
+}
+.wexport:hover {
+  border-color: var(--accent);
+}
+.wexport:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+.wexport:disabled {
+  opacity: 0.5;
+}
+@media (max-width: 600px) {
+  .wexport,
+  .wdel {
+    font-size: 12px;
+    padding-inline: 6px;
+  }
+}
+
+/* Hide PWA install action when browser installation is unavailable. */
+#installApp[hidden] {
+  display: none;
+}
