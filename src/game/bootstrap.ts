@@ -416,7 +416,7 @@ const { overlay, playBtn, subEl, infoEl, objEl,
   initializeAudio: audioInit, applySound, saveSound, playClick: () => sfx('click'),
   isPlaying: () => playing,
   saveAndRefreshWorlds: () => { void saveWorld().then(refreshWorlds); },
-  onPlay: () => startGame(),
+  onPlay: () => startGame(), onPause: () => pause(),
 });
 
 const sessionControls = createGameSessionControls({

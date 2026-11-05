@@ -114,7 +114,7 @@ export function createGameSessionControls(deps: GameSessionDependencies) {
     else if (state.locked) {
       state.locked = false;
       state.mining = state.placing = false;
-      if (!state.fallback && !state.invOpen) pause();
+      if (state.playing && !state.fallback && !state.invOpen) pause();
     }
   });
 

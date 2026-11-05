@@ -252,3 +252,24 @@ test('unavailable WebGL reveals safe startup recovery instead of infinite Loadin
   await expect(page.locator('#play')).toBeEnabled();
   await expect(page.locator('#sub')).toContainText('saved worlds');
 });
+
+test('the desktop and touch menu controls pause and preserve the active world', async ({ page, isMobile }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('./');
+  await expect(page.locator('#play')).toBeEnabled({ timeout: 15_000 });
+  await page.locator('#play').click();
+  await expect(page.locator('#overlay')).toBeHidden();
+  await expect(page.locator('#btnMenu')).toBeVisible();
+
+  if (isMobile) await page.locator('#btnMenu').tap();
+  else await page.keyboard.press('Escape');
+
+  await expect(page.locator('#overlay')).toBeVisible();
+  await expect(page.locator('#play')).toHaveText('Resume');
+  await expect(page.locator('.world')).toHaveCount(1);
+  await expect(page.locator('#saveNote')).toContainText('save automatically');
+  await page.locator('#play').click();
+  await expect(page.locator('#overlay')).toBeHidden();
+  expect(errors).toEqual([]);
+});

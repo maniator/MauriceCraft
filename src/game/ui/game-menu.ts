@@ -60,6 +60,7 @@ export interface GameMenuDependencies {
   isPlaying: () => boolean;
   saveAndRefreshWorlds: () => void;
   onPlay: () => void;
+  onPause: () => void;
 }
 function requireElement(id: string): HTMLElement {
   const element = document.getElementById(id);
@@ -183,6 +184,12 @@ export function createGameMenu(deps: GameMenuDependencies) {
     });
   }
   playBtn.addEventListener('click', deps.onPlay);
+  requireElement('btnMenu').addEventListener('click', () => {
+    if (deps.isPlaying()) deps.onPause();
+  });
+  window.addEventListener('keydown', event => {
+    if (event.code === 'Escape' && deps.isPlaying()) deps.onPause();
+  });
 
   let hintTimer: ReturnType<typeof setTimeout> | undefined;
   function showHint(message: string, milliseconds = 6000): void {
