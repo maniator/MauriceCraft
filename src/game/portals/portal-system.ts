@@ -3,6 +3,7 @@ import { ckey } from '../world/chunk-key';
 import { liquidKind } from '../world/fluid-blocks';
 import { getDimensionCache } from '../session/dimension-chunk-records';
 import { portalContains, type PortalDimension, type PortalFrame } from './frame';
+import { conflictsWithPortalSite, findLinkedPortal } from './linking';
 
 export type WorldDimension = PortalDimension | 'end';
 export interface PortalChunk {
@@ -84,6 +85,10 @@ export function createPortalSystem<Chunk extends PortalChunk>(
     const chunkX = Math.round(centerX);
     const chunkZ = Math.round(centerZ);
     const bottomY = Math.max(1, Math.min(worldHeight - 6, Math.floor(baseY)));
+    // The build command and automatic arrivals share this guard. The old code
+    // overwrote adjacent portals with large obsidian landing pads.
+    if (conflictsWithPortalSite(portals, dimension, chunkX, bottomY, chunkZ))
+      throw new Error('A portal is already too close. Build at least seven blocks farther away.');
     ensureAround(chunkX, chunkZ);
     const portal: PortalFrame = {
       dimension, x: chunkX - 0.5, y: bottomY, z: chunkZ,
@@ -182,13 +187,17 @@ export function createPortalSystem<Chunk extends PortalChunk>(
 
     const destinationDimension: PortalDimension = dimension === 'overworld' ? 'nether' : 'overworld';
     const scale = dimension === 'overworld' ? 1 / 8 : 8;
-    const destinationX = Math.round(entered.x * scale);
-    const destinationZ = Math.round(entered.z * scale);
-    let destination = portals.find(portal =>
-      portal.dimension === destinationDimension &&
-      Math.abs(portal.x - destinationX) < 3 && Math.abs(portal.z - destinationZ) < 3,
+    const destinationX = Math.round((entered.x + 0.5) * scale);
+    const destinationZ = Math.round((entered.z + 0.5) * scale);
+    // Minecraft-style portal searches operate in the destination dimension.
+    // If two overworld portals map close together, reuse the best existing
+    // Nether frame instead of generating increasingly crowded new frames.
+    let destination = findLinkedPortal(
+      portals, destinationDimension, destinationX,
+      destinationDimension === 'nether' ? 15 : entered.y, destinationZ,
     );
-    changeDimension(destinationDimension, destinationX, destinationZ,
+    changeDimension(destinationDimension, destination?.x !== undefined ? destination.x + 0.5 : destinationX,
+      destination?.z !== undefined ? destination.z + 0.5 : destinationZ,
       destinationDimension === 'nether' ? 15 : undefined);
     if (!destination) {
       getOrGenerate(destinationX >> 4, destinationZ >> 4);
@@ -196,13 +205,15 @@ export function createPortalSystem<Chunk extends PortalChunk>(
         topBlockY(destinationX, destinationZ) + 1;
       destination = buildPortalFrame(destinationDimension, destinationX, floorY, destinationZ);
     }
-    player.x = destination.x + (destination.axis === 'z' ? 2.1 : 0);
-    player.z = destination.z + (destination.axis === 'z' ? 0 : 2.1);
+    // Center the exit on the frame, then offset onto its solid landing side.
+    player.x = destination.x + (destination.axis === 'z' ? 2.1 : 0.5);
+    player.z = destination.z + (destination.axis === 'z' ? 0.5 : 2.1);
     player.y = destination.y + 1.05;
     for (let tries = 0; tries < 12 && collides(player.x, player.y, player.z); tries++) {
       player.y += 1;
     }
     portalCooldown = 2.5;
+    saveWorld();
     showHint('Portal travel: ' +
       (destinationDimension === 'nether' ? 'Overworld → Nether' : 'Nether → Overworld'), 3000);
   }
