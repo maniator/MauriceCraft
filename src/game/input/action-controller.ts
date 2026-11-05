@@ -67,7 +67,8 @@ export function createActionController(deps: ActionDependencies) {
       (deps.isBed(get(target.x, target.y, target.z)) ||
         get(target.x, target.y, target.z) === deps.craftingTableId);
     // A brief desktop click uses interactable targets; holding still mines/attacks.
-    const contextClick = pm && !heldMine && !shiftHeld && (useVillager || useBlock);
+    const contextClick = pm && !heldMine && !shiftHeld &&
+      (useVillager || (useBlock && !mobInFront));
     if (wantMine && !contextClick) {
       if (mobHit && (!blockHit || mobHit.t < blockHit.t + 0.01)) {
         if (state.attackCd <= 0) { deps.attackMob(mobHit.mob); state.attackCd = 0.45; }

@@ -87,6 +87,17 @@ describe('player and game commands', () => {
     expect(game.getUpdates()).toBeGreaterThan(0);
   });
 
+  it('caps /give without reducing saved inventory stacks above the cap', () => {
+    const game = fixture();
+    game.run('gm', ['survival']);
+    game.inventory[3] = 15000;
+    game.run('give', ['stone', '2']);
+    expect(game.inventory[3]).toBe(15000);
+    game.inventory[3] = 9998;
+    game.run('give', ['stone', '5']);
+    expect(game.inventory[3]).toBe(9999);
+  });
+
   it('heals, feeds and toggles creative flight', () => {
     const game = fixture();
     expect(game.run('heal')).toContain('healthy');

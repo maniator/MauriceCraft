@@ -115,6 +115,16 @@ describe('input actions and cooldowns', () => {
     expect(f.attackMob).not.toHaveBeenCalled();
   });
 
+  it('attacks a mob in front of a crafting table rather than interacting through it', () => {
+    const f = fixture();
+    f.setBlock(18);
+    f.setMob({ kind: 'zombie', golem: false } as SpawnMob);
+    f.state.pulseMine = true;
+    f.actions.handleActions(0.01, 400);
+    expect(f.attackMob).toHaveBeenCalledOnce();
+    expect(f.openCraft).not.toHaveBeenCalled();
+  });
+
   it('still mines blocks when left mouse is held down, not just clicked', () => {
     const f = fixture();
     f.state.mining = true;

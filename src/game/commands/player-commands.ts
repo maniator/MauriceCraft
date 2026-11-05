@@ -137,7 +137,9 @@ export function registerPlayerCommands(deps: PlayerCommandDependencies): void {
         deps.updateHotbar(true);
         return deps.names[itemId] + ' is in your hotbar (Creative items are unlimited)';
       }
-      grantInventoryItem(deps.inventory, deps.hotbar, itemId, amount);
+      // Only /give applies a command quantity cap; world pickups must never lose existing stacks.
+      const available = Math.max(0, 9999 - (deps.inventory[itemId] || 0));
+      grantInventoryItem(deps.inventory, deps.hotbar, itemId, Math.min(amount, available));
       deps.updateHotbar(true);
       return 'Gave you ' + amount + ' ' + deps.names[itemId];
     }, index => index === 1 ? Object.keys(deps.itemMap()) : []);

@@ -6,7 +6,7 @@ export function grantInventoryItem(
   amount: number,
 ): void {
   if (!Number.isInteger(itemId) || itemId <= 0 || !Number.isFinite(amount) || amount <= 0) return;
-  inventory[itemId] = Math.min(9999, Math.max(0, inventory[itemId] || 0) + Math.floor(amount));
+  inventory[itemId] = Math.max(0, inventory[itemId] || 0) + Math.floor(amount);
   if (hotbar.includes(itemId)) return;
 
   // Truly empty slots win over depleted items the player may want to replenish later.

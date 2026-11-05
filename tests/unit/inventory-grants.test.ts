@@ -41,13 +41,21 @@ describe('automatic hotbar pickup', () => {
     expect(hotbar).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
   });
 
-  it('ignores invalid grants and caps oversized command stacks', () => {
+  it('never reduces a legacy inventory stack larger than the /give command limit', () => {
+    const inventory: Record<number, number> = { 10: 15000 };
+    const hotbar = Array<number>(9).fill(0);
+    grantInventoryItem(inventory, hotbar, 10, 1);
+    expect(inventory[10]).toBe(15001);
+    expect(hotbar[0]).toBe(10);
+  });
+
+  it('ignores invalid grants without capping ordinary collected items', () => {
     const inventory: Record<number, number> = { 10: 9998 };
     const hotbar = Array<number>(9).fill(0);
     grantInventoryItem(inventory, hotbar, 0, 4);
     grantInventoryItem(inventory, hotbar, 10, -2);
     grantInventoryItem(inventory, hotbar, 10, 5);
-    expect(inventory).toEqual({ 10: 9999 });
+    expect(inventory).toEqual({ 10: 10003 });
     expect(hotbar[0]).toBe(10);
   });
 });
