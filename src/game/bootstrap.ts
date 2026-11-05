@@ -42,29 +42,23 @@ function requireGameElement(id: string): HTMLElement {
 
 /* ---------- World services (typed terrain + renderer + chunk stores) ---------- */
 const WORLD_HEIGHT = 48, CHUNK_SIZE = 16, SEA_LEVEL = 14, VIEW_DISTANCE = 5;
-let seed = 1;
-let generatorVersion = 1;
+let seed = 1, generatorVersion = 1;
 let dimension: WorldDimension = 'overworld';
 const portals: PortalFrame[] = []; // Persistent portal pairs, stored with each world.
 const worldServices = createWorldRuntime({
   height: WORLD_HEIGHT, chunkSize: CHUNK_SIZE, seaLevel: SEA_LEVEL,
-  viewDistance: VIEW_DISTANCE, getSeed: () => seed,
-  setSeed: newSeed => { seed = newSeed; },
-  getGeneratorVersion: () => generatorVersion,
-  setGeneratorVersion: version => { generatorVersion = version; },
+  viewDistance: VIEW_DISTANCE, getSeed: () => seed, setSeed: newSeed => { seed = newSeed; },
+  getGeneratorVersion: () => generatorVersion, setGeneratorVersion: version => { generatorVersion = version; },
   getDimension: () => dimension, getPlayer: () => player,
 });
 const {
   GRASS, DIRT, STONE, SAND, WOOD, LEAVES, DARK_WOOD, BIRCH_WOOD,
   ACACIA_WOOD, WILLOW_WOOD,  PLANKS, BRICK, COBBLE, STONEBRICK, SANDSTONE, GRAVEL,
-  HAY, GOLD, TNT, TORCH, CTABLE, BED,
-  LAVA, OBSIDIAN, IRON_BLOCK, COPPER_BLOCK, DIAMOND_BLOCK, BEEF,
-  PORK, MUTTON, CHICKEN, COOKED, WOOL, FEATHER,
-  LEATHER, GUNPOWDER, DYNAMITE, FLINT, EMERALD, BONE,
+  HAY, GOLD, TNT, TORCH, CTABLE, BED, LAVA, OBSIDIAN, IRON_BLOCK, COPPER_BLOCK, DIAMOND_BLOCK, BEEF,
+  PORK, MUTTON, CHICKEN, COOKED, WOOL, FEATHER, LEATHER, GUNPOWDER, DYNAMITE, FLINT, EMERALD, BONE,
   STRING, STICK, COAL, RAW_COPPER, RAW_IRON, COPPER_INGOT,
   IRON_INGOT, DIAMOND, EGG_KINDS, FOOD, tileOf, ATLAS_N, isBed,
-  BED_H, BED_DIR, solid, NAMES, ALL_BLOCKS, BREAK_TIME,
-  DROPS, TOOL_TIERS, toolId, TOOLS, TOOL_MAX, TOOL_LVL,
+  BED_H, BED_DIR, solid, NAMES, ALL_BLOCKS, BREAK_TIME, DROPS, TOOL_TIERS, toolId, TOOLS, TOOL_MAX, TOOL_LVL,
   TOOL_SPD, TOOL_DMG, NEEDS_PICK, hotbar, toolWear, canvas,
   renderer, scene, camera, atlasCanvas, tex, dayUniform,
   glowMat, sun, moon, sel, disposeMesh, buildChunk,
@@ -297,8 +291,7 @@ const { heldTool, toolSpeed, canCollect, wearTool, attackDamage, spendItem } = c
 });
 const itemDrops = createItemDropSystem({
   scene, atlas: tex, atlasTiles: ATLAS_N, tileOf, getBlock: get, solid, player,
-  getDimension: () => dimension, giveItem,
-  playPickup: () => sfx('pop'),
+  getDimension: () => dimension, giveItem, playPickup: () => sfx('pop'),
 });
 const fadeEl = requireGameElement('fade');
 const { doBreak, useBed, useSelected, healGolem } = createBlockInteractions({
@@ -500,8 +493,7 @@ const worldSession = createGameplayWorldSession({
     dimension, enderDragonDefeated, portals: snapshotPortals(portals),
     mode, difficulty, spawn: spawnPoint, omen, hunger, satiety: sat,
     weather: { w: weather, t: weatherT, r: rainLevel },
-    timeOfDay: tod, health: dead ? MAX_HEALTH : hp,
-    selected, hotbar, inventory: inv,
+    timeOfDay: tod, health: dead ? MAX_HEALTH : hp, selected, hotbar, inventory: inv,
     player: { x: player.x, y: player.y, z: player.z, yaw: player.yaw,
       pitch: player.pitch, fly: !!player.fly },
     relics, toolWear, itemDrops: itemDrops.snapshot(), golems: mobs,
@@ -528,8 +520,7 @@ const frame = createFrameLoop({
   isPlaying: () => playing,
   streamChunks,
   update,
-  updateFluids: worldServices.stepFluids,
-  updateDrops: itemDrops.update,
+  updateFluids: worldServices.stepFluids, updateDrops: itemDrops.update,
   updateIdleCamera: () => {
     camera.position.set(player.x, player.y + EYE_HEIGHT, player.z); camera.rotation.set(player.pitch, player.yaw, 0);
   },
