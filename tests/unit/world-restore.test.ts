@@ -18,6 +18,7 @@ function fixture() {
   const hotbar = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const relics: unknown[] = [];
   const resetWorld = vi.fn(), clearMobs = vi.fn(), clearRelics = vi.fn();
+  const restoreItemDrops = vi.fn(), clearItemDrops = vi.fn();
   const updateHearts = vi.fn(), renderFood = vi.fn(), updateWeatherUI = vi.fn();
   const addMob = vi.fn((kind: string, x: number, y: number, z: number): SpawnMob =>
     ({ kind, x, y, z, hp: 20, persist: false } as SpawnMob));
@@ -28,14 +29,15 @@ function fixture() {
     weatherLabels: { clear: 'Clear', cloudy: 'Cloudy', rain: 'Rain', storm: 'Storm' },
     kinds: { irongolem: {} }, mobs: [], relics, maximumHealth: 20,
     resetWorld, clearPortalVisuals: vi.fn(), showPortalVisual: vi.fn(),
-    clearMobs, clearRelics, addRelic: vi.fn(), createRelics: vi.fn(),
+    clearMobs, clearRelics, restoreItemDrops, clearItemDrops,
+    addRelic: vi.fn(), createRelics: vi.fn(),
     setMode: mode => { state.mode = mode; state.hp = 20; state.hunger = 20; },
     updateHearts, renderFood, updateWeatherUI,
     addMob, hasChunk: () => true, respawn: vi.fn(), random: () => 0.5,
   };
   return { restore: createWorldRestore(deps), deps, state, player, portals,
     inventory, toolWear, hotbar, resetWorld, clearMobs, clearRelics,
-    updateHearts, renderFood, updateWeatherUI, addMob };
+    updateHearts, renderFood, updateWeatherUI, addMob, restoreItemDrops, clearItemDrops };
 }
 
 describe('saved-world restoration', () => {
@@ -59,6 +61,7 @@ describe('saved-world restoration', () => {
     expect(f.state.hunger).toBe(13);
     expect(f.state.rainTarget).toBe(0.75);
     expect(f.inventory).toEqual({ 3: 10 });
+    expect(f.restoreItemDrops).toHaveBeenCalledWith([]);
     expect(f.toolWear).toEqual({ 101: 12 });
     expect(f.portals).toHaveLength(1);
     expect(f.portals[0].axis).toBe('x');
@@ -106,8 +109,18 @@ describe('saved-world restoration', () => {
     expect(f.state.tod).toBe(0.22);
     expect(f.state.ready).toBe(true);
     expect(f.inventory).toEqual({});
+    expect(f.clearItemDrops).toHaveBeenCalledOnce();
     expect(f.toolWear).toEqual({});
     expect(f.hotbar).toEqual(Array(9).fill(0));
+  });
+
+  it('restores existing uncollected items from world metadata', () => {
+    const f = fixture();
+    const savedDrop = { id: 5, count: 1, x: 2.5, y: 9, z: -1.5,
+      dimension: 'nether', age: 2.5 };
+    f.restore.applyWorld({ id: 'drops', name: 'Drops', seed: 17,
+      created: 1, lastPlayed: 1, itemDrops: [savedDrop] });
+    expect(f.restoreItemDrops).toHaveBeenCalledWith([savedDrop]);
   });
 
   it('loads defaults for missing fields in old saves and rejects unsupported dimensions', () => {

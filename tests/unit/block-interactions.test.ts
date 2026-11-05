@@ -19,6 +19,7 @@ function fixture() {
   const showHint = vi.fn();
   const playSound = vi.fn();
   const updateHotbar = vi.fn();
+  const spawnDrop = vi.fn();
   const refreshAround = vi.fn();
   const spawnTnt = vi.fn();
   const addMob = vi.fn((kind: string, x: number, y: number, z: number): SpawnMob =>
@@ -44,7 +45,7 @@ function fixture() {
     hasChunk: () => true, solid: id => id !== 0, isBed: id => id >= 19 && id <= 26,
     collides: () => false, heldTool: () => null, canCollect: () => true,
     wearTool: vi.fn(), spendItem: id => { if (!(inventory[id] > 0)) return false; inventory[id]--; return true; },
-    exert: vi.fn(), giveItem: vi.fn(), updateHotbar, renderFood: vi.fn(),
+    exert: vi.fn(), giveItem: vi.fn(), spawnDrop, updateHotbar, renderFood: vi.fn(),
     showHint, flashName, playSound, playSoundAt: vi.fn(), refreshAround,
     queueRebuild: vi.fn(), flushRebuilds: vi.fn(), rebuildRegion: vi.fn(),
     ensureAround: vi.fn(), showPortalVisual: vi.fn(), saveWorld: vi.fn(),
@@ -52,7 +53,7 @@ function fixture() {
   };
   const interactions = createBlockInteractions(deps);
   return { interactions, cells, getBlock, setBlock, hotbar, inventory, flashName, showHint, refreshAround,
-    playSound, spawnTnt, addMob,
+    playSound, spawnTnt, addMob, spawnDrop,
     setCell: (x: number, y: number, z: number, id: number) => { cells.set(key(x, y, z), id); },
     setTarget: (value: BlockTarget | null) => { target = value; },
     setMode: (value: string) => { mode = value; },
@@ -111,7 +112,17 @@ describe('block and item interactions', () => {
     f.interactions.doBreak({ x: 0, y: 1, z: 0 });
     expect(f.getBlock(0, 1, 0)).toBe(0);
     expect(f.getBlock(0, 1, -1)).toBe(0);
-    expect(f.inventory[19]).toBe(2);
+    expect(f.inventory[19]).toBe(1);
+    expect(f.spawnDrop).toHaveBeenCalledWith(19, 1, 0.5, 1.5, 0.5);
+  });
+
+  it('spawns a small physical item rather than automatically adding mined blocks', () => {
+    const f = fixture();
+    f.setCell(3, 12, 3, 3);
+    f.interactions.doBreak({ x: 3, y: 12, z: 3 });
+    expect(f.inventory[3]).toBeUndefined();
+    expect(f.spawnDrop).toHaveBeenCalledWith(3, 1, 3.5, 12.5, 3.5);
+    expect(f.getBlock(3, 12, 3)).toBe(0);
   });
 
   it('forms an iron golem from the same five-block T pattern', () => {

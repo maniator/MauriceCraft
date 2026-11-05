@@ -56,6 +56,7 @@ export interface BlockInteractionDependencies {
   spendItem: (id: number) => boolean;
   exert: (amount: number) => void;
   giveItem: (id: number, amount: number) => void;
+  spawnDrop: (id: number, amount: number, x: number, y: number, z: number) => void;
   updateHotbar: (withSound?: boolean) => void;
   renderFood: () => void;
   showHint: (message: string, ms: number) => void;
@@ -88,7 +89,7 @@ export function createBlockInteractions(deps: BlockInteractionDependencies) {
   const solid = deps.solid, isBed = deps.isBed, chunkAt = deps.hasChunk;
   const collides = deps.collides, hasHealth = deps.hasHealth;
   const heldTool = deps.heldTool, canCollect = deps.canCollect, wearTool = deps.wearTool;
-  const spendItem = deps.spendItem, exert = deps.exert, giveItem = deps.giveItem;
+  const spendItem = deps.spendItem, exert = deps.exert;
   const updateHotbar = deps.updateHotbar, renderFood = deps.renderFood;
   const showHint = deps.showHint, flashName = deps.flashName;
   const sfx = deps.playSound, sfxAt = deps.playSoundAt;
@@ -102,12 +103,17 @@ function doBreak(t: BlockPosition): void {
   const b = get(t.x, t.y, t.z);
   if (deps.getMode() === 'survival') {
     exert(0.02);
-    if (canCollect(b)) { const drop = isBed(b) ? BED : (DROPS[b] || b); inv[drop] = (inv[drop] || 0) + 1; updateHotbar(false); }
+    if (canCollect(b)) {
+      const drop = isBed(b) ? BED : (DROPS[b] || b);
+      deps.spawnDrop(drop, 1, t.x + 0.5, t.y + 0.5, t.z + 0.5);
+    }
     else flashName('You need a ' + (NEEDS_PICK[b] > 0 ? 'stronger ' : '') + 'pickaxe to collect this');
     const ht = heldTool();
     if (ht) wearTool(ht.id, ht.kind === 'sword' ? 2 : 1);
   }
-  if (deps.getMode() === 'survival' && b === GRAVEL && Math.random() < 0.3) { giveItem(GUNPOWDER, 1); flashName('+1 Gunpowder'); }
+  if (deps.getMode() === 'survival' && b === GRAVEL && Math.random() < 0.3) {
+    deps.spawnDrop(GUNPOWDER, 1, t.x + 0.5, t.y + 0.5, t.z + 0.5);
+  }
   setBlock(t.x, t.y, t.z, 0);
   if (isBed(b)) {   // take the other half of the bed with it
     const k = b - 19, dv = BED_DIR[k >> 1], head = k & 1, sg = head ? -1 : 1;
@@ -116,7 +122,10 @@ function doBreak(t: BlockPosition): void {
   }
   sfx('break', 1, 0, b);
   let torchGone = b === TORCH;
-  if (get(t.x, t.y + 1, t.z) === TORCH) { setBlock(t.x, t.y + 1, t.z, 0); torchGone = true; if (deps.getMode() === 'survival') giveItem(TORCH, 1); }
+  if (get(t.x, t.y + 1, t.z) === TORCH) {
+    setBlock(t.x, t.y + 1, t.z, 0); torchGone = true;
+    if (deps.getMode() === 'survival') deps.spawnDrop(TORCH, 1, t.x + 0.5, t.y + 1.5, t.z + 0.5);
+  }
   refreshAround(t.x, t.z, torchGone);
 }
 function eatItem(id: number): number {

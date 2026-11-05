@@ -2,6 +2,7 @@ import type { WorldRecord } from '../storage/world-storage';
 import type { PortalFrame } from '../portals/frame';
 import { restorePortals } from '../portals/persistence';
 import type { SpawnMob } from '../entities/mob-spawning';
+import type { ItemDropRecord } from '../entities/item-drops';
 
 interface SavedPlayer {
   x: number; y: number; z: number;
@@ -16,7 +17,7 @@ type SavedWorld = WorldRecord & {
   mode?: string; difficulty?: string;
   spawn?: { x: number; y: number; z: number } | null;
   omen?: boolean; weather?: { w: string; t: number; r: number };
-  relics?: SavedRelic[]; hp?: number; hunger?: number; sat?: number; golems?: SavedGolem[];
+  relics?: SavedRelic[]; itemDrops?: ItemDropRecord[]; hp?: number; hunger?: number; sat?: number; golems?: SavedGolem[];
 };
 
 export interface RestorableGameState {
@@ -49,6 +50,8 @@ export interface WorldRestoreDependencies {
   clearPortalVisuals: () => void;
   showPortalVisual: (portal: PortalFrame) => void;
   clearMobs: () => void;
+  restoreItemDrops?: (items: readonly ItemDropRecord[]) => void;
+  clearItemDrops?: () => void;
   clearRelics: () => void;
   addRelic: (x: number, y: number, z: number, got?: boolean) => void;
   createRelics: () => void;
@@ -86,6 +89,7 @@ export function createWorldRestore(deps: WorldRestoreDependencies) {
     portals.forEach(deps.showPortalVisual);
     deps.resetWorld(m.seed, Math.floor(p.x / 16), Math.floor(p.z / 16), m.generatorVersion ?? 1);
     deps.clearMobs();
+    deps.restoreItemDrops?.(Array.isArray(m.itemDrops) ? m.itemDrops : []);
     player.x = p.x; player.y = p.y; player.z = p.z;
     player.vx = player.vy = player.vz = 0;
     player.yaw = p.yaw || 0; player.pitch = p.pitch || 0; player.fallStart = null;
@@ -126,6 +130,7 @@ export function createWorldRestore(deps: WorldRestoreDependencies) {
   }
 
   function prepareNewWorld(world: WorldRecord): void {
+    deps.clearItemDrops?.();
     deps.savedChunks.clear();
     deps.resetWorld(world.seed, 0, 0, world.generatorVersion ?? 1);
     state.spawnPoint = null;

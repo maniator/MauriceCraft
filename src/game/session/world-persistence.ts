@@ -3,6 +3,7 @@ import type { WritableChunk } from '../world/block-access';
 import type { WorldRecord, ChunkRecord } from '../storage/world-storage';
 import type { SaveBatch } from './world-session';
 import type { PortalFrame } from '../portals/frame';
+import type { ItemDropRecord } from '../entities/item-drops';
 
 export interface WorldSnapshotState {
   dimension: string;
@@ -23,6 +24,7 @@ export interface WorldSnapshotState {
   player: { x: number; y: number; z: number; yaw: number; pitch: number; fly: boolean };
   relics: readonly { x: number; y: number; z: number; got: boolean }[];
   toolWear: Readonly<Record<number, number>>;
+  itemDrops?: readonly ItemDropRecord[];
   golems: readonly { kind: string; x: number; y: number; z: number;
     hp: number; hx: number; hz: number; golem: boolean; persist: boolean }[];
 }
@@ -48,6 +50,7 @@ export function snapshotWorldState(world: WorldRecord, state: WorldSnapshotState
   world.player = { ...state.player };
   world.relics = state.relics.map(({ x, y, z, got }) => ({ x, y, z, got }));
   world.toolWear = { ...state.toolWear };
+  world.itemDrops = (state.itemDrops ?? []).map(drop => ({ ...drop }));
   world.golems = state.golems.filter(g => g.golem && g.persist).map(g => ({
     kind: g.kind, x: g.x, y: g.y, z: g.z, hp: g.hp, hx: g.hx, hz: g.hz,
   }));
