@@ -8,14 +8,15 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: github-pages
-  cancel-in-progress: false
-
+# Build jobs are disposable, but GitHub Pages publications must not be
+# cancelled mid-flight: doing so can leave a server-side deployment lock.
 jobs:
   build:
     name: Build Pages artifact
     runs-on: ubuntu-24.04
+    concurrency:
+      group: pages-build-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -39,6 +40,11 @@ jobs:
     name: Publish Pages
     needs: build
     runs-on: ubuntu-24.04
+    # Serialize publication: only the latest pending deployment is kept,
+    # while an active publish is allowed to complete safely.
+    concurrency:
+      group: github-pages-deploy
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write
