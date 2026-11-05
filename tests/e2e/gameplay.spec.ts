@@ -167,9 +167,12 @@ test('first-person hand equips hotbar items and swings on desktop and mobile min
   await expect(heldItem).toHaveAttribute('aria-label', 'Holding Stick');
   await expect(heldItem).toBeVisible();
   await runCommand(page, '/give stone 1');
-  await page.locator('#hotbar .slot').nth(1).click();
+  // Desktop pointer lock uses number keys; touch devices select hotbar buttons.
+  if (isMobile) await page.locator('#hotbar .slot').nth(1).tap();
+  else await page.keyboard.press('2');
   await expect(heldItem).toHaveAttribute('aria-label', 'Holding Stone');
-  await page.locator('#hotbar .slot').nth(0).click();
+  if (isMobile) await page.locator('#hotbar .slot').nth(0).tap();
+  else await page.keyboard.press('1');
   await expect(heldItem).toHaveAttribute('aria-label', 'Holding Stick');
 
   if (isMobile) {
@@ -200,7 +203,8 @@ test('first-person hand equips hotbar items and swings on desktop and mobile min
     });
   } else await page.evaluate(() => window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })));
 
-  await page.locator('#hotbar .slot').nth(2).click();
+  if (isMobile) await page.locator('#hotbar .slot').nth(2).tap();
+  else await page.keyboard.press('3');
   await expect(heldItem).toBeHidden();
   await expect(hand).toBeVisible();
   expect(errors).toEqual([]);
