@@ -19,6 +19,7 @@ describe('save format compatibility', () => {
       timeOfDay: 0.65, health: 9, selected: 2, hotbar,
       inventory: { 3: 99 }, player: { x: 2, y: 3, z: 4, yaw: 0, pitch: 0, fly: false },
       relics: [{ x: 6, y: 7, z: 8, got: true }], toolWear: { 110: 4 },
+      itemDrops: [{ id: 5, count: 2, x: 9, y: 10, z: 11, dimension: 'overworld', age: 3 }],
       golems: [
         { kind: 'irongolem', x: 1, y: 2, z: 3, hp: 19, hx: 1, hz: 3, golem: true, persist: true },
         { kind: 'cow', x: 1, y: 2, z: 3, hp: 10, hx: 1, hz: 3, golem: false, persist: true },
@@ -32,6 +33,8 @@ describe('save format compatibility', () => {
     expect(saved.sat).toBe(4);
     expect(saved.tod).toBe(0.65);
     expect(saved.inv).toEqual({ 3: 99 });
+    expect(saved.itemDrops).toEqual([{ id: 5, count: 2, x: 9, y: 10, z: 11,
+      dimension: 'overworld', age: 3 }]);
     expect(saved.golems).toEqual([{ kind: 'irongolem', x: 1, y: 2, z: 3, hp: 19, hx: 1, hz: 3 }]);
     hotbar[0] = 99;
     expect(saved.hotbar).toEqual([1, 2, 3]);

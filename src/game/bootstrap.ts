@@ -16,6 +16,7 @@ import { raycastBlocks } from './world/raycast';
 import { createCollisionEngine } from './world/collision';
 import { createToolUsage } from './items/tool-usage';
 import { createBlockInteractions } from './interactions/block-interactions';
+import { createItemDropSystem } from './entities/item-drops';
 import { createActionController } from './input/action-controller';
 import { createGameMenu, MODE_LABELS, type GameMode, type Difficulty } from './ui/game-menu';
 import type { WeatherMode } from './rendering/weather-system';
@@ -61,7 +62,7 @@ const {
   PORK, MUTTON, CHICKEN, COOKED, WOOL, FEATHER,
   LEATHER, GUNPOWDER, DYNAMITE, FLINT, EMERALD, BONE,
   STRING, STICK, COAL, RAW_COPPER, RAW_IRON, COPPER_INGOT,
-  IRON_INGOT, DIAMOND, EGG_KINDS, FOOD, tileOf, isBed,
+  IRON_INGOT, DIAMOND, EGG_KINDS, FOOD, tileOf, ATLAS_N, isBed,
   BED_H, BED_DIR, solid, NAMES, ALL_BLOCKS, BREAK_TIME,
   DROPS, TOOL_TIERS, toolId, TOOLS, TOOL_MAX, TOOL_LVL,
   TOOL_SPD, TOOL_DMG, NEEDS_PICK, hotbar, toolWear, canvas,
@@ -294,6 +295,11 @@ const { heldTool, toolSpeed, canCollect, wearTool, attackDamage, spendItem } = c
   flashName, showHint: (message, ms) => showHint(message, ms),
   playSound: event => sfx(event), exert,
 });
+const itemDrops = createItemDropSystem({
+  scene, atlas: tex, atlasTiles: ATLAS_N, tileOf, getBlock: get, solid, player,
+  getDimension: () => dimension, giveItem,
+  playPickup: () => sfx('pop'),
+});
 const fadeEl = requireGameElement('fade');
 const { doBreak, useBed, useSelected, healGolem } = createBlockInteractions({
   camera, player, mobs, portals, hotbar, inventory: inv,
@@ -316,7 +322,7 @@ const { doBreak, useBed, useSelected, healGolem } = createBlockInteractions({
   getBlock: get, setBlock, inBounds,
   hasChunk: (cx, cz) => !!chunkAt(cx, cz),
   solid, isBed, collides, heldTool, canCollect, wearTool, spendItem,
-  exert, giveItem,
+  exert, giveItem, spawnDrop: itemDrops.spawn,
   updateHotbar: withSound => updateHotbar(withSound ?? false),
   renderFood, flashName,
   showHint: (message, ms) => showHint(message, ms),
@@ -498,13 +504,14 @@ const worldSession = createGameplayWorldSession({
     selected, hotbar, inventory: inv,
     player: { x: player.x, y: player.y, z: player.z, yaw: player.yaw,
       pitch: player.pitch, fly: !!player.fly },
-    relics, toolWear, golems: mobs,
+    relics, toolWear, itemDrops: itemDrops.snapshot(), golems: mobs,
   }),
   player, portals, inventory: inv, toolWear, hotbar, allBlocks: ALL_BLOCKS,
   savedChunks, dimensionChunks, chunks, getDimension: () => dimension,
   validDifficulties: DIFF, weatherLabels: WEATHER_LABEL,
   kinds: KINDS, mobs, relics, maximumHealth: MAX_HEALTH,
   resetWorld, clearPortalVisuals, showPortalVisual, clearMobs, clearRelics,
+  restoreItemDrops: itemDrops.restore, clearItemDrops: itemDrops.clear,
   addRelic, createRelics,
   setMode: value => setMode(value in MODE_LABELS ? value as GameMode : 'creative'),
   updateHearts, renderFood, updateWeatherUI,
@@ -522,6 +529,7 @@ const frame = createFrameLoop({
   streamChunks,
   update,
   updateFluids: worldServices.stepFluids,
+  updateDrops: itemDrops.update,
   updateIdleCamera: () => {
     camera.position.set(player.x, player.y + EYE_HEIGHT, player.z); camera.rotation.set(player.pitch, player.yaw, 0);
   },
