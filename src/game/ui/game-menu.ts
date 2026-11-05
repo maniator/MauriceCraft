@@ -85,7 +85,7 @@ export function createGameMenu(deps: GameMenuDependencies) {
     deps.touchUi.style.display = 'block';
     requireElement('controls').innerHTML =
       '<dt>Left side</dt><dd>Drag to move</dd><dt>Right side</dt><dd>Drag to look, tap to use or place items, talk to villagers, or open crafting tables; hold to mine or attack</dd>' +
-      '<dt>Use</dt><dd>Optional button to use or place the selected item</dd><dt>Hotbar</dt><dd>Tap to choose an item</dd><dt>Bag</dt><dd>Open the inventory</dd>';
+      '<dt>Crosshair</dt><dd>All taps, mining and attacks target the center of the view</dd><dt>Hotbar</dt><dd>Tap to choose an item</dd><dt>Bag</dt><dd>Open the inventory</dd>';
   }
 
   function updateDifficultyUI(): void {
@@ -110,7 +110,8 @@ export function createGameMenu(deps: GameMenuDependencies) {
     deps.food.classList.toggle('raised', canInteract);
     objEl.style.display = mode === 'adventure' ? 'block' : 'none';
     deps.hideSelection();
-    deps.placeButton.style.display = canInteract ? 'block' : 'none';
+    // A tap on the scene already interacts at the centered crosshair. Avoid a redundant mobile Use button.
+    deps.placeButton.style.display = !deps.isTouch && canInteract ? 'block' : 'none';
     deps.flyButton.style.display = mode === 'creative' ? 'block' : 'none';
     deps.inventoryButton.style.display = canInteract ? 'block' : 'none';
     deps.jumpButton.textContent = mode === 'spectator' ? 'Up' : 'Jump';

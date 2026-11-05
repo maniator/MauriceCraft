@@ -219,6 +219,43 @@ test('first-person hand equips hotbar items and swings on desktop and mobile min
   expect(errors).toEqual([]);
 });
 
+test('first-person viewmodel remains in the aiming area without obstructing the mobile reticle', async ({ page, isMobile }) => {
+  await startWorld(page);
+  const hand = page.locator('#heldHand');
+  const reticle = page.locator('#crosshair');
+  await expect(hand).toBeVisible();
+  await expect(reticle).toBeVisible();
+
+  const layout = await page.evaluate(() => {
+    const hand = document.getElementById('heldHand')!.getBoundingClientRect();
+    const crosshair = document.getElementById('crosshair')!.getBoundingClientRect();
+    const centerX = crosshair.left + crosshair.width / 2;
+    const centerY = crosshair.top + crosshair.height / 2;
+    const handX = hand.left + hand.width / 2;
+    const handY = hand.top + hand.height / 2;
+    const touchUi = document.getElementById('touchui')!;
+    const overlappingButtons = [...touchUi.querySelectorAll('button')].filter(button => {
+      const rect = button.getBoundingClientRect();
+      return getComputedStyle(button).display !== 'none' &&
+        rect.left <= centerX + 20 && rect.right >= centerX - 20 &&
+        rect.top <= centerY + 20 && rect.bottom >= centerY - 20;
+    });
+    return { handX, handY, centerX, centerY, overlappingButtons: overlappingButtons.map(b => b.id) };
+  });
+  // The old hand was bottom-right, practically attached to the hotbar.
+  expect(Math.abs(layout.handX - layout.centerX)).toBeLessThan(190);
+  expect(layout.handY).toBeGreaterThan(layout.centerY);
+  expect(layout.handY - layout.centerY).toBeLessThan(210);
+  expect(layout.overlappingButtons).toEqual([]);
+  // Codex regression: held items must not cover the survival mining progress indicator.
+  const layers = await page.evaluate(() => ({
+    progress: Number(getComputedStyle(document.getElementById('mineBar')!).zIndex),
+    hand: Number(getComputedStyle(document.getElementById('heldHand')!).zIndex),
+  }));
+  expect(layers.progress).toBeGreaterThan(layers.hand);
+  if (isMobile) await expect(page.locator('#btnPlace')).toBeHidden();
+});
+
 test('mobile and desktop can return to menu and confirm a manual save', async ({ page, isMobile }) => {
   await startWorld(page);
   const menu = page.getByRole('button', { name: 'Return to main menu' });
