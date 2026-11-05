@@ -1,20 +1,10 @@
 name: Copilot Setup Steps
 
+# Special Copilot agent environment initialization, not normal PR CI.
+# The agent uses this job automatically when starting its session.
+# workflow_dispatch allows manual validation when needed.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/copilot-setup-steps.yml
-  pull_request:
-    paths:
-      - .github/workflows/copilot-setup-steps.yml
-
-# Keep only the newest setup run for each PR (or branch), without
-# cancelling CI or other workflows that share the same ref.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
 
 jobs:
   copilot-setup-steps:
