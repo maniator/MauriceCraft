@@ -70,7 +70,8 @@ export function createChunkMesher<T extends MeshChunk>(deps: MesherDependencies<
           const height = c[1] ? y1 : y0;
           // The foot sits on the supporting wall. The tip leans toward the
           // center of the empty voxel; the encoded face survives save/reload.
-          const tilt = support ? 0.34 - height / 0.78 * 0.32 : 0;
+          // Extend the foot slightly into its supporting wall, leaving no visible gap.
+          const tilt = support ? 0.46 - height / 0.78 * 0.44 : 0;
           pos.push(x + (c[0] ? hi : lo) + (support?.[0] ?? 0) * tilt,
             y + height,
             z + (c[2] ? hi : lo) + (support?.[1] ?? 0) * tilt);

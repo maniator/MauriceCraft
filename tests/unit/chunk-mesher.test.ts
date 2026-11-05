@@ -82,6 +82,16 @@ describe('typed chunk meshing', () => {
     const tip = axis === 'x' ? p.getX(2) : p.getZ(2);
     if (positive) expect(base).toBeGreaterThan(tip);
     else expect(base).toBeLessThan(tip);
+    // The supporting solid block begins at x/z = 2 or ends at x/z = 1.
+    // The base of the torch must actually reach its wall, not float in air.
+    const foot: number[] = [];
+    for (let i = 0; i < p.count; i++) {
+      if (Math.abs(p.getY(i) - 1) < 0.0001)
+        foot.push(axis === 'x' ? p.getX(i) : p.getZ(i));
+    }
+    expect(foot.length).toBeGreaterThan(0);
+    if (positive) expect(Math.max(...foot)).toBeGreaterThanOrEqual(2);
+    else expect(Math.min(...foot)).toBeLessThanOrEqual(1);
     mesher.disposeMesh(chunk);
   });
 
