@@ -281,6 +281,9 @@ test('raid wave status, menu control and gameplay hints never cover one another'
   await page.locator('#play').click();
   const menu = page.locator('#btnMenu');
   await expect(menu).toBeVisible();
+  // Gameplay updates the raid and hint display every frame. Force both visible
+  // at the stylesheet level so this tests layout rather than raid timing.
+  await page.addStyleTag({ content: '#raid, #hint { display: block !important; }' });
   await page.locator('#raid').evaluate(element => {
     element.textContent = 'Raid: Wave 3';
     element.style.display = 'block';
