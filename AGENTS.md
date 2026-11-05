@@ -27,8 +27,11 @@ Make a small, understandable commit for each completed change. For each task, ex
 
 Read the matching guide when your task fits:
 
-- [Fix a bug](.github/skills/fix-a-bug/SKILL.md)
-- [Add a game feature](.github/skills/add-a-feature/SKILL.md)
-- [Write or improve tests](.github/skills/test-a-change/SKILL.md)
+- [Fix a bug](.agents/skills/fix-a-bug/SKILL.md)
+- [Add a game feature](.agents/skills/add-a-feature/SKILL.md)
+- [Write or improve tests](.agents/skills/test-a-change/SKILL.md)
+- [Review a PR or diff](.agents/skills/code-review/SKILL.md)
+- [Review code quality](.agents/skills/code-review-and-quality/SKILL.md)
+- [Review game regression risks](.agents/skills/review-game-regressions/SKILL.md)
 
-For sample requests to give an agent, see [Agent prompts](docs/AGENT_PROMPTS.md).
+For sample requests to give an agent, see [Agent prompts](docs/AGENT_PROMPTS.md); for reviewer usage, see [Agent review skills](docs/AGENT_REVIEW_SKILLS.md).

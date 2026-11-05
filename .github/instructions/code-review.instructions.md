@@ -29,3 +29,9 @@ Use these checks when reviewing pull requests:
 - For gameplay/UI behavior changes, expect `npm run check`.
 - For control, HUD, menu, startup, save, or other browser behavior changes, also expect `npm run test:e2e` (or a clear reason it was not run).
 - Prefer actionable review comments with clear file/line reasoning and concrete fixes.
+
+## Reusable review workflow
+
+- Start with [.agents/skills/code-review/SKILL.md](../../.agents/skills/code-review/SKILL.md) for PRs, branches, and go/no-go reviews. For deeper implementation checks load [code-review-and-quality](../../.agents/skills/code-review-and-quality/SKILL.md); for gameplay, saves, input, rendering, or PWA changes load [review-game-regressions](../../.agents/skills/review-game-regressions/SKILL.md).
+- Keep **spec compliance** and **repository standards** findings separate. Flag actual regressions with a precise changed-line location, consequence, and suggested test or repair; drop speculative or duplicate comments.
+- For a GO / NO-GO decision, inspect the latest head commit's CI, merge state, and unresolved actionable review threads. Distinguish existing problems from PR-introduced ones and say when verification was unavailable. Never pretend a check or a real-game visual review was performed.
