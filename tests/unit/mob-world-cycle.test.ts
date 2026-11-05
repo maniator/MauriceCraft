@@ -101,7 +101,29 @@ describe('mob world population cycle', () => {
     expect(f.updateRaid).not.toHaveBeenCalled();
     f.setMobCap(0);
     f.updateMobs(2.1);
-    expect(f.trySpawnNetherMob).toHaveBeenCalledOnce();
+    expect(f.trySpawnNetherMob).toHaveBeenCalledTimes(2);
+    expect(f.trySpawnNetherMob).toHaveBeenLastCalledWith(true);
+  });
+
+  it('spawns Nether inhabitants in Creative and only passive striders on Peaceful', () => {
+    const creative = fixture();
+    creative.setHealth(false);
+    creative.setDimension('nether');
+    creative.updateMobs(2.1);
+    expect(creative.trySpawnNetherMob).toHaveBeenCalledOnce();
+
+    const peaceful = fixture();
+    peaceful.setHealth(false);
+    peaceful.setDimension('nether');
+    peaceful.setMobCap(0);
+    peaceful.updateMobs(2.1);
+    expect(peaceful.trySpawnNetherMob).toHaveBeenCalledOnce();
+    expect(peaceful.trySpawnNetherMob).toHaveBeenCalledWith(true);
+    expect(peaceful.trySpawnMob).not.toHaveBeenCalled();
+    peaceful.mobs.push(...Array.from({ length: 4 }, () =>
+      ({ kind: 'strider', x: 2, z: 3, hostile: false } as MobActor)));
+    peaceful.updateMobs(8);
+    expect(peaceful.trySpawnNetherMob).toHaveBeenCalledOnce();
   });
 
   it('counts neutral Nether creatures toward the spawn budget even when hostiles die', () => {

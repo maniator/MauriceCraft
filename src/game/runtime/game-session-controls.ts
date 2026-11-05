@@ -77,7 +77,7 @@ export function createGameSessionControls(deps: GameSessionDependencies) {
   function setDifficulty(difficulty: Difficulty): void {
     if (!deps.difficulties[difficulty]) return;
     state.difficulty = difficulty;
-    if (deps.difficulties[difficulty].cap === 0 && deps.hasHealth()) {
+    if (deps.difficulties[difficulty].cap === 0) {
       for (let i = deps.mobs.length - 1; i >= 0; i--) {
         if (deps.mobs[i].hostile) deps.removeMobAt(i);
       }

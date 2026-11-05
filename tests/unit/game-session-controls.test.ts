@@ -74,6 +74,14 @@ describe('game lifecycle controls', () => {
     expect(f.saveWorld).toHaveBeenCalledOnce();
   });
 
+  it('also removes hostile creatures on Peaceful while building in Creative', () => {
+    const f = fixture();
+    expect(f.state.mode).toBe('creative');
+    f.actions.setDifficulty('peaceful');
+    expect(f.mobs).toEqual([{ hostile: false }]);
+    expect(f.removeMobAt).toHaveBeenCalledWith(0);
+  });
+
   it('starts only after loading and pauses with cleared input plus an autosave', () => {
     const f = fixture();
     f.state.ready = false;
