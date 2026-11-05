@@ -1,5 +1,5 @@
 import type { ChunkRecord, WorldRecord, WorldStorage } from '../storage/world-storage';
-import { decodeWorldArchive, encodeWorldArchive, WORLD_FILE_MAX_BYTES } from '../storage/world-archive';
+import { WORLD_FILE_MAX_BYTES } from '../storage/world-archive-limits';
 import { prepareImportedWorld, worldArchiveFilename } from './world-transfer';
 import { deriveWorldSeed32, nextWorldSeed64, parseWorldSeedInput64, type WorldSeedWords } from '../world/seed64';
 
@@ -259,6 +259,8 @@ export function createWorldSession(deps: WorldSessionDependencies) {
     const world = await database.getWorld(id);
     if (!world) throw new Error('World not found.');
     const chunks = await database.getChunks(id);
+    // The binary archive codec is needed only for explicit exports.
+    const { encodeWorldArchive } = await import('../storage/world-archive');
     const bytes = encodeWorldArchive(world, chunks);
     const blob = new Blob([new Uint8Array(bytes)], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
@@ -277,6 +279,8 @@ export function createWorldSession(deps: WorldSessionDependencies) {
     if (file.size < 24 || file.size > WORLD_FILE_MAX_BYTES) {
       throw new Error('Choose a valid .mcraft world file up to 256 MB.');
     }
+    // Keep the archive parser out of normal gameplay and startup downloads.
+    const { decodeWorldArchive } = await import('../storage/world-archive');
     const archive = decodeWorldArchive(new Uint8Array(await file.arrayBuffer()));
     if ((archive.world.generatorVersion ?? 1) > CURRENT_WORLD_GENERATOR_VERSION) {
       throw new Error('This world needs a newer MauriceCraft terrain version.');
