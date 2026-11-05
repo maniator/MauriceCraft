@@ -133,6 +133,8 @@ test('survival bag hides zero-count items and recipe book reveals partial recipe
   await startWorld(page);
   await runCommand(page, '/gamemode survival');
   await runCommand(page, '/give stick 1');
+  await expect(page.locator('#hotbar .slot').first()).toHaveAttribute('aria-label', 'Stick, slot 1');
+  await expect(page.locator('#hotbar .slot').first().locator('.cnt')).toHaveText('1');
 
   if (isMobile) await page.locator('#btnInv').tap();
   else await page.keyboard.press('i');
