@@ -15,7 +15,7 @@ The site must remain at the same origin/path for existing browser saves to be re
 
 ## Verified deployment
 
-`.github/workflows/ci.yml` checks every change with ESLint, strict TypeScript, unit coverage, a production build, and desktop/mobile Playwright smoke tests. When the **CI** workflow succeeds for a push to `main`, `.github/workflows/pages.yml` builds and deploys **that exact tested commit** using `npm ci` and the GitHub Pages `/MauriceCraft/` base path.
+`.github/workflows/ci.yml` checks every change with ESLint, strict TypeScript, unit coverage, a production build, and desktop/mobile Playwright smoke tests. When the **CI** workflow succeeds for a push to `main`, `.github/workflows/pages.yml` is triggered by that completed CI run, checks out the CI commit SHA, and deploys **that exact tested commit** using `npm ci` and the GitHub Pages `/MauriceCraft/` base path. The publish job now gives GitHub Pages a longer window and retries once if the first publish times out while GitHub reports `updating_pages`.
 
 A failed or cancelled CI run does **not** publish a new version. The prior Pages deployment remains available. During a series of small commits, GitHub may cancel obsolete CI runs to save minutes; the latest successful run is the one that gets deployed. Pull-request test runs never publish a site.
 
