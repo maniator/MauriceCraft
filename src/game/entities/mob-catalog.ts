@@ -2,6 +2,8 @@
  * References numeric block IDs from the canonical save-compatible catalog.
  */
 import { makeZombie, makeCow, makePig, makeSheep, makeChicken, makeCreeper, makeSkeleton, makeSpider, makePillager, makeVindicator, makeIronGolem, makeCopperGolem, makeDiamondGolem, makeVillager, makeEnderDragon } from './mob-models';
+import { makePiglin, makeZombifiedPiglin, makeHoglin, makeGhast, makeBlaze,
+  makeMagmaCube, makeStrider, makeWitherSkeleton } from './nether-mob-models';
 
 export interface MobDropIds {
   GUNPOWDER: number;
@@ -25,6 +27,27 @@ export function createMobCatalog(ids: MobDropIds) {
   const { GUNPOWDER, BONE, STRING, EMERALD, IRON_INGOT, COPPER_INGOT, DIAMOND, BEEF, LEATHER, PORK, MUTTON, WOOL, CHICKEN, FEATHER } = ids;
   const randomCountUpTo = (maximum: number) => 1 + Math.floor(Math.random() * maximum);
   const KINDS = {
+    piglin: { hostile: true, r: 0.32, h: 2.05, hp: 18, speed: 2.4,
+      melee: { d: 1.4, dmg: 4, cd: 1.1 }, make: makePiglin,
+      drops: function () { return [[GUNPOWDER, Math.random() < 0.09 ? 1 : 0]]; } },
+    zombified_piglin: { hostile: false, r: 0.32, h: 2.1, hp: 20, speed: 2.3,
+      melee: { d: 1.3, dmg: 3, cd: 1.2 }, make: makeZombifiedPiglin,
+      drops: function () { return [[BONE, Math.random() < 0.24 ? 1 : 0]]; } },
+    hoglin: { hostile: true, r: 0.64, h: 1.8, hp: 35, speed: 2.3,
+      melee: { d: 1.8, dmg: 5, cd: 1.3, lift: 4 }, make: makeHoglin,
+      drops: function () { return [[PORK, randomCountUpTo(3)], [LEATHER, Math.random() < 0.3 ? 1 : 0]]; } },
+    ghast: { hostile: true, r: 1.05, h: 3.2, hp: 10, speed: 2,
+      make: makeGhast, drops: function () { return [[GUNPOWDER, randomCountUpTo(2)]]; } },
+    blaze: { hostile: true, r: 0.36, h: 1.85, hp: 20, speed: 2.1,
+      make: makeBlaze, drops: function () { return [[GUNPOWDER, Math.random() < 0.6 ? 1 : 0]]; } },
+    magma_cube: { hostile: true, r: 0.46, h: 0.85, hp: 15, speed: 1.9,
+      melee: { d: 1.35, dmg: 3, cd: 1.2 }, make: makeMagmaCube,
+      drops: function () { return [[GUNPOWDER, Math.random() < 0.3 ? 1 : 0]]; } },
+    strider: { hostile: false, r: 0.45, h: 1.5, hp: 20, speed: 1.2,
+      make: makeStrider, drops: function () { return [[STRING, Math.random() < 0.4 ? 1 : 0]]; } },
+    wither_skeleton: { hostile: true, r: 0.3, h: 2.25, hp: 20, speed: 2.6,
+      melee: { d: 1.5, dmg: 5, cd: 1.1 }, make: makeWitherSkeleton,
+      drops: function () { return [[BONE, randomCountUpTo(2)]]; } },
     zombie: { hostile: true, r: 0.3, h: 1.8, hp: 20, speed: 2.7, melee: { d: 1.15, dmg: 3, cd: 1.1 }, make: makeZombie, drops: function () { return [[GUNPOWDER, Math.random() < 0.5 ? 1 : 0]]; } },
     enderdragon: { hostile: true, r: 2.8, h: 5.5, hp: 300, speed: 5.0, make: makeEnderDragon, drops: function () { return []; } },
     creeper: { hostile: true, r: 0.3, h: 1.85, hp: 20, speed: 2.4, make: makeCreeper, drops: function () { return [[GUNPOWDER, randomCountUpTo(2)]]; } },

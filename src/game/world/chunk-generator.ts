@@ -1,11 +1,12 @@
 import { fbm, hash2, mulberry32 } from './noise';
 import type { Biome } from './biomes';
 import { createModernChunkGenerator } from './chunk-generator-v2';
+import { createNetherGenerator } from './nether-generator';
 import type { GeneratedStructure } from './structure-regions';
 import type { WriteBlock } from './structure-builders';
 
 export type WorldDimension = 'overworld' | 'nether' | 'end';
-export type TerrainBlockIds = Record<'BRICK' | 'COAL_ORE' | 'COPPER_ORE' | 'DIAMOND_ORE' | 'DIRT' | 'GOLD' | 'GRASS' | 'IRON_ORE' | 'LAVA' | 'LEAVES' | 'SAND' | 'SANDSTONE' | 'STONE' | 'STONEBRICK' | 'TORCH' | 'WATER' | 'WOOD', number> & Partial<Record<'SNOW' | 'PINE_LEAVES' | 'RED_SAND' | 'DARK_WOOD' | 'BIRCH_WOOD' | 'BIRCH_LEAVES' | 'ACACIA_WOOD' | 'ACACIA_LEAVES' | 'WILLOW_WOOD' | 'WILLOW_LEAVES' | 'AUTUMN_LEAVES' | 'MUD' | 'FLOWERING_GRASS', number>>;
+export type TerrainBlockIds = Record<'BRICK' | 'COAL_ORE' | 'COPPER_ORE' | 'DIAMOND_ORE' | 'DIRT' | 'GOLD' | 'GRASS' | 'IRON_ORE' | 'LAVA' | 'LEAVES' | 'SAND' | 'SANDSTONE' | 'STONE' | 'STONEBRICK' | 'TORCH' | 'WATER' | 'WOOD', number> & Partial<Record<'SNOW' | 'PINE_LEAVES' | 'RED_SAND' | 'DARK_WOOD' | 'BIRCH_WOOD' | 'BIRCH_LEAVES' | 'ACACIA_WOOD' | 'ACACIA_LEAVES' | 'WILLOW_WOOD' | 'WILLOW_LEAVES' | 'AUTUMN_LEAVES' | 'MUD' | 'FLOWERING_GRASS' | 'NETHERRACK' | 'BASALT' | 'SOUL_SOIL' | 'CRIMSON_NYLIUM' | 'WARPED_NYLIUM' | 'BLACKSTONE' | 'GLOWSTONE', number>>;
 export interface ChunkGeneratorDependencies {
   getSeed: () => number;
   getDimension: () => WorldDimension;
@@ -34,12 +35,15 @@ export function createChunkGenerator(deps: ChunkGeneratorDependencies) {
   const { BRICK, COAL_ORE, COPPER_ORE, DIAMOND_ORE, DIRT, GOLD, GRASS, IRON_ORE, LAVA, LEAVES, SAND, SANDSTONE, STONE, STONEBRICK, TORCH, WATER, WOOD } = deps.blocks;
   const H = deps.maxHeight, SEA = deps.seaLevel, REG = deps.regionSize;
   const modern = deps.getBiome ? createModernChunkGenerator({ ...deps, getBiome: deps.getBiome }) : null;
+  const modernNether = createNetherGenerator(deps);
   function generateChunkData(cx: number, cz: number): Uint8Array {
     const seed = getSeed(), dimension = getDimension();
     const data = new Uint8Array(16 * H * 16);
     const x0 = cx * 16, z0 = cz * 16;
     if (dimension === 'overworld' && (deps.getGeneratorVersion?.() ?? 1) >= 2 && modern)
       return modern(cx, cz);
+    if (dimension === 'nether' && (deps.getGeneratorVersion?.() ?? 1) >= 5)
+      return modernNether(cx, cz);
     // Separate Nether and End terrain generators. They reuse the game's block atlas,
     // but create distinct landscapes and keep the normal Overworld generator unchanged.
     if (dimension === 'nether' || dimension === 'end') {
