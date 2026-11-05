@@ -464,7 +464,7 @@ const { clearPortalVisuals, showPortalVisual, buildPortalFrame,
   setDimension: nextDimension => { dimension = nextDimension; },
   getPlayer: () => player,
   isPlaying: () => playing,
-  ensureAround, getOrGenerate: getOrGen, setBlock, topBlockY: topY,
+  ensureAround, getOrGenerate: getOrGen, setBlock, getBlock: get, topBlockY: topY,
   rebuildRegion, disposeMesh, resetChunkCache, clearStructures: () => structCache.clear(),
   clearMobs, collides, saveWorld, showHint,
 });
