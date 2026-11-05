@@ -37,6 +37,7 @@ export interface CoreGameCommandDependencies {
   weatherLabels: PlayerCommandDependencies['weatherLabels'];
   maxHeight: number; maxHealth: number;
   getSeed: () => number;
+  getSeedLabel?: () => string;
   getDimension: () => WorldDimension;
   getDifficultyCap: () => number;
   hasHealth: () => boolean;
@@ -86,7 +87,8 @@ export function registerCoreGameCommands(deps: CoreGameCommandDependencies): voi
     updateHotbar: showName => deps.updateHotbar(showName ?? false),
     updateHearts: deps.updateHearts, renderFood: deps.renderFood,
     toggleFly: deps.toggleFly, ensureAround: deps.ensureAround,
-    topBlockY: world.topY, collides: deps.collides, getSeed: deps.getSeed,
+    topBlockY: world.topY, collides: deps.collides,
+    getSeed: deps.getSeed, getSeedLabel: deps.getSeedLabel,
   });
 
   registerWorldCommands({

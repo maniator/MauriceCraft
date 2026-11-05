@@ -20,6 +20,7 @@ export interface WorldRuntimeDependencies {
   seaLevel: number;
   viewDistance: number;
   getSeed: () => number;
+  getFeatureSeed?: () => number;
   setSeed: (seed: number) => void;
   getGeneratorVersion: () => number;
   setGeneratorVersion: (version: number) => void;
@@ -86,8 +87,10 @@ export function createWorldRuntime(deps: WorldRuntimeDependencies) {
     return Math.max(3, Math.min(WORLD_HEIGHT - 12, height));
   }
 
+  const getFeatureSeed = (): number => deps.getGeneratorVersion() >= 5
+    ? (deps.getFeatureSeed?.() ?? deps.getSeed()) : deps.getSeed();
   const regions = createStructureRegions({
-    heightAt, getSeed: deps.getSeed, getPlayer: deps.getPlayer,
+    heightAt, getSeed: getFeatureSeed, getPlayer: deps.getPlayer,
     getGeneratorVersion: deps.getGeneratorVersion,
     getBiome: (x, z) => biomeAt(x, z, deps.getSeed()),
     seaLevel: SEA_LEVEL, maxHeight: WORLD_HEIGHT,
@@ -100,12 +103,12 @@ export function createWorldRuntime(deps: WorldRuntimeDependencies) {
     heightAt, inStructureZone: inStructZone,
     seaLevel: SEA_LEVEL, worldHeight: WORLD_HEIGHT,
   });
-  const { buildStructure } = createStructureBuilders(deps.getSeed, {
+  const { buildStructure } = createStructureBuilders(getFeatureSeed, {
     BRICK, COBBLE, CTABLE, DIRT, GOLD, GRAVEL, HAY,
     LEAVES, MOSSY, PLANKS, SANDSTONE, STONEBRICK, TORCH, WOOD,
   }, deps.getGeneratorVersion);
   const caveCarver = createCaveCarver({
-    getSeed: deps.getSeed, heightAt: groundH, inStructureZone: inStructZone,
+    getSeed: getFeatureSeed, heightAt: groundH, inStructureZone: inStructZone,
     worldHeight: WORLD_HEIGHT,
   });
   const generateChunkData = createChunkGenerator({

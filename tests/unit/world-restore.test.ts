@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { WorldRecord } from '../../src/game/storage/world-storage';
 import { createWorldRestore, type RestorableGameState, type WorldRestoreDependencies } from '../../src/game/session/world-restore';
 import type { SpawnMob } from '../../src/game/entities/mob-spawning';
+import { deriveWorldSeed32 } from '../../src/game/world/seed64';
 
 function fixture() {
   const state: RestorableGameState = {
@@ -18,7 +19,8 @@ function fixture() {
   const craftedRecipes = new Set<string>(['stale:from:prior:world']);
   const hotbar = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const relics: unknown[] = [];
-  const resetWorld = vi.fn(), clearMobs = vi.fn(), clearRelics = vi.fn();
+  const resetWorld = vi.fn(), setWorldSeed64 = vi.fn();
+  const clearMobs = vi.fn(), clearRelics = vi.fn();
   const restoreItemDrops = vi.fn(), clearItemDrops = vi.fn();
   const updateHearts = vi.fn(), renderFood = vi.fn(), updateWeatherUI = vi.fn();
   const addMob = vi.fn((kind: string, x: number, y: number, z: number): SpawnMob =>
@@ -29,7 +31,7 @@ function fixture() {
     savedChunks: new Map(), validDifficulties: { normal: {}, hard: {} },
     weatherLabels: { clear: 'Clear', cloudy: 'Cloudy', rain: 'Rain', storm: 'Storm' },
     kinds: { irongolem: {} }, mobs: [], relics, maximumHealth: 20,
-    resetWorld, clearPortalVisuals: vi.fn(), showPortalVisual: vi.fn(),
+    resetWorld, setWorldSeed64, clearPortalVisuals: vi.fn(), showPortalVisual: vi.fn(),
     clearMobs, clearRelics, restoreItemDrops, clearItemDrops,
     addRelic: vi.fn(), createRelics: vi.fn(),
     setMode: mode => { state.mode = mode; state.hp = 20; state.hunger = 20; },
@@ -37,7 +39,7 @@ function fixture() {
     addMob, hasChunk: () => true, respawn: vi.fn(), random: () => 0.5,
   };
   return { restore: createWorldRestore(deps), deps, state, player, portals,
-    inventory, toolWear, craftedRecipes, hotbar, resetWorld, clearMobs, clearRelics,
+    inventory, toolWear, craftedRecipes, hotbar, resetWorld, setWorldSeed64, clearMobs, clearRelics,
     updateHearts, renderFood, updateWeatherUI, addMob, restoreItemDrops, clearItemDrops };
 }
 
@@ -55,6 +57,7 @@ describe('saved-world restoration', () => {
     };
     f.restore.applyWorld(world);
     expect(f.resetWorld).toHaveBeenCalledWith(501, 2, -2, 1);
+    expect(f.setWorldSeed64).toHaveBeenCalledWith(null);
     expect(f.player.x).toBe(35);
     expect(f.player.vx).toBe(0);
     expect(f.state.mode).toBe('survival');
@@ -80,6 +83,43 @@ describe('saved-world restoration', () => {
     expect(f.resetWorld).toHaveBeenCalledWith(311, 0, 0, 2);
     expect(f.state.weather).toBe('cloudy');
     expect(f.state.rainTarget).toBe(0.16);
+  });
+
+  it('keeps preexisting generator v4 worlds on the exact original 32-bit seed', () => {
+    const f = fixture();
+    f.restore.applyWorld({ ...({ id: 'v4', name: 'Old v4', seed: 6041988,
+      generatorVersion: 4, created: 1, lastPlayed: 2 } satisfies WorldRecord) });
+    expect(f.resetWorld).toHaveBeenCalledWith(6041988, 0, 0, 4);
+    expect(f.setWorldSeed64).toHaveBeenCalledWith(null);
+  });
+
+  it('restores and initializes the full seed of new v5 worlds', () => {
+    const f = fixture();
+    const seed64 = '18446744073709551615';
+    const terrain = deriveWorldSeed32(seed64, 'terrain');
+    const world: WorldRecord = { id: 'v5', name: 'New v5', seed: terrain, seed64,
+      generatorVersion: 5, created: 1, lastPlayed: 2 };
+    f.restore.applyWorld(world);
+    expect(f.resetWorld).toHaveBeenCalledWith(terrain, 0, 0, 5);
+    expect(f.setWorldSeed64).toHaveBeenCalledWith(seed64);
+    f.restore.prepareNewWorld(world);
+    expect(f.setWorldSeed64).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects corrupt v5 metadata without clearing the old world', () => {
+    const f = fixture();
+    f.deps.savedChunks.set(99, new Uint8Array([3]));
+    const broken: WorldRecord = { id: 'bad', name: 'Broken v5', seed: 123,
+      generatorVersion: 5, created: 1, lastPlayed: 2 };
+    expect(() => f.restore.applyWorld(broken)).toThrow('64-bit world seed is missing');
+    expect(() => f.restore.prepareNewWorld(broken)).toThrow('64-bit world seed is missing');
+    expect(() => f.restore.applyWorld({ ...broken, seed64: '18446744073709551616' }))
+      .toThrow('Invalid 64-bit world seed');
+    expect(() => f.restore.applyWorld({ ...broken, seed64: '18446744073709551615' }))
+      .toThrow('does not match stored world metadata');
+    expect(f.deps.savedChunks.has(99)).toBe(true);
+    expect(f.setWorldSeed64).not.toHaveBeenCalled();
+    expect(f.resetWorld).not.toHaveBeenCalled();
   });
 
   it('loads learned recipes per world, ignoring invalid entries from older data', () => {

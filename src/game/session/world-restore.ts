@@ -1,4 +1,5 @@
 import type { WorldRecord } from '../storage/world-storage';
+import { deriveWorldSeed32 } from '../world/seed64';
 import type { PortalFrame } from '../portals/frame';
 import { restorePortals } from '../portals/persistence';
 import type { SpawnMob } from '../entities/mob-spawning';
@@ -49,6 +50,7 @@ export interface WorldRestoreDependencies {
   relics: readonly unknown[];
   maximumHealth: number;
   resetWorld: (seed: number, x: number, z: number, generatorVersion?: number) => void;
+  setWorldSeed64?: (seed64: string | null) => void;
   clearPortalVisuals: () => void;
   showPortalVisual: (portal: PortalFrame) => void;
   clearMobs: () => void;
@@ -75,6 +77,15 @@ function restoreNumbers(values: Record<string, number>, source?: Record<string, 
   for (const [key, value] of Object.entries(source ?? {})) values[key] = value;
 }
 
+/** A v5 seed must be fully intact before any world state is mutated. */
+function resolveSeed(world: WorldRecord): { terrain: number; full: string | null } {
+  if ((world.generatorVersion ?? 1) < 5) return { terrain: world.seed, full: null };
+  if (typeof world.seed64 !== 'string') throw new Error('64-bit world seed is missing from a v5 save');
+  const terrain = deriveWorldSeed32(world.seed64, 'terrain');
+  if (terrain !== world.seed) throw new Error('64-bit world seed does not match stored world metadata');
+  return { terrain, full: world.seed64 };
+}
+
 /** Interpret original saved-world fields without changing the on-disk format. */
 export function createWorldRestore(deps: WorldRestoreDependencies) {
   const { state, player, portals, inventory, hotbar, toolWear } = deps;
@@ -82,6 +93,7 @@ export function createWorldRestore(deps: WorldRestoreDependencies) {
 
   function applyWorld(world: WorldRecord): void {
     const m = world as SavedWorld;
+    const resolvedSeed = resolveSeed(m);
     const p = m.player || { x: 0.5, y: 60, z: 0.5, yaw: 0, pitch: 0, fly: false };
     state.dimension = ['overworld', 'nether', 'end'].includes(m.dimension ?? '') ? m.dimension! : 'overworld';
     state.enderDragonDefeated = !!m.enderDragonDefeated;
@@ -89,7 +101,8 @@ export function createWorldRestore(deps: WorldRestoreDependencies) {
     portals.push(...restorePortals(m.portals));
     deps.clearPortalVisuals();
     portals.forEach(deps.showPortalVisual);
-    deps.resetWorld(m.seed, Math.floor(p.x / 16), Math.floor(p.z / 16), m.generatorVersion ?? 1);
+    deps.setWorldSeed64?.(resolvedSeed.full);
+    deps.resetWorld(resolvedSeed.terrain, Math.floor(p.x / 16), Math.floor(p.z / 16), m.generatorVersion ?? 1);
     deps.clearMobs();
     deps.restoreItemDrops?.(Array.isArray(m.itemDrops) ? m.itemDrops : []);
     player.x = p.x; player.y = p.y; player.z = p.z;
@@ -138,9 +151,11 @@ export function createWorldRestore(deps: WorldRestoreDependencies) {
   }
 
   function prepareNewWorld(world: WorldRecord): void {
+    const resolvedSeed = resolveSeed(world);
     deps.clearItemDrops?.();
     deps.savedChunks.clear();
-    deps.resetWorld(world.seed, 0, 0, world.generatorVersion ?? 1);
+    deps.setWorldSeed64?.(resolvedSeed.full);
+    deps.resetWorld(resolvedSeed.terrain, 0, 0, world.generatorVersion ?? 1);
     state.spawnPoint = null;
     state.omen = false;
     state.weather = 'clear';

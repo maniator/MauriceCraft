@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { nextWorldName, nextWorldSeed, parseWorldSeedInput, CURRENT_WORLD_GENERATOR_VERSION, timeAgo } from '../../src/game/session/world-session';
+import { nextWorldName, nextWorldSeed, nextSavedWorldSeed64, parseWorldSeedInput, CURRENT_WORLD_GENERATOR_VERSION, timeAgo } from '../../src/game/session/world-session';
 import type { WorldRecord } from '../../src/game/storage/world-storage';
+import { deriveWorldSeed32 } from '../../src/game/world/seed64';
 
 function world(name: string): WorldRecord {
   return { id: name, name, seed: 5, created: 100, lastPlayed: 100 };
@@ -15,11 +16,22 @@ describe('saved world session naming and history', () => {
   });
 
   it('creates full-range deterministic testable seeds without reusing saved seeds', () => {
-    expect(CURRENT_WORLD_GENERATOR_VERSION).toBe(4);
+    expect(CURRENT_WORLD_GENERATOR_VERSION).toBe(5);
     expect(nextWorldSeed([], () => 0.75)).toBe(3221225472);
     expect(nextWorldSeed([world('a')], () => 0)).toBe(0);
     const existing = [{ ...world('a'), seed: 3221225472 }];
     expect(nextWorldSeed(existing, () => 0.75)).toBe(0);
+  });
+
+  it('creates unique canonical uint64 seeds even when legacy worlds use 32-bit seeds', () => {
+    const old: WorldRecord = { ...world('old'), seed: 4294967295, generatorVersion: 4 };
+    const modern: WorldRecord = { ...world('modern'), seed: 5,
+      seed64: '4294967296', generatorVersion: 5 };
+    const candidates = [[0, 0xffffffff], [1, 0], [0x12345678, 0x9abcdef0]] as const;
+    let index = 0;
+    const seed64 = nextSavedWorldSeed64([old, modern], () => candidates[index++]);
+    expect(seed64).toBe('1311768467463790320');
+    expect(deriveWorldSeed32(seed64, 'terrain')).toBeGreaterThanOrEqual(0);
   });
 
   it('accepts reproducible word, phrase and numeric seeds', () => {
