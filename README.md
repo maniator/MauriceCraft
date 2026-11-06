@@ -1,6 +1,6 @@
 # MauriceCraft
 
-A browser-based block-building adventure inspired by Minecraft, built to run on school Chromebooks, computers, and phones. Play Creative, Survival, Adventure, or Spectator mode, explore generated terrain and structures, craft items, and visit the Nether and End.
+A browser-based block-building adventure inspired by Minecraft, built to run on school Chromebooks, computers, and phones. Play Creative, Survival, Adventure, or Spectator mode, explore generated terrain and structures, craft items, and visit the Nether and End. At first this game was created by my son Maurice, this is a copy of it.
 
 ## Quick start
 
