@@ -23,6 +23,7 @@ function fixture() {
   let mode: GameMode = 'creative';
   let hunger = 20;
   let sleeping = false;
+  let inWater = false;
   const damage: number[] = [];
   let collisions = 0;
   const stepCeilings: Array<number | undefined> = [];
@@ -35,6 +36,7 @@ function fixture() {
     isJumpPressed: () => Boolean(keys.Space),
     isSleeping: () => sleeping,
     getSpectatorSpeed: () => 1,
+    isInWater: () => inWater,
     worldHeight: 48,
     moveEntity: (axis, distance, maxStepY) => {
       collisions++;
@@ -71,6 +73,9 @@ function fixture() {
     },
     setSleeping: (next: boolean) => {
       sleeping = next;
+    },
+    setWater: (next: boolean) => {
+      inWater = next;
     },
     getCollisions: () => collisions,
   };
@@ -146,6 +151,26 @@ describe('player movement and physics', () => {
     hungry.keys.ShiftLeft = true;
     hungry.movement.updateMovement(0.05);
     expect(Math.abs(sprinting.player.z)).toBeGreaterThan(Math.abs(hungry.player.z));
+  });
+
+  it('swims upward with Space and dives with Shift without fall damage', () => {
+    const swimmer = fixture();
+    swimmer.player.y = 3;
+    swimmer.setWater(true);
+    swimmer.keys.Space = true;
+    swimmer.movement.updateMovement(0.05);
+    expect(swimmer.player.vy).toBeGreaterThan(0);
+    expect(swimmer.player.y).toBeGreaterThan(3);
+    expect(swimmer.player.fallStart).toBeNull();
+
+    const diver = fixture();
+    diver.player.y = 3;
+    diver.setWater(true);
+    diver.keys.ShiftLeft = true;
+    diver.movement.updateMovement(0.05);
+    expect(diver.player.vy).toBeLessThan(0);
+    expect(diver.player.y).toBeLessThan(3);
+    expect(diver.player.fallStart).toBeNull();
   });
 
   it('does not move horizontally during the sleep animation', () => {
