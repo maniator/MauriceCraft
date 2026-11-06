@@ -23,6 +23,7 @@ export interface PlayerMovementDependencies {
   isJumpPressed: () => boolean;
   isSleeping: () => boolean;
   getSpectatorSpeed: () => number;
+  isInWater: () => boolean;
   worldHeight: number;
   moveEntity: (axis: 0 | 1 | 2, distance: number, maxStepY?: number) => void;
   checkPortal: (seconds: number) => void;
@@ -86,19 +87,26 @@ export function createPlayerMovement(deps: PlayerMovementDependencies) {
     }
 
     const flying = player.fly && mode === 'creative';
+    const swimming = !flying && deps.isInWater();
     const moving = horizontalInput !== 0 || forwardInput !== 0;
     const sprinting =
-      shiftPressed && !flying && moving && !(mode === 'survival' && deps.getHunger() <= 6);
-    const speed = flying ? (keys.ControlLeft ? 18 : 10) : sprinting ? 6.6 : 4.4;
+      shiftPressed && !flying && !swimming && moving && !(mode === 'survival' && deps.getHunger() <= 6);
+    const speed = flying ? (keys.ControlLeft ? 18 : 10) : swimming ? 3.6 : sprinting ? 6.6 : 4.4;
     const targetVelocityX = (horizontalInput * cosYaw + forwardInput * sinYaw) * speed;
     const targetVelocityZ = (-horizontalInput * sinYaw + forwardInput * cosYaw) * speed;
-    const acceleration = player.onGround || flying ? 14 : 3.5;
+    const acceleration = swimming ? 4.5 : player.onGround || flying ? 14 : 3.5;
     const smoothFactor = Math.min(1, acceleration * seconds);
     player.vx += (targetVelocityX - player.vx) * smoothFactor;
     player.vz += (targetVelocityZ - player.vz) * smoothFactor;
     if (flying) {
       const verticalInput = Number(jumpPressed) - Number(shiftPressed);
       player.vy += (verticalInput * speed - player.vy) * Math.min(1, 10 * seconds);
+    } else if (swimming) {
+      // Water cancels normal gravity. Space strokes upward; Shift dives down.
+      // A small neutral rise helps the player reach the surface without sinking.
+      const verticalInput = Number(jumpPressed) - Number(shiftPressed);
+      const swimVelocity = verticalInput === 0 ? 0.18 : verticalInput * 3.8;
+      player.vy += (swimVelocity - player.vy) * Math.min(1, 6 * seconds);
     } else {
       player.vy = Math.max(-50, player.vy - 28 * seconds);
       if (jumpPressed && player.onGround) {
@@ -107,8 +115,8 @@ export function createPlayerMovement(deps: PlayerMovementDependencies) {
       }
     }
     // One-block ledges are walkable, but only from the ground, never while
-    // flying, falling, or jumping. Share one height ceiling for both axes.
-    const maxStepY = !flying && player.onGround && player.vy <= 0 ? player.y + 1.001 : undefined;
+    // flying, swimming, falling, or jumping. Share one height ceiling for both axes.
+    const maxStepY = !flying && !swimming && player.onGround && player.vy <= 0 ? player.y + 1.001 : undefined;
     player.onGround = false;
     deps.moveEntity(0, player.vx * seconds, maxStepY);
     deps.moveEntity(2, player.vz * seconds, maxStepY);
@@ -136,7 +144,7 @@ export function createPlayerMovement(deps: PlayerMovementDependencies) {
       }
     }
 
-    if (flying) {
+    if (flying || swimming) {
       player.fallStart = null;
     } else if (player.onGround) {
       if (player.fallStart !== null) {

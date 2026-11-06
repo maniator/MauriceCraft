@@ -15,6 +15,7 @@ import { createWorldRuntime } from './world/world-runtime';
 import { deriveWorldSeed32 } from './world/seed64';
 import { raycastBlocks } from './world/raycast';
 import { createCollisionEngine } from './world/collision';
+import { liquidKind } from './world/fluid-blocks';
 import { createToolUsage } from './items/tool-usage';
 import { grantInventoryItem } from './items/inventory-grants';
 import { createBlockInteractions } from './interactions/block-interactions';
@@ -1034,6 +1035,14 @@ const { updateMovement: updatePlayerMovement } = createPlayerMovement({
   isJumpPressed: () => Boolean(keys.Space || touchJump),
   isSleeping: () => sleepT > 0,
   getSpectatorSpeed: () => specSpeed,
+  isInWater: () => {
+    const x = Math.floor(player.x),
+      z = Math.floor(player.z);
+    return (
+      liquidKind(get(x, Math.floor(player.y + 0.3), z)) === 'water' ||
+      liquidKind(get(x, Math.floor(player.y + 1.2), z)) === 'water'
+    );
+  },
   worldHeight: WORLD_HEIGHT,
   moveEntity: (axis, distance, maxStepY) => moveEnt(player, axis, distance, maxStepY),
   checkPortal: (seconds) => checkPortal(seconds),

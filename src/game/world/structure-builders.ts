@@ -146,30 +146,38 @@ export function createStructureBuilders(
     P(a[0], gy + 2, a[1], HAY);
     P(b[0], gy + 1, b[1], HAY);
   }
-  function buildBellTower(P: PlaceBlock, map: MapXZ, gy: number): void {
-    for (let u = 0; u < 5; u++) {
-      for (let v = 0; v < 5; v++) {
-        const m = map(u, v),
-          x = m[0],
-          z = m[1];
-        const edge = u === 0 || u === 4 || v === 0 || v === 4,
-          corner = (u === 0 || u === 4) && (v === 0 || v === 4);
+  /** A small village synagogue with a broad sanctuary, entry, windows, and a gold Star of David. */
+  function buildSynagogue(P: PlaceBlock, map: MapXZ, gy: number): void {
+    const w = 9;
+    const d = 7;
+    for (let u = 0; u < w; u++) {
+      for (let v = 0; v < d; v++) {
+        const [x, z] = map(u, v);
+        const edge = u === 0 || u === w - 1 || v === 0 || v === d - 1;
+        const corner = (u === 0 || u === w - 1) && (v === 0 || v === d - 1);
         P(x, gy, z, COBBLE);
-        for (let y = 1; y <= 7; y++) {
-          let b = 0;
-          if (edge) {
-            b = corner ? WOOD : STONEBRICK;
-            if (v === 0 && u === 2 && y <= 2) b = 0;
-            if (y === 5 && (((u === 0 || u === 4) && v === 2) || (v === 4 && u === 2))) b = 0;
-          }
-          P(x, gy + y, z, b);
+        for (let y = 1; y <= 4; y++) {
+          let block = edge ? (corner ? WOOD : STONEBRICK) : 0;
+          if (v === 0 && u === 4 && y <= 2) block = 0;
+          if (y === 2 && v === d - 1 && (u === 2 || u === 6)) block = 0;
+          P(x, gy + y, z, block);
         }
-        for (let L = 0; L <= 2; L++)
-          if (u >= L && u <= 4 - L && v >= L && v <= 4 - L) P(x, gy + 8 + L, z, BRICK);
+        if (v >= 1 && v <= d - 2) {
+          const roofLayer = Math.min(v - 1, d - 2 - v);
+          P(x, gy + 5 + roofLayer, z, BRICK);
+        }
       }
     }
-    const c = map(2, 2);
-    P(c[0], gy + 11, c[1], GOLD);
+    // Gold Star of David on the front-facing wall.
+    for (const [u, y] of [[3, 2], [4, 3], [5, 2], [3, 4], [4, 3], [5, 4]] as const) {
+      const [x, z] = map(u, 0);
+      P(x, gy + y, z, GOLD);
+    }
+    const [doorX, doorZ] = map(4, 0);
+    P(doorX, gy + 1, doorZ, 0);
+    P(doorX, gy + 2, doorZ, 0);
+    const [lightX, lightZ] = map(4, 3);
+    P(lightX, gy + 4, lightZ, TORCH);
   }
   /** V2 settlements have variable street lengths, orientations, and plot counts. */
   function buildVariedVillage(P: PlaceBlock, st: GeneratedStructure, x0: number, z0: number): void {
@@ -223,7 +231,7 @@ export function createStructureBuilders(
         ];
         if (building < 0.58) buildHouse(P, map, gy, width, 5, style);
         else if (building < 0.89) buildFarm(P, map, gy, 7, 6);
-        else buildBellTower(P, map, gy);
+        else buildSynagogue(P, map, gy);
       }
       const endX = cx + dx * reach + px * shift,
         endZ = cz + dz * reach + pz * shift;
@@ -292,7 +300,7 @@ export function createStructureBuilders(
         if (kind < 0.48) buildHouse(P, map, gy, 5, 5, style);
         else if (kind < 0.66) buildHouse(P, map, gy, 7, 5, style);
         else if (kind < 0.88) buildFarm(P, map, gy, 7, 6);
-        else buildBellTower(P, map, gy);
+        else buildSynagogue(P, map, gy);
       }
     }
   }
