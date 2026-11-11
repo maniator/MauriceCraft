@@ -34,6 +34,20 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Exercise desktop and mobile production website
         run: npm run test:e2e
+      - name: Verify seeded desktop/mobile captures and approved baselines
+        run: npm run test:visual
+      - name: Publish seeded visual candidates for manual review
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: seeded-visual-captures
+          path: |
+            test-results/**/visual-captures/*.png
+            test-results/**/*-diff.png
+            test-results/**/*-actual.png
+            test-results/**/*-expected.png
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Publish browser failure evidence
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

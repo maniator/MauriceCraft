@@ -373,6 +373,7 @@ let playing = false,
   locked = false,
   fallback = false,
   ready = false;
+let visualFrozen = false;
 const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 let invOpen = false,
   tradeOpen = false,
@@ -1466,14 +1467,11 @@ const worldSession = createGameplayWorldSession({
   showHint: (message, duration) => showHint(message, duration),
 });
 
-function init(): Promise<void> {
-  return worldSession.initialize();
-}
-
 const frame = createFrameLoop(
   {
     isReady: () => ready,
     isPlaying: () => playing,
+    isVisualFrozen: () => visualFrozen,
     streamChunks,
     update,
     updateFluids: worldServices.stepFluids,
@@ -1531,7 +1529,10 @@ const frame = createFrameLoop(
 export function startGameApplication(): void {
   setMode('creative');
   setTimeout(() => {
-    void init().catch((error) => showStartupFailure(error));
+    void worldSession.initialize().catch((error) => showStartupFailure(error));
   }, 30);
   startFrameLoop(frame);
+  // Test-only injection remains a single line to respect the existing bootstrap limit.
+  // prettier-ignore
+  if (import.meta.env.MODE === 'visual-test') void import('./testing/visual-bootstrap').then(m => m.attachVisualBootstrap({ gameState, player, hotbar, inv, chunks, setMode, setDifficulty, setWeather, changeDimension, ensureAround, streamChunks, updateHotbar, daylight, camera, scene, renderer, eyeHeight: EYE_HEIGHT, getSeed: () => seed, getVersion: () => generatorVersion, getDimension: () => dimension, getFrozen: () => visualFrozen, setFrozen: value => { visualFrozen = value; } }));
 }

@@ -18,7 +18,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,css,scss,md,mdx}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,css,scss,md,mdx}\"",
     "check:style": "npm run format:check && npm run lint",
-    "check:tests": "npm run test:coverage && npm run build"
+    "check:tests": "npm run test:coverage && npm run build",
+    "build:visual": "vite build --mode visual-test",
+    "test:visual": "playwright test --config playwright.visual.config.ts"
   },
   "dependencies": {
     "dexie": "4.4.7",
