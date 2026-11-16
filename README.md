@@ -15,7 +15,7 @@ Open the local address printed by Vite. For a production build, run `npm run bui
 
 ## Controls
 
-Desktop: **WASD** to move, **Space** to jump, mouse to look, left/right click to break/place, **1–9** or wheel to select, **I** for inventory, **C** for crafting, **T** or **/** for commands, and **Esc** to pause. Creative mode supports flight with **F** or double-tap Space. The in-game menu documents additional shortcuts.
+Desktop: **WASD** to move, **Space** to jump or swim upward, **Shift** to dive while swimming, mouse to look, left/right click to break/place, **1–9** or wheel to select, **I** for inventory, **C** for crafting, **T** or **/** for commands, and **Esc** to pause. Creative mode supports flight with **F** or double-tap Space. The in-game menu documents additional shortcuts.
 
 Mobile: use the on-screen movement area, drag to look, and tap the on-screen Jump/Place/Bag/Cmd controls. Inventory, crafting, and the pause menu are touch-friendly.
 
