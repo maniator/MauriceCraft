@@ -313,6 +313,28 @@ canvas#view {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
+#btnView {
+  position: fixed;
+  right: 12px;
+  top: calc(env(safe-area-inset-top, 0px) + 52px);
+  z-index: 4;
+  min-height: 44px;
+  padding: 6px 12px;
+  color: var(--text);
+  background: var(--panel);
+  border: 2px solid var(--panel-edge);
+  font-family: var(--font);
+  font-size: 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+#btnView:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+#btnView[aria-pressed='true'] {
+  border-color: var(--accent);
+}
 /* First-person viewmodel belongs in the camera foreground, never behind HUD buttons.
      Positioned relative to the crosshair so actions clearly land where the player aims. */
 #heldHand {

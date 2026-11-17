@@ -351,6 +351,34 @@ test('first-person viewmodel remains in the aiming area without obstructing the 
   if (isMobile) await expect(page.locator('#btnPlace')).toBeHidden();
 });
 
+test('camera view toggles between the player avatar and the foreground hand', async ({
+  page,
+  isMobile,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await startWorld(page);
+  const view = page.locator('#btnView');
+  await expect(view).toHaveAttribute('aria-pressed', /^(true|false)$/);
+  if ((await view.getAttribute('aria-pressed')) === 'true') {
+    if (isMobile) await view.tap();
+    else await page.keyboard.press('v');
+  }
+  await expect(view).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#heldHand')).toBeVisible();
+  if (isMobile) await view.tap();
+  else await page.keyboard.press('v');
+  await expect(view).toHaveAttribute('aria-pressed', 'true');
+  await expect(view).toHaveText('1st Person');
+  await expect(page.locator('#heldHand')).toBeHidden();
+  await expect(page.locator('#crosshair')).toBeVisible();
+  if (isMobile) await view.tap();
+  else await page.keyboard.press('v');
+  await expect(view).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#heldHand')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test('mobile and desktop can return to menu and confirm a manual save', async ({
   page,
   isMobile,

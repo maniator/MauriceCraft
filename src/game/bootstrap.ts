@@ -9,6 +9,7 @@ import { createPlayerMovement } from './player/player-movement';
 import { createRespawn } from './player/player-respawn';
 import { exertPlayer } from './player/hunger';
 import { createWeatherSystem } from './rendering/weather-system';
+import { createThirdPersonView } from './rendering/third-person-view';
 import { JOBS, JOB_NAMES } from './entities/mob-models';
 import { createMobRuntime } from './entities/mob-runtime';
 import { createWorldRuntime } from './world/world-runtime';
@@ -29,6 +30,7 @@ import type { BlockRayHit } from './world/raycast';
 import type { DragGesture, MovementTouch, CameraTouch } from './input/game-controls';
 import type { SpawnMob } from './entities/mob-spawning';
 import { createGameUiComposition } from './ui/game-ui-composition';
+import { createGameUiItemBindings } from './ui/game-ui-item-bindings';
 import { createCommandConsole } from './commands/command-console';
 import { createLazyCommandLoader } from './commands/lazy-command-loader';
 import { createPortalSystem } from './portals/portal-system';
@@ -71,37 +73,21 @@ const worldServices = createWorldRuntime({
 });
 const {
   GRASS,
-  DIRT,
-  STONE,
   SAND,
   WOOD,
   LEAVES,
-  DARK_WOOD,
-  BIRCH_WOOD,
-  ACACIA_WOOD,
-  WILLOW_WOOD,
-  PLANKS,
-  BRICK,
-  COBBLE,
-  STONEBRICK,
-  SANDSTONE,
   GRAVEL,
   HAY,
-  GOLD,
   TNT,
   TORCH,
   CTABLE,
   BED,
   LAVA,
   OBSIDIAN,
-  IRON_BLOCK,
-  COPPER_BLOCK,
-  DIAMOND_BLOCK,
   BEEF,
   PORK,
   MUTTON,
   CHICKEN,
-  COOKED,
   WOOL,
   FEATHER,
   LEATHER,
@@ -111,10 +97,6 @@ const {
   EMERALD,
   BONE,
   STRING,
-  STICK,
-  COAL,
-  RAW_COPPER,
-  RAW_IRON,
   COPPER_INGOT,
   IRON_INGOT,
   DIAMOND,
@@ -708,6 +690,24 @@ const gameState = {
   },
 };
 
+const thirdPerson = createThirdPersonView({
+  scene,
+  camera,
+  player,
+  getBlock: get,
+  solid,
+  worldHeight: WORLD_HEIGHT,
+  getMode: () => mode,
+  getSelectedItem: () => hotbar[selected],
+  getItemCount: (itemId) => inv[itemId] || 0,
+  tileOf,
+  atlasCanvas,
+});
+const toggleView = () => {
+  thirdPerson.toggle();
+  updateHotbar(false);
+};
+
 const {
   hotbarEl,
   heartsEl,
@@ -742,83 +742,15 @@ const {
   tools: TOOLS,
   toolMax: TOOL_MAX,
   toolWear,
-  recipeItems: {
-    BED,
-    BEEF,
-    BONE,
-    BRICK,
-    CHICKEN,
-    COAL,
-    COBBLE,
-    COOKED,
-    COPPER_BLOCK,
-    COPPER_INGOT,
-    CTABLE,
-    DIAMOND,
-    DIAMOND_BLOCK,
-    DIRT,
-    DYNAMITE,
-    EMERALD,
-    FEATHER,
-    FLINT,
-    GOLD,
-    GRAVEL,
-    GUNPOWDER,
-    IRON_BLOCK,
-    IRON_INGOT,
-    LEATHER,
-    MUTTON,
-    PLANKS,
-    PORK,
-    DARK_WOOD,
-    BIRCH_WOOD,
-    ACACIA_WOOD,
-    WILLOW_WOOD,
-    RAW_COPPER,
-    RAW_IRON,
-    SAND,
-    SANDSTONE,
-    STICK,
-    STONE,
-    STONEBRICK,
-    STRING,
-    TNT,
-    TORCH,
-    WOOD,
-    WOOL,
-  },
-  itemIds: {
-    HAY,
-    WOOL,
-    BONE,
-    EMERALD,
-    COOKED,
-    BED,
-    BEEF,
-    PORK,
-    CHICKEN,
-    LEATHER,
-    COBBLE,
-    STONEBRICK,
-    SANDSTONE,
-    BRICK,
-    COPPER_INGOT,
-    GUNPOWDER,
-    TORCH,
-    FLINT,
-    DYNAMITE,
-    TNT,
-    IRON_INGOT,
-    COAL,
-    GOLD,
-    DIAMOND,
-  },
+  ...createGameUiItemBindings(worldServices),
   toolTiers: TOOL_TIERS,
   toolId,
   jobNames: JOB_NAMES,
   keys,
   touchMove,
   isTouch,
+  isThirdPerson: () => thirdPerson.isThirdPerson,
+  toggleView,
   maxHealth: MAX_HEALTH,
   getMode: () => mode,
   getModeLabel: () => MODE_LABELS[mode],
@@ -1022,7 +954,10 @@ const { handleActions, resetMine } = createActionController({
   craftingTableId: CTABLE,
   openCraft,
   useSelected,
-  swingHeldItem,
+  swingHeldItem: () => {
+    swingHeldItem();
+    thirdPerson.swing();
+  },
 });
 
 /* ---------- Update loop ---------- */
@@ -1091,6 +1026,7 @@ const update = createGameTick({
   exert,
   checkRelics,
   handleActions,
+  afterActions: (dt) => thirdPerson.update(dt),
 });
 
 /* ---------- Day / night ---------- */

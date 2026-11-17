@@ -24,6 +24,8 @@ export interface GameUiCompositionDependencies {
   keys: Record<string, boolean>;
   touchMove: { x: number; z: number };
   isTouch: boolean;
+  isThirdPerson: () => boolean;
+  toggleView: () => void;
   maxHealth: number;
   getMode: () => string;
   getModeLabel: () => string;
@@ -62,6 +64,7 @@ export function createGameUiComposition(deps: GameUiCompositionDependencies) {
     getHunger: deps.getHunger,
     getHealth: deps.getHealth,
     canInteract: deps.canInteract,
+    isThirdPerson: deps.isThirdPerson,
     maxHealth: deps.maxHealth,
   });
   const recipes = createRecipeCatalog({
@@ -114,6 +117,7 @@ export function createGameUiComposition(deps: GameUiCompositionDependencies) {
     openInventory: inventory.openInventory,
     openCommand: deps.openCommand,
     pause: deps.pauseGame,
+    toggleView: deps.toggleView,
   });
   return { ...hud, ...inventory, ...controls, craftedRecipes };
 }

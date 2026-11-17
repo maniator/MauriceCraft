@@ -52,6 +52,7 @@ export interface TickDependencies {
   exert: (amount: number) => void;
   checkRelics: () => void;
   handleActions: (deltaSeconds: number, now: number) => void;
+  afterActions?: (deltaSeconds: number) => void;
   random?: () => number;
 }
 
@@ -154,5 +155,7 @@ export function createGameTick(
       camera.rotation.z = (random() - 0.5) * state.shake * 0.05;
       state.shake = Math.max(0, state.shake - dt * 2.2);
     } else camera.rotation.z = 0;
+    // Adjust the visual camera only after gameplay resolves eye-based targeting.
+    deps.afterActions?.(dt);
   };
 }
